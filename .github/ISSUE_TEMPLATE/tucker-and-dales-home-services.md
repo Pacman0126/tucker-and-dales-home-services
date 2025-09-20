@@ -1,6 +1,6 @@
 ---
-name: Gambinos Restaurant and Lounge reservation booking project
-about: A reservation booking and tracking app for Gambinos Restaurant and Lounge
+name: Tucker and Dale's Home Services
+about: A system for selling and booking home services via a shopping cart
 title: User Story <Title>
 labels: ''
 assignees: ''
