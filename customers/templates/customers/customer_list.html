@@ -1,0 +1,20 @@
+{% extends "core/base.html" %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<h2>Customers</h2>
+<a href="{% url 'customers:customer_create' %}" class="btn btn-primary mb-3">New Customer</a>
+<table class="table table-striped">
+  <tr>
+    <th>Name</th><th>Email</th><th>Phone</th>
+  </tr>
+  {% for c in customers %}
+    <tr>
+      <td><a href="{% url 'customers:customer_detail' c.pk %}">{{ c.first_name }} {{ c.last_name }}</a></td>
+      <td>{{ c.email }}</td>
+      <td>{{ c.phone }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="3">No customers yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}
