@@ -1,0 +1,83 @@
+[2025-09-21 19:56:33,961] INFO django Deleted old RegisteredCustomer records.
+[2025-09-21 20:01:47,700] INFO django Deleted old RegisteredCustomer records.
+[2025-09-21 20:04:35,831] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:06:28,305] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:06:29,012] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:06:45,535] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:07:19,026] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:07:19,188] WARNING django.request Not Found: /favicon.ico
+[2025-09-21 20:07:19,194] WARNING django.server "GET /favicon.ico HTTP/1.1" 404 2357
+[2025-09-21 20:07:22,338] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:07:22,506] WARNING django.request Not Found: /favicon.ico
+[2025-09-21 20:07:22,507] WARNING django.server "GET /favicon.ico HTTP/1.1" 404 2357
+[2025-09-21 20:08:16,223] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:14:28,406] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:14:54,528] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:18:36,418] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:20:20,080] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:22:43,497] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:28:31,503] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:28:31,707] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:28:31,823] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:28:32,128] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:28:32,144] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:29:35,763] DEBUG django.db.backends (0.000) 
+            SELECT name, type FROM sqlite_master
+            WHERE type in ('table', 'view') AND NOT name='sqlite_sequence'
+            ORDER BY name; args=None; alias=default
+[2025-09-21 20:29:35,765] DEBUG django.db.backends (0.000) SELECT "django_migrations"."id", "django_migrations"."app", "django_migrations"."name", "django_migrations"."applied" FROM "django_migrations"; args=(); alias=default
+[2025-09-21 20:30:07,992] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:30:13,117] DEBUG django.db.backends (0.000) SELECT "django_session"."session_key", "django_session"."session_data", "django_session"."expire_date" FROM "django_session" WHERE ("django_session"."expire_date" > '2025-09-21 18:30:13.115282' AND "django_session"."session_key" = 'h7pekm8i1dv75l3e841ezyom7fr03r8r') LIMIT 21; args=('2025-09-21 18:30:13.115282', 'h7pekm8i1dv75l3e841ezyom7fr03r8r'); alias=default
+[2025-09-21 20:30:13,127] INFO django.server "GET /admin/ HTTP/1.1" 302 0
+[2025-09-21 20:30:13,168] INFO django.server "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4181
+[2025-09-21 20:30:13,272] INFO django.server "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2694
+[2025-09-21 20:30:13,273] INFO django.server "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2929
+[2025-09-21 20:30:13,274] INFO django.server "GET /static/admin/css/base.css HTTP/1.1" 200 21310
+[2025-09-21 20:30:13,284] INFO django.server "GET /static/admin/css/login.css HTTP/1.1" 200 958
+[2025-09-21 20:30:13,284] INFO django.server "GET /static/admin/js/theme.js HTTP/1.1" 200 1943
+[2025-09-21 20:30:13,285] INFO django.server "GET /static/admin/css/responsive.css HTTP/1.1" 200 18559
+[2025-09-21 20:30:13,288] INFO django.server "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+[2025-09-21 20:30:17,464] INFO django.server "GET /customers HTTP/1.1" 301 0
+[2025-09-21 20:30:17,469] DEBUG django.db.backends (0.000) SELECT COUNT(*) AS "__count" FROM "customers_registeredcustomer"; args=(); alias=default
+[2025-09-21 20:30:17,475] DEBUG django.db.backends (0.000) SELECT "customers_registeredcustomer"."id", "customers_registeredcustomer"."unique_customer_id", "customers_registeredcustomer"."first_name", "customers_registeredcustomer"."last_name", "customers_registeredcustomer"."street_address", "customers_registeredcustomer"."city", "customers_registeredcustomer"."state", "customers_registeredcustomer"."zipcode", "customers_registeredcustomer"."phone", "customers_registeredcustomer"."email", "customers_registeredcustomer"."created_at" FROM "customers_registeredcustomer" ORDER BY "customers_registeredcustomer"."last_name" ASC, "customers_registeredcustomer"."first_name" ASC; args=(); alias=default
+[2025-09-21 20:30:17,518] INFO django.server "GET /customers/ HTTP/1.1" 200 27990
+[2025-09-21 20:30:45,341] INFO django.server "GET /customers/new HTTP/1.1" 301 0
+[2025-09-21 20:30:45,352] INFO django.server "GET /customers/new/ HTTP/1.1" 200 2450
+[2025-09-21 20:30:56,078] DEBUG django.db.backends (0.000) SELECT COUNT(*) AS "__count" FROM "customers_registeredcustomer"; args=(); alias=default
+[2025-09-21 20:30:56,079] DEBUG django.db.backends (0.000) SELECT "customers_registeredcustomer"."id", "customers_registeredcustomer"."unique_customer_id", "customers_registeredcustomer"."first_name", "customers_registeredcustomer"."last_name", "customers_registeredcustomer"."street_address", "customers_registeredcustomer"."city", "customers_registeredcustomer"."state", "customers_registeredcustomer"."zipcode", "customers_registeredcustomer"."phone", "customers_registeredcustomer"."email", "customers_registeredcustomer"."created_at" FROM "customers_registeredcustomer" ORDER BY "customers_registeredcustomer"."last_name" ASC, "customers_registeredcustomer"."first_name" ASC; args=(); alias=default
+[2025-09-21 20:30:56,098] INFO django.server "GET /customers/ HTTP/1.1" 200 27990
+[2025-09-21 20:35:02,303] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:35:02,366] DEBUG django.db.backends (0.000) 
+            SELECT name, type FROM sqlite_master
+            WHERE type in ('table', 'view') AND NOT name='sqlite_sequence'
+            ORDER BY name; args=None; alias=default
+[2025-09-21 20:35:02,369] DEBUG django.db.backends (0.000) SELECT "django_migrations"."id", "django_migrations"."app", "django_migrations"."name", "django_migrations"."applied" FROM "django_migrations"; args=(); alias=default
+[2025-09-21 20:35:06,001] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:44:20,523] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:45:14,004] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:45:14,140] WARNING django.request Not Found: /favicon.ico
+[2025-09-21 20:45:14,141] WARNING django.server "GET /favicon.ico HTTP/1.1" 404 2357
+[2025-09-21 20:48:25,633] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:48:26,217] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:48:47,718] INFO core.views Home page accessed
+[2025-09-21 20:48:47,728] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:48:47,882] WARNING django.request Not Found: /favicon.ico
+[2025-09-21 20:48:47,883] WARNING django.server "GET /favicon.ico HTTP/1.1" 404 2357
+[2025-09-21 20:52:02,785] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\tucker_and_dales_home_services\settings.py changed, reloading.
+[2025-09-21 20:52:03,428] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:52:03,489] DEBUG django.db.backends (0.000) 
+            SELECT name, type FROM sqlite_master
+            WHERE type in ('table', 'view') AND NOT name='sqlite_sequence'
+            ORDER BY name; args=None; alias=default
+[2025-09-21 20:52:03,492] DEBUG django.db.backends (0.000) SELECT "django_migrations"."id", "django_migrations"."app", "django_migrations"."name", "django_migrations"."applied" FROM "django_migrations"; args=(); alias=default
+[2025-09-21 20:52:22,530] INFO django.utils.autoreload Watching for file changes with StatReloader
+[2025-09-21 20:52:22,590] DEBUG django.db.backends (0.000) 
+            SELECT name, type FROM sqlite_master
+            WHERE type in ('table', 'view') AND NOT name='sqlite_sequence'
+            ORDER BY name; args=None; alias=default
+[2025-09-21 20:52:22,592] DEBUG django.db.backends (0.000) SELECT "django_migrations"."id", "django_migrations"."app", "django_migrations"."name", "django_migrations"."applied" FROM "django_migrations"; args=(); alias=default
+[2025-09-21 20:52:28,116] INFO core.views Home page accessed
+[2025-09-21 20:52:28,126] INFO django.server "GET / HTTP/1.1" 200 841
+[2025-09-21 20:54:45,556] ERROR core.views Test error log from shell
+[2025-09-21 21:03:08,961] INFO django.utils.autoreload C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\forms.py changed, reloading.
+[2025-09-21 21:03:09,690] INFO django.utils.autoreload Watching for file changes with StatReloader

@@ -6,10 +6,25 @@ class RegisteredCustomerForm(forms.ModelForm):
     class Meta:
         model = RegisteredCustomer
         fields = [
-            "unique_customer_id", "first_name", "last_name",
-            "street_address", "city", "state", "zipcode",
-            "phone", "email",
+            "first_name",
+            "last_name",
+            "street_address",
+            "city",
+            "state",
+            "zipcode",
+            "phone",
+            "email",
         ]
+        widgets = {
+            "first_name": forms.TextInput(attrs={"class": "form-control"}),
+            "last_name": forms.TextInput(attrs={"class": "form-control"}),
+            "street_address": forms.TextInput(attrs={"class": "form-control"}),
+            "city": forms.TextInput(attrs={"class": "form-control"}),
+            "state": forms.TextInput(attrs={"class": "form-control"}),
+            "zipcode": forms.TextInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "email": forms.EmailInput(attrs={"class": "form-control"}),
+        }
 
     def clean_phone(self):
         p = self.cleaned_data["phone"]

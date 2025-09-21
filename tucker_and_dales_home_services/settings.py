@@ -16,6 +16,15 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Ensure logs directory and files exist
+logs_dir = Path(BASE_DIR) / "logs"
+logs_dir.mkdir(exist_ok=True)
+
+for log_file in ["django.log", "error.log"]:
+    log_path = logs_dir / log_file
+    if not log_path.exists():
+        log_path.touch()
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -127,6 +136,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -144,7 +154,7 @@ LOGGING = {
 
     "handlers": {
         "django_file": {
-            "level": "INFO",
+            "level": "DEBUG",  # keep DEBUG in file, includes SQL queries
             "class": "logging.FileHandler",
             "filename": os.path.join(BASE_DIR, "logs", "django.log"),
             "formatter": "verbose",
@@ -156,7 +166,7 @@ LOGGING = {
             "formatter": "verbose",
         },
         "console": {
-            "level": "DEBUG",
+            "level": "WARNING",  # 👈 only show WARNING+ in terminal
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
@@ -165,8 +175,23 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["django_file", "error_file", "console"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": True,
+        },
+        "core": {
+            "handlers": ["django_file", "error_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "customers": {
+            "handlers": ["django_file", "error_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["django_file"],  # SQL queries only to file
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
 }

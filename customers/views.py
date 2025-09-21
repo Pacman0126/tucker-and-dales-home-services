@@ -1,39 +1,40 @@
+# customers/views.py
 import logging
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import RegisteredCustomer
 from .forms import RegisteredCustomerForm
 
-# Use __name__ so logs show "customers.views"
 logger = logging.getLogger(__name__)
 
 
 def customer_list(request):
-    logger.info("Customer list page accessed")
     customers = RegisteredCustomer.objects.all()
-    logger.debug(f"Fetched {customers.count()} customers from database")
+    logger.info("Customer list accessed")
     return render(request, "customers/customer_list.html", {"customers": customers})
 
 
 def customer_detail(request, pk):
-    logger.info(f"Customer detail page accessed for ID={pk}")
     customer = get_object_or_404(RegisteredCustomer, pk=pk)
     return render(request, "customers/customer_detail.html", {"customer": customer})
 
+# Superuser check
 
-def customer_create(request):
+
+def is_owner(user):
+    return user.is_superuser
+
+
+@login_required
+@user_passes_test(is_owner)
+def customer_edit(request, pk):
+    customer = get_object_or_404(RegisteredCustomer, pk=pk)
     if request.method == "POST":
-        form = RegisteredCustomerForm(request.POST)
+        form = RegisteredCustomerForm(request.POST, instance=customer)
         if form.is_valid():
-            customer = form.save()
-            logger.info(
-                f"New customer created: {customer.first_name} {customer.last_name} (ID={customer.pk})")
-            messages.success(request, "Customer registered successfully.")
-            return redirect("customers:customer_list")
-        else:
-            logger.warning("Customer form submission failed validation")
+            form.save()
+            logger.info(f"Customer {customer.id} updated by {request.user}")
+            return redirect("customers:customer_detail", pk=customer.pk)
     else:
-        logger.debug("Customer create form displayed")
-        form = RegisteredCustomerForm()
-
-    return render(request, "customers/customer_form.html", {"form": form})
+        form = RegisteredCustomerForm(instance=customer)
+    return render(request, "customers/customer_edit.html", {"form": form, "customer": customer})
