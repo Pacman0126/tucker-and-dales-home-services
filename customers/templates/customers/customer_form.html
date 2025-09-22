@@ -1,11 +1,14 @@
-{% extends "core/base.html" %}
-{% block title %}New Customer{% endblock %}
+{% extends "base.html" %}
+{% block title %}Edit Customer{% endblock %}
 {% block content %}
-<h2>Register Customer</h2>
-<form method="post" class="mb-3">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-success">Save</button>
-</form>
-<a href="{% url 'customers:customer_list' %}" class="btn btn-secondary">Cancel</a>
+<div class="container mt-4">
+  <h2>Edit {{ customer.first_name }} {{ customer.last_name }}</h2>
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'customers:customer_detail' customer.pk %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
 {% endblock %}
+

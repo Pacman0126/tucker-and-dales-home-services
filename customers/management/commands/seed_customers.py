@@ -1,52 +1,59 @@
-import random
-import logging
 import uuid
-from django.core.management.base import BaseCommand
+import random
 from faker import Faker
+from django.core.management.base import BaseCommand
 from customers.models import RegisteredCustomer
 
-logger = logging.getLogger("django")
+fake = Faker("en_US")
 
-DALLAS_STREETS = [
-    "Main St", "Elm St", "Commerce St", "Cedar Springs Rd", "Ross Ave",
-    "McKinney Ave", "Lamar St", "Maple Ave", "Lovers Ln", "Mockingbird Ln",
-    "Abrams Rd", "Royal Ln", "Northwest Hwy", "Skillman St", "Greenville Ave",
-    "Forest Ln", "Coit Rd", "Campbell Rd", "Spring Valley Rd", "Preston Rd",
-    "Inwood Rd", "Walnut Hill Ln", "Park Ln", "Hillcrest Rd", "Montfort Dr"
+CITIES = [
+    "Dallas", "Fort Worth", "Arlington", "Plano", "Irving", "Garland",
+    "Grand Prairie", "McKinney", "Frisco", "Mesquite", "Carrollton",
+    "Richardson", "Lewisville", "Allen", "Flower Mound", "Denton",
+    "North Richland Hills", "Cedar Hill", "Grapevine", "Mansfield"
 ]
+
+TARGET_COUNT = 180
 
 
 class Command(BaseCommand):
-    help = "Seed the database with at least 180 fake Dallas customers"
+    help = "Seed the database with unique RegisteredCustomer records."
 
-    def handle(self, *args, **kwargs):
-        fake = Faker()
-        Faker.seed(42)
-
-        # Wipe old data first
+    def handle(self, *args, **options):
         RegisteredCustomer.objects.all().delete()
-        logger.info("Deleted old RegisteredCustomer records.")
+        self.stdout.write(self.style.WARNING(
+            "Deleted old RegisteredCustomer records."))
 
-        customers = []
-        while len(customers) < 200:  # generate 200 candidates
-            street = random.choice(DALLAS_STREETS)
-            house_number = random.randint(100, 9999)
-            address = f"{house_number} {street}"
+        used_names = set()
+        created = 0
 
-            customers.append(RegisteredCustomer(
+        while created < TARGET_COUNT:
+            first = fake.first_name()
+            last = fake.last_name()
+
+            if (first, last) in used_names:
+                continue
+            used_names.add((first, last))
+
+            street_address = f"{random.randint(100, 9999)} {fake.street_name()}"
+            city = random.choice(CITIES)
+            state = "TX"
+            zipcode = fake.zipcode_in_state(state_abbr="TX")
+            phone = fake.numerify("###-###-####")
+            email = f"{first.lower()}.{last.lower()}{random.randint(1, 9999)}@example.com"
+
+            RegisteredCustomer.objects.create(
                 unique_customer_id=str(uuid.uuid4()),
-                first_name=fake.first_name(),
-                last_name=fake.last_name(),
-                street_address=address,
-                city="Dallas",
-                state="TX",
-                zipcode=fake.zipcode_in_state(state_abbr="TX"),
-                phone=fake.phone_number(),
-                email=fake.unique.email(),  # must be unique
-            ))
-
-        # Insert exactly 180
-        RegisteredCustomer.objects.bulk_create(customers[:180])
+                first_name=first,
+                last_name=last,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zipcode=zipcode,
+                phone=phone,
+                email=email,
+            )
+            created += 1
 
         self.stdout.write(self.style.SUCCESS(
-            "Seeded 180 customers into the database."))
+            f"Seeded {created} unique customers."))
