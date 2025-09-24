@@ -1,0 +1,40 @@
+/* ==============================
+   Custom Styles for Phase 1
+   Tucker & Dale's Home Services
+   ============================== */
+
+/* General tweaks */
+body {
+  font-family: Arial, sans-serif;
+}
+
+/* Navbar adjustments */
+.navbar .nav-link {
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Messages (alerts) spacing */
+.alert {
+  margin-bottom: 1rem;
+}
+
+/* Search form spacing */
+.search-form .form-control {
+  min-width: 200px; /* wider on desktop */
+}
+
+.search-form .btn {
+  min-width: 90px; /* button doesn’t get too narrow */
+}
+
+/* On very small screens */
+@media (max-width: 576px) {
+  .search-form .form-control {
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+  .search-form .btn {
+    width: 100%;
+  }
+}

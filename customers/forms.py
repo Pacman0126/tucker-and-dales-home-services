@@ -17,28 +17,44 @@ class RegisteredCustomerForm(forms.ModelForm):
         ]
         widgets = {
             "first_name": forms.TextInput(attrs={
-                "class": "form-control", "placeholder": "First name"
+                "class": "form-control mb-3",
+                "placeholder": "First name",
+                "autocomplete": "given-name",
             }),
             "last_name": forms.TextInput(attrs={
-                "class": "form-control", "placeholder": "Last name"
+                "class": "form-control mb-3",
+                "placeholder": "Last name",
+                "autocomplete": "family-name",
             }),
             "street_address": forms.TextInput(attrs={
-                "class": "form-control", "placeholder": "Street address"
+                "class": "form-control mb-3",
+                "placeholder": "Street address",
+                "autocomplete": "address-line1",
             }),
             "city": forms.TextInput(attrs={
-                "class": "form-control", "placeholder": "City"
+                "class": "form-control mb-3",
+                "placeholder": "City",
+                "autocomplete": "address-level2",
             }),
             "state": forms.TextInput(attrs={
-                "class": "form-control", "placeholder": "State"
+                "class": "form-control mb-3",
+                "placeholder": "State",
+                "autocomplete": "address-level1",
             }),
             "zipcode": forms.TextInput(attrs={
-                "class": "form-control", "placeholder": "Zipcode"
+                "class": "form-control mb-3",
+                "placeholder": "Zipcode",
+                "autocomplete": "postal-code",
             }),
             "phone": forms.TextInput(attrs={
-                "class": "form-control", "placeholder": "Phone number"
+                "class": "form-control mb-3",
+                "placeholder": "Phone number",
+                "autocomplete": "tel",
             }),
             "email": forms.EmailInput(attrs={
-                "class": "form-control", "placeholder": "Email address"
+                "class": "form-control mb-3",
+                "placeholder": "Email address",
+                "autocomplete": "email",
             }),
         }
 
@@ -52,5 +68,6 @@ class RegisteredCustomerForm(forms.ModelForm):
         e = self.cleaned_data.get("email", "").strip()
         if e and not e.endswith((".com", ".net", ".org")):  # simple example rule
             raise forms.ValidationError(
-                "Email must be valid and end with .com, .net, or .org.")
+                "Email must be valid and end with .com, .net, or .org."
+            )
         return e

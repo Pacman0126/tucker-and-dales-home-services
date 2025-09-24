@@ -16,6 +16,17 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+
+# 👇 point Django to look for static/ folder at the level of manage.py
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Where static files are collected for deployment
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 # Ensure logs directory and files exist
 logs_dir = Path(BASE_DIR) / "logs"
 logs_dir.mkdir(exist_ok=True)
@@ -200,3 +211,6 @@ LOGGING = {
 
 # Redirect users to login page if not authenticated
 LOGIN_URL = '/admin/login/'
+
+LOGIN_REDIRECT_URL = "/"          # go home after login
+LOGOUT_REDIRECT_URL = "/accounts/login/"  # after logout
