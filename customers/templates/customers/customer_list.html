@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}Customers{% endblock %}
 
 {% block content %}
@@ -7,17 +6,14 @@
   <h2>Customers</h2>
 
   <!-- Search bar -->
-  <form method="get" class="row mb-4">
-    <div class="col-9 col-md-10">
+  <form method="get" class="row mb-4 search-form">
+    <div class="col-md-10">
       <input type="text" name="q" class="form-control"
              placeholder="Search by name, address, or email..."
              value="{{ query|default:'' }}">
     </div>
-    <div class="col-3 col-md-2 d-flex gap-2">
+    <div class="col-md-2">
       <button type="submit" class="btn btn-primary w-100">Search</button>
-      {% if query %}
-      <a href="{% url 'customers:customer_list' %}" class="btn btn-outline-secondary w-100">Clear</a>
-      {% endif %}
     </div>
   </form>
 
@@ -25,7 +21,7 @@
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
     {% for customer in customers %}
     <div class="col">
-      <div class="card shadow-sm h-100">
+      <div class="card shadow-sm customer-card h-100">
         <div class="card-body">
           <h5 class="card-title">{{ customer.first_name }} {{ customer.last_name }}</h5>
           <p class="card-text">
@@ -34,9 +30,7 @@
             {{ customer.phone }}<br>
             {{ customer.email }}
           </p>
-          <a href="{% url 'customers:customer_detail' customer.pk %}" class="btn btn-primary btn-sm">
-            View
-          </a>
+          <a href="{% url 'customers:customer_detail' customer.pk %}" class="btn btn-primary btn-sm">View/Edit</a>
         </div>
       </div>
     </div>
@@ -45,33 +39,49 @@
     {% endfor %}
   </div>
 
-  <!-- Pagination -->
+  <!-- 🔹 Results count -->
   {% if page_obj.has_other_pages %}
-  <nav class="mt-4">
+    <p class="text-center small mt-3 mb-1">
+      Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} results
+    </p>
+  {% endif %}
+
+  <!-- 🔹 Pagination -->
+  {% if page_obj.has_other_pages %}
+  <nav aria-label="Customer pagination">
     <ul class="pagination justify-content-center">
+
+      <!-- Previous -->
       {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a>
-      </li>
+        <li class="page-item">
+          <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
+            &laquo; Prev
+          </a>
+        </li>
       {% else %}
-      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
       {% endif %}
 
+      <!-- Page numbers -->
       {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
+        {% if num == page_obj.number %}
           <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
           <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a></li>
         {% endif %}
       {% endfor %}
 
+      <!-- Next -->
       {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
-      </li>
+        <li class="page-item">
+          <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}" aria-label="Next">
+            Next &raquo;
+          </a>
+        </li>
       {% else %}
-      <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
       {% endif %}
+
     </ul>
   </nav>
   {% endif %}

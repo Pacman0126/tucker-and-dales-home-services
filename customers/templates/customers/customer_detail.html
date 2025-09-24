@@ -3,41 +3,61 @@
 {% block title %}Customer Details{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <h2>{{ customer.first_name }} {{ customer.last_name }}</h2>
-  <p>
-    {{ customer.street_address }}<br>
-    {{ customer.city }}, {{ customer.state }} {{ customer.zipcode }}<br>
-    {{ customer.phone }}<br>
-    {{ customer.email }}
-  </p>
+<div class="container mt-5">
+  <div class="card customer-card shadow-sm">
 
-  {% if user.is_superuser %}
-    <div class="d-flex gap-2 mb-3">
-      <a href="{% url 'customers:customer_edit' customer.pk %}" class="btn btn-warning">Edit</a>
-      
-      <!-- Trigger Delete Modal -->
-      <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-        Delete
-      </button>
+    <!-- ✅ Themed header -->
+    <div class="modal-header modal-header-accent rounded-top">
+      <h5 class="modal-title">
+        {{ customer.first_name }} {{ customer.last_name }}
+      </h5>
     </div>
-  {% endif %}
 
-  <a href="{% url 'customers:customer_list' %}" class="btn btn-secondary">← Back to Customer List</a>
+    <div class="card-body">
+      <!-- Customer info -->
+      <p>
+        {{ customer.street_address }}<br>
+        {{ customer.city }}, {{ customer.state }} {{ customer.zipcode }}<br>
+        {{ customer.phone }}<br>
+        {{ customer.email }}
+      </p>
+
+      {% if user.is_superuser %}
+        <!-- Action buttons -->
+        <div class="d-flex gap-2 mb-3">
+          <a href="{% url 'customers:customer_edit' customer.pk %}" class="btn btn-warning">
+            Edit
+          </a>
+
+          <!-- Trigger Delete Modal -->
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            Delete
+          </button>
+        </div>
+      {% endif %}
+
+      <a href="{% url 'customers:customer_list' %}" class="btn btn-secondary">← Back to Customer List</a>
+    </div>
+  </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
+      
+      <!-- Header styled via global variable -->
+      <div class="modal-header modal-header-danger">
         <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      
       <div class="modal-body">
-        Are you sure you want to delete <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>?
+        Are you sure you want to delete <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>?  
         This action cannot be undone.
       </div>
+      
       <div class="modal-footer">
         <form method="post" action="{% url 'customers:customer_delete' customer.pk %}">
           {% csrf_token %}
@@ -45,7 +65,9 @@
           <button type="submit" class="btn btn-danger">Yes, Delete</button>
         </form>
       </div>
+      
     </div>
   </div>
 </div>
+
 {% endblock %}

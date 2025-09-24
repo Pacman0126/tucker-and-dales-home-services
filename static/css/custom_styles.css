@@ -3,38 +3,432 @@
    Tucker & Dale's Home Services
    ============================== */
 
-/* General tweaks */
+/* 🎨 Global Variables */
+:root {
+  --font-family-base: 'Segoe UI', Arial, sans-serif;
+
+  /* Background & Text */
+  --color-bg: #0b3d0b;            /* fallback dark forest green */
+  --bg-image: url("/static/images/grass_texture.jpg"); /* swap texture here */
+  --color-text: #fdfcf4;          /* off-white for contrast */
+
+  /* Search bar */
+  --color-search-bg: #cdd648;     /* pale green background */
+  --color-search-text: #212529;   /* dark readable text */
+
+  /* Cards */
+  --color-card-bg: #dab44e;       /* parchment yellowish */
+  --color-card-text: #212529;
+
+  /* Buttons */
+  --color-primary: #28a745;
+  --color-primary-hover: rgba(40, 167, 69, 0.85);
+
+  --color-secondary: #6c757d;
+  --color-secondary-hover: rgba(108, 117, 125, 0.85);
+
+  --color-warning: #ffc107;
+  --color-warning-hover: rgba(255, 193, 7, 0.85);
+
+  --color-danger: #dc3545;
+  --color-danger-hover: rgba(220, 53, 69, 0.85);
+
+  --color-accent: #20c997;
+  --color-accent-hover: rgba(32, 201, 151, 0.85);
+
+  /* Navbar */
+  --color-navbar-bg: #1c3d28;
+  --color-navbar-link: #ffffff;
+  --color-navbar-link-hover: var(--color-accent);
+
+  /* Borders & Radius */
+  --radius-card: 0.5rem;
+  --radius-alert: 0.4rem;
+  --radius-btn: 50rem; /* pill-style buttons */
+  --radius-pill: 50rem;
+
+  /* Spacing */
+  --spacing-sm: 0.25rem;
+  --spacing-md: 0.5rem;
+  --spacing-lg: 1rem;
+}
+
+/* ==============================
+   General
+   ============================== */
 body {
-  font-family: Arial, sans-serif;
+  font-family: var(--font-family-base);
+  background-color: var(--color-bg);
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  color: var(--color-text);
+  min-height: 100vh;
 }
 
-/* Navbar adjustments */
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+/* ==============================
+   Navbar
+   ============================== */
+.navbar.navbar-dark.bg-dark {
+  background-color: var(--color-navbar-bg) !important;
+}
+
+/* Navbar links → pill buttons */
 .navbar .nav-link {
-  font-size: 0.95rem;
-  padding: 0.5rem 0.75rem;
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  margin: 0 0.25rem;
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+  color: var(--color-navbar-link) !important;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Messages (alerts) spacing */
+.navbar .nav-link:hover {
+  background-color: var(--color-accent);
+  color: #fff !important;
+}
+
+/* Active page highlight */
+.navbar .nav-link.active {
+  background-color: var(--color-accent);
+  color: #fff !important;
+}
+
+/* Brand pill button */
+.btn-accent {
+  background-color: var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
+  color: #fff !important;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+
+.btn-accent:hover {
+  background-color: var(--color-accent-hover) !important;
+  border-color: var(--color-accent-hover) !important;
+}
+
+/* ==============================
+   Alerts
+   ============================== */
 .alert {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
+  border-radius: var(--radius-alert);
 }
 
-/* Search form spacing */
-.search-form .form-control {
-  min-width: 200px; /* wider on desktop */
+/* ==============================
+   Buttons (global pill style)
+   ============================== */
+.btn {
+  border-radius: var(--radius-pill);
+  font-weight: 500;
 }
 
-.search-form .btn {
-  min-width: 90px; /* button doesn’t get too narrow */
+/* Primary */
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.btn-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
 }
 
-/* On very small screens */
+/* Secondary */
+.btn-secondary {
+  background-color: var(--color-secondary) !important;
+  border-color: var(--color-secondary) !important;
+}
+.btn-secondary:hover {
+  background-color: var(--color-secondary-hover) !important;
+  border-color: var(--color-secondary-hover) !important;
+}
+
+/* Warning */
+.btn-warning {
+  background-color: var(--color-warning) !important;
+  border-color: var(--color-warning) !important;
+  color: #212529 !important;
+}
+.btn-warning:hover {
+  background-color: var(--color-warning-hover) !important;
+  border-color: var(--color-warning-hover) !important;
+}
+
+/* Danger */
+.btn-danger {
+  background-color: var(--color-danger) !important;
+  border-color: var(--color-danger) !important;
+}
+.btn-danger:hover {
+  background-color: var(--color-danger-hover) !important;
+  border-color: var(--color-danger-hover) !important;
+}
+
+/* ==============================
+   Search Form
+   ============================== */
+form.search-form .form-control {
+  background-color: var(--color-search-bg);
+  color: var(--color-search-text);
+  border: 1px solid rgba(0,0,0,0.25);
+  border-radius: var(--radius-pill);
+  min-width: 200px;
+}
+form.search-form .form-control::placeholder {
+  color: rgba(0,0,0,0.55);
+}
+form.search-form .form-control:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+}
+
+/* Search button */
+form.search-form .btn.btn-primary {
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+form.search-form .btn.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* Clear Search button */
+form.search-form .btn.btn-secondary {
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff !important;
+}
+form.search-form .btn.btn-secondary:hover {
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
 @media (max-width: 576px) {
-  .search-form .form-control {
-    margin-bottom: 0.5rem;
+  form.search-form .form-control {
+    margin-bottom: var(--spacing-md);
     width: 100%;
   }
-  .search-form .btn {
+  form.search-form .btn.btn-primary,
+  form.search-form .btn.btn-secondary {
     width: 100%;
   }
 }
+
+
+/* ==============================
+   Customer Cards
+   ============================== */
+.card.customer-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: var(--radius-card);
+  background-color: var(--color-card-bg);
+  color: var(--color-card-text);
+}
+
+.card.customer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.card.customer-card .card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card.customer-card .btn {
+  margin-top: var(--spacing-md);
+}
+
+/* ==============================
+   Pagination (pill style)
+   ============================== */
+.pagination {
+  flex-wrap: wrap;
+}
+
+.pagination .page-link {
+  min-width: 38px;
+  text-align: center;
+  border-radius: var(--radius-pill) !important;
+  color: var(--color-accent);
+}
+.pagination .page-link:hover {
+  background-color: var(--color-accent-hover);
+  color: #fff;
+}
+.pagination .active .page-link {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+.pagination .page-item {
+  margin: var(--spacing-sm);
+}
+
+@media (max-width: 576px) {
+  .pagination .page-link {
+    font-size: 0.85rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+/* ==============================
+   Extra Small Devices (≤400px)
+   ============================== */
+@media (max-width: 400px) {
+  /* Brand pill button (navbar-brand) */
+  .btn-accent.navbar-brand {
+    max-width: 180px;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.65rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+
+  /* Navbar links shrink slightly */
+  .navbar .nav-link {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  /* Search form → stack vertically */
+  form.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  form.search-form .form-control,
+  form.search-form .btn.btn-primary,
+  form.search-form .btn.btn-secondary {
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.75rem;
+  }
+
+  /* Pagination buttons tighter */
+  .pagination .page-link {
+    font-size: 0.75rem;
+    min-width: 30px;
+    padding: var(--spacing-sm) var(--spacing-sm);
+  }
+}
+
+/* ==============================
+   Modal Styling
+   ============================== */
+
+.modal-content {
+  background-color: var(--color-card-bg);   /* parchment background */
+  color: var(--color-card-text);
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* Generic header/footer borders */
+.modal-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
+
+/* Variant headers (using global colors) */
+.modal-header-danger {
+  background-color: var(--color-danger) !important;
+  color: #fff !important;
+}
+
+.modal-header-accent {
+  background-color: var(--color-accent) !important;
+  color: #fff !important;
+}
+
+/* Pill-style modal buttons */
+.modal-footer .btn {
+  border-radius: var(--radius-pill);
+}
+
+
+/* ==============================
+   Modals (header theming via variables)
+   ============================== */
+.modal-header {
+  border-bottom: none; /* cleaner look */
+  border-top-left-radius: var(--radius-card);
+  border-top-right-radius: var(--radius-card);
+  padding: var(--spacing-md) var(--spacing-lg);
+  color: #fff;
+}
+
+/* Use variable-driven colors */
+.modal-header-danger {
+  background-color: var(--color-danger) !important;
+}
+
+.modal-header-warning {
+  background-color: var(--color-warning) !important;
+  color: #212529 !important;
+}
+
+.modal-header-accent {
+  background-color: var(--color-accent) !important;
+}
+
+.modal-header-primary {
+  background-color: var(--color-primary) !important;
+}
+
+/* ==============================
+   Modal Footers (themed to match headers if desired)
+   ============================== */
+.modal-footer {
+  border-top: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom-left-radius: var(--radius-card);
+  border-bottom-right-radius: var(--radius-card);
+}
+
+/* Variable-driven footer classes */
+.modal-footer-danger {
+  background-color: rgba(220, 53, 69, 0.05); /* subtle red tint */
+}
+
+.modal-footer-warning {
+  background-color: rgba(255, 193, 7, 0.08); /* subtle yellow tint */
+}
+
+.modal-footer-accent {
+  background-color: rgba(32, 201, 151, 0.08); /* subtle green tint */
+}
+
+.modal-footer-primary {
+  background-color: rgba(40, 167, 69, 0.08); /* subtle green tint */
+}
+
+
+
+

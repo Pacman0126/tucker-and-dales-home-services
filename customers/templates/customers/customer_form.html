@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}Customer Form{% endblock %}
 
 {% block content %}
@@ -7,11 +6,9 @@
   <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
 
-      <div class="card shadow-sm">
+      <div class="card customer-card shadow-sm customer-card">
         <div class="card-header bg-dark text-white">
-          <h5 class="mb-0">
-            {% if customer %}Edit Customer{% else %}Add Customer{% endif %}
-          </h5>
+          <h5 class="mb-0">{% if customer %}Edit Customer{% else %}Add Customer{% endif %}</h5>
         </div>
         <div class="card-body">
           <form method="post" novalidate>
@@ -22,20 +19,14 @@
                 {{ field.label_tag }}
                 {{ field }}
                 {% if field.errors %}
-                  <div class="text-danger small">
-                    {{ field.errors|striptags }}
-                  </div>
+                  <div class="text-danger small">{{ field.errors|striptags }}</div>
                 {% endif %}
               </div>
             {% endfor %}
 
             <div class="d-flex justify-content-between">
-              <a href="{% url 'customers:customer_list' %}" class="btn btn-secondary">
-                Cancel
-              </a>
-              <button type="submit" class="btn btn-primary">
-                Save
-              </button>
+              <a href="{% url 'customers:customer_list' %}" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">Save</button>
             </div>
           </form>
         </div>

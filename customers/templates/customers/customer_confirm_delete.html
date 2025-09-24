@@ -1,23 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Confirm Delete{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-  <div class="alert alert-danger">
-    <h4>Are you sure?</h4>
-    <p>
-      This will permanently delete
-      <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>
-      and cannot be undone.
-    </p>
-  </div>
-
-  <form method="post">
-    {% csrf_token %}
-    <a href="{% url 'customers:customer_detail' customer.pk %}" class="btn btn-secondary">Cancel</a>
-    <button type="submit" class="btn btn-danger">Yes, Delete</button>
-  </form>
-</div>
+{% block title %}
+  {% if customer %}Edit Customer{% else %}Add Customer{% endif %}
 {% endblock %}
 
+{% block content %}
+<div class="container mt-5">
+  <div class="card customer-card shadow-sm">
+    <!-- ✅ Themed header -->
+    <div class="modal-header modal-header-accent rounded-top">
+      <h5 class="modal-title">
+        {% if customer %}Edit Customer{% else %}Add Customer{% endif %}
+      </h5>
+    </div>
+
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        
+        {% for field in form %}
+          <div class="mb-3">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
+              <div class="text-danger small">
+                {{ field.errors|striptags }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <!-- ✅ Actions -->
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'customers:customer_list' %}" class="btn btn-secondary">
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
