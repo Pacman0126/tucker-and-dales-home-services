@@ -98,3 +98,22 @@ def customer_edit(request, pk):
         "customers/customer_form.html",
         {"form": form, "customer": customer},
     )
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def customer_delete(request, pk):
+    """Delete a customer (superusers only)."""
+    customer = get_object_or_404(RegisteredCustomer, pk=pk)
+
+    if request.method == "POST":
+        logger.warning(f"Customer {customer.pk} deleted by {request.user}")
+        customer.delete()
+        messages.success(request, "Customer deleted successfully.")
+        return redirect("customers:customer_list")
+
+    return render(
+        request,
+        "customers/customer_confirm_delete.html",
+        {"customer": customer},
+    )

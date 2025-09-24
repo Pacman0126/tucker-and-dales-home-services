@@ -11,13 +11,42 @@
       <a class="navbar-brand" href="/">Home Services</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="{% url 'customers:customer_list' %}">Customers</a></li>
+          {% if user.is_authenticated and user.is_superuser %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'customers:customer_list' %}">Customers</a>
+            </li>
+          {% endif %}
+        </ul>
+
+        <!-- Right side: Login/Logout -->
+        <ul class="navbar-nav ms-auto">
+          {% if user.is_authenticated %}
+            <li class="nav-item">
+              <span class="navbar-text text-white me-2">
+                Logged in as {{ user.username }}
+              </span>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+          {% endif %}
         </ul>
       </div>
     </div>
   </nav>
 
   <main class="container mt-4">
+    {% if messages %}
+      <div class="mb-3">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 
@@ -26,3 +55,4 @@
   </footer>
 </body>
 </html>
+

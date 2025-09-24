@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>{{ customer.first_name }} {{ customer.last_name }}</h2>
+  <p>
+    {{ customer.street_address }}<br>
+    {{ customer.city }}, {{ customer.state }} {{ customer.zipcode }}<br>
+    {{ customer.phone }}<br>
+    {{ customer.email }}
+  </p>
+
+  {% if user.is_superuser %}
+    <a href="{% url 'customers:customer_edit' customer.pk %}" class="btn btn-warning">Edit</a>
+    <a href="{% url 'customers:customer_delete' customer.pk %}" class="btn btn-danger">Delete</a>
+  {% endif %}
+  <a href="{% url 'customers:customer_list' %}" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}
