@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     # created apps
     'customers',
     'core',
+    "scheduling",
 
 
 ]
