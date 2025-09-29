@@ -21,33 +21,36 @@ class Employee(models.Model):
     name = models.CharField(max_length=255)
     home_address = models.CharField(max_length=255)
     service_category = models.ForeignKey(
-        ServiceCategory, on_delete=models.CASCADE)
+        "ServiceCategory", on_delete=models.CASCADE)
 
-    def current_location(self, date, slot):
+    def __str__(self):
+        return f"{self.name} ({self.service_category.name})"
+
+    def current_location(self, date, time_slot):
         """
-        Returns the employee's address for a given date and timeslot.
-        - If no jobs that day yet → home address
-        - Else → last jobsite of the day before or at this slot
+        Returns the employee's location for a given date & slot.
+        - If booked in this slot → that jobsite.
+        - Else if booked earlier that day → last jobsite.
+        - Else → home address.
         """
-        # All assignments for this employee on that day
         assignments = (
-            self.jobassignment_set
-            .filter(booking__date=date)
+            self.jobassignment_set.filter(booking__date=date)
             .select_related("booking__time_slot")
             .order_by("booking__time_slot__id")
         )
 
-        if not assignments.exists():
-            return self.home_address
+        # Booked in this slot? → return jobsite
+        slot_job = assignments.filter(booking__time_slot=time_slot).first()
+        if slot_job:
+            return slot_job.jobsite_address
 
-        # Find if they have a booking at or before this slot
-        for a in assignments:
-            if a.booking.time_slot.id <= slot.id:
-                last_job = a
-            else:
-                break
+        # Else, get the last job that day
+        last_job = assignments.last()
+        if last_job:
+            return last_job.jobsite_address
 
-        return last_job.jobsite_address if "last_job" in locals() else self.home_address
+        # Default → home address
+        return self.home_address
 
 
 class Booking(models.Model):
