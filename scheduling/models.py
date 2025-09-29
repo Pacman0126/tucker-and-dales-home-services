@@ -1,36 +1,6 @@
 from django.utils.timezone import now
 from django.db import models
-
-
-class Employee(models.Model):
-    name = models.CharField(max_length=100)
-    home_address = models.CharField(max_length=255)
-    service_category = models.ForeignKey(
-        "ServiceCategory", on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.name} ({self.service_category})"
-
-    def current_location(self, date, time_slot):
-        """
-        Returns the employee's jobsite address if booked at that date+slot,
-        otherwise falls back to home address.
-        """
-        assignment = self.jobassignment_set.filter(
-            booking__date=date,
-            booking__time_slot=time_slot
-        ).first()
-        if assignment:
-            return assignment.jobsite_address
-        return self.home_address
-
-
-class TimeSlot(models.Model):
-    start = models.DateTimeField()
-    end = models.DateTimeField()
-
-    def __str__(self):
-        return f"{self.start.strftime('%Y-%m-%d %H:%M')} – {self.end.strftime('%H:%M')}"
+from django.utils import timezone
 
 
 class ServiceCategory(models.Model):
@@ -40,16 +10,56 @@ class ServiceCategory(models.Model):
         return self.name
 
 
-class Booking(models.Model):
-    customer_name = models.CharField(max_length=200)
-    customer_address = models.CharField(max_length=255)
-    service_category = models.ForeignKey(
-        ServiceCategory, on_delete=models.CASCADE)
-    time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
-    employees = models.ManyToManyField("Employee", through="JobAssignment")
+class TimeSlot(models.Model):
+    label = models.CharField(max_length=20, unique=True)  # e.g., "7:30-9:30"
 
     def __str__(self):
-        return f"{self.service_category} @ {self.customer_address} ({self.time_slot})"
+        return self.label
+
+
+class Employee(models.Model):
+    name = models.CharField(max_length=255)
+    home_address = models.CharField(max_length=255)
+    service_category = models.ForeignKey(
+        ServiceCategory, on_delete=models.CASCADE)
+
+    def current_location(self, date, slot):
+        """
+        Returns the employee's address for a given date and timeslot.
+        - If no jobs that day yet → home address
+        - Else → last jobsite of the day before or at this slot
+        """
+        # All assignments for this employee on that day
+        assignments = (
+            self.jobassignment_set
+            .filter(booking__date=date)
+            .select_related("booking__time_slot")
+            .order_by("booking__time_slot__id")
+        )
+
+        if not assignments.exists():
+            return self.home_address
+
+        # Find if they have a booking at or before this slot
+        for a in assignments:
+            if a.booking.time_slot.id <= slot.id:
+                last_job = a
+            else:
+                break
+
+        return last_job.jobsite_address if "last_job" in locals() else self.home_address
+
+
+class Booking(models.Model):
+    customer_name = models.CharField(max_length=255)
+    customer_address = models.CharField(max_length=255)
+    date = models.DateField()
+    time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
+    service_category = models.ForeignKey(
+        ServiceCategory, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.customer_name} ({self.service_category} on {self.date} at {self.time_slot})"
 
 
 class JobAssignment(models.Model):
@@ -57,12 +67,7 @@ class JobAssignment(models.Model):
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
     jobsite_address = models.CharField(max_length=255, blank=True)
 
-    class Meta:
-        # Prevents duplicate entries for the same employee & booking
-        unique_together = ("employee", "booking")
-
     def save(self, *args, **kwargs):
-        # Default jobsite address is the booking's customer address
         if not self.jobsite_address:
             self.jobsite_address = self.booking.customer_address
         super().save(*args, **kwargs)
