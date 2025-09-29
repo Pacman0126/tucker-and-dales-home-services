@@ -28,9 +28,10 @@ class Employee(models.Model):
 
     def current_location(self, date, time_slot):
         """
-        Returns the employee's location for a given date & slot.
+        Returns where the employee is during a given date/slot.
+        Priority:
         - If booked in this slot → that jobsite.
-        - Else if booked earlier that day → last jobsite.
+        - Else if had earlier jobs that day → last jobsite.
         - Else → home address.
         """
         assignments = (
@@ -39,18 +40,35 @@ class Employee(models.Model):
             .order_by("booking__time_slot__id")
         )
 
-        # Booked in this slot? → return jobsite
         slot_job = assignments.filter(booking__time_slot=time_slot).first()
         if slot_job:
             return slot_job.jobsite_address
 
-        # Else, get the last job that day
         last_job = assignments.last()
         if last_job:
             return last_job.jobsite_address
 
-        # Default → home address
         return self.home_address
+
+    def next_location(self, date, time_slot):
+        """
+        Returns where the employee is going after this slot (if booked).
+        Priority:
+        - If has a job in the *next* slot that day → that jobsite.
+        - Else → None (meaning available / end of day).
+        """
+        assignments = (
+            self.jobassignment_set.filter(booking__date=date)
+            .select_related("booking__time_slot")
+            .order_by("booking__time_slot__id")
+        )
+
+        # Find first assignment after this slot
+        for job in assignments:
+            if job.booking.time_slot.id > time_slot.id:
+                return job.jobsite_address
+
+        return None
 
 
 class Booking(models.Model):

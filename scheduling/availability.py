@@ -17,40 +17,30 @@ def calculate_drive_time(addr1, addr2):
 def get_available_employees(customer_address, date, time_slot, service_category):
     """
     Returns employees in a given category who can take this job slot.
-
     Rules:
-    - If already booked in this slot → skip.
-    - If no jobs yet that day → check travel time from home.
-    - If has jobs that day → check travel feasibility (<= 30 min for ALL jobs).
+    - Skip if already booked.
+    - Feasible if travel time from current_location ≤ 30 minutes
+      AND (if applicable) travel time to next_location ≤ 30 minutes.
     """
     available = []
     employees = Employee.objects.filter(service_category=service_category)
 
     for emp in employees:
-        # Already booked in this slot? → skip
+        # Already booked in this slot? skip
         if emp.jobassignment_set.filter(
             booking__date=date, booking__time_slot=time_slot
         ).exists():
             continue
 
-        # Gather all of employee's jobs today
-        todays_jobs = (
-            emp.jobassignment_set.filter(booking__date=date)
-            .select_related("booking__time_slot")
-            .order_by("booking__time_slot__id")
-        )
+        # Where are they now? Where are they going next?
+        start_loc = emp.current_location(date, time_slot)
+        end_loc = emp.next_location(date, time_slot)
 
-        if not todays_jobs.exists():
-            # No jobs yet today → start from home
-            if calculate_drive_time(emp.home_address, customer_address) <= 30:
-                available.append(emp)
-            continue
-
-        # Employee has jobs today → must be within 30 min of *all* jobs
-        feasible = all(
-            calculate_drive_time(job.jobsite_address, customer_address) <= 30
-            for job in todays_jobs
-        )
+        feasible = True
+        if calculate_drive_time(start_loc, customer_address) > 30:
+            feasible = False
+        if end_loc and calculate_drive_time(customer_address, end_loc) > 30:
+            feasible = False
 
         if feasible:
             available.append(emp)
