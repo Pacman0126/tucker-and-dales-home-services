@@ -1,50 +1,70 @@
 {% extends "base.html" %}
-
-{% block title %}Search by Time Slot{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
-  <h2 class="mb-3">Search by Time Slot</h2>
+  <h2>Search by Date</h2>
 
-  <!-- 🔍 Search Form -->
+  <!-- Search Form -->
   <form method="get" class="mb-4">
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Search Availability</button>
+    <div class="row g-3">
+      <div class="col-md-4">{{ form.date }}</div>
+      <div class="col-md-4">{{ form.service_category }}</div>
+      <div class="col-md-4">
+        <input type="text" name="customer_address" placeholder="Enter your address" class="form-control">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Search Availability</button>
   </form>
 
-  <!-- 🛒 Mini Cart -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <span class="fw-bold">(0) – $0</span>
-      <button class="btn btn-sm btn-outline-secondary">☰</button>
-    </div>
-    <div>
-      <i class="bi bi-cart-fill"></i>
-    </div>
-  </div>
-
+  <!-- Results -->
   {% if results %}
-    <h4 class="mt-4">Results for {{ form.cleaned_data.time_slot.label }}</h4>
-
-    {% for day, employees in results.items %}
+    <h3 class="mt-4">Available for {{ form.cleaned_data.date }}</h3>
+    {% for slot, employees in results.items %}
       <div class="card mb-3">
-        <div class="card-header">
-          <strong>{{ day }}</strong>
-        </div>
+        <!-- ✅ Use slot.label for human-readable time slot -->
+        <div class="card-header fw-bold">{{ slot.label }}</div>
         <div class="card-body">
           {% if employees %}
-            <p class="mb-2 text-muted">Drag available resource to cart:</p>
-            {% for emp in employees %}
-              <button class="btn btn-outline-success btn-sm me-2 mb-2">
-                {{ emp.name }}
-              </button>
-            {% endfor %}
+            <div class="d-flex flex-wrap gap-2">
+              {% for emp in employees %}
+                <button 
+                  type="button" 
+                  class="btn btn-outline-success rounded-pill draggable-emp" 
+                  draggable="true"
+                  data-emp-id="{{ emp.id }}"
+                >
+                  {{ emp.name }}
+                </button>
+              {% endfor %}
+            </div>
           {% else %}
-            <span class="text-danger">Fully booked</span>
+            <span class="text-muted">Fully booked</span>
           {% endif %}
         </div>
       </div>
     {% endfor %}
+
+    <!-- Drag-to-Cart Placeholder -->
+    <div class="mt-5 p-4 border rounded bg-light text-center">
+      <h5>🛒 Drag Employees Here to Create a Booking</h5>
+      <div id="cart-dropzone" class="dropzone p-3 border border-dashed rounded"></div>
+    </div>
   {% endif %}
 </div>
+
+<script>
+  // Simple drag-drop placeholder (extend later)
+  document.querySelectorAll(".draggable-emp").forEach(btn => {
+    btn.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("text/plain", btn.dataset.empId);
+    });
+  });
+
+  const dropzone = document.getElementById("cart-dropzone");
+  dropzone.addEventListener("dragover", e => e.preventDefault());
+  dropzone.addEventListener("drop", e => {
+    e.preventDefault();
+    const empId = e.dataTransfer.getData("text/plain");
+    dropzone.innerHTML += `<div class="alert alert-success">Employee ${empId} added to booking</div>`;
+  });
+</script>
 {% endblock %}

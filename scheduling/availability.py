@@ -1,3 +1,4 @@
+import requests
 from django.conf import settings
 from .models import Employee
 from datetime import timedelta
@@ -7,11 +8,26 @@ from datetime import timedelta
 
 def calculate_drive_time(addr1, addr2):
     """
-    Placeholder for driving time logic.
-    Currently hard-coded to 20 minutes.
-    Replace with Google Maps Distance Matrix API call later.
+    Uses Google Distance Matrix API to calculate drive time in minutes.
     """
-    return 20  # minutes
+    api_key = settings.GOOGLE_MAPS_API_KEY
+    url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+
+    params = {
+        "origins": addr1,
+        "destinations": addr2,
+        "key": api_key,
+        "mode": "driving",
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    try:
+        seconds = data["rows"][0]["elements"][0]["duration"]["value"]
+        return seconds // 60  # minutes
+    except (KeyError, IndexError):
+        return 9999  # fail-safe: treat as impossible
 
 
 def get_available_employees(customer_address, date, time_slot, service_category):
