@@ -10,12 +10,36 @@ TIME_SLOTS = [
 
 
 class SearchByDateForm(forms.Form):
-    date = forms.DateField(widget=forms.SelectDateWidget)
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            "type": "date",
+            "class": "form-control",
+        })
+    )
     service_category = forms.ModelChoiceField(
-        queryset=ServiceCategory.objects.all())
+        queryset=ServiceCategory.objects.all(),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    customer_address = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Enter your address",
+        })
+    )
 
 
 class SearchByTimeSlotForm(forms.Form):
-    time_slot = forms.ChoiceField(choices=TIME_SLOTS)
+    time_slot = forms.ChoiceField(
+        choices=TIME_SLOTS,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
     service_category = forms.ModelChoiceField(
-        queryset=ServiceCategory.objects.all())
+        queryset=ServiceCategory.objects.all(),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    customer_address = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Enter your address",
+        })
+    )
