@@ -1,59 +1,49 @@
-import uuid
 import random
-from faker import Faker
+import uuid
 from django.core.management.base import BaseCommand
+from faker import Faker
 from customers.models import RegisteredCustomer
 
-fake = Faker("en_US")
+fake = Faker()
 
+# 🔹 Dallas–Metroplex cities for realism
 CITIES = [
-    "Dallas", "Fort Worth", "Arlington", "Plano", "Irving", "Garland",
-    "Grand Prairie", "McKinney", "Frisco", "Mesquite", "Carrollton",
-    "Richardson", "Lewisville", "Allen", "Flower Mound", "Denton",
-    "North Richland Hills", "Cedar Hill", "Grapevine", "Mansfield"
+    ("Dallas", "TX", "75201"),
+    ("Plano", "TX", "75093"),
+    ("Garland", "TX", "75040"),
+    ("Irving", "TX", "75039"),
+    ("Arlington", "TX", "76010"),
+    ("Denton", "TX", "76201"),
+    ("Carrollton", "TX", "75006"),
+    ("Frisco", "TX", "75034"),
+    ("Flower Mound", "TX", "75028"),
+    ("Richardson", "TX", "75080"),
 ]
-
-TARGET_COUNT = 180
 
 
 class Command(BaseCommand):
-    help = "Seed the database with unique RegisteredCustomer records."
+    help = "Seed 180 RegisteredCustomers in Dallas Metroplex"
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **kwargs):
+        # Clear existing customers
         RegisteredCustomer.objects.all().delete()
         self.stdout.write(self.style.WARNING(
-            "Deleted old RegisteredCustomer records."))
+            "🧹 Old RegisteredCustomers cleared."))
 
-        used_names = set()
-        created = 0
-
-        while created < TARGET_COUNT:
-            first = fake.first_name()
-            last = fake.last_name()
-
-            if (first, last) in used_names:
-                continue
-            used_names.add((first, last))
-
-            street_address = f"{random.randint(100, 9999)} {fake.street_name()}"
-            city = random.choice(CITIES)
-            state = "TX"
-            zipcode = fake.zipcode_in_state(state_abbr="TX")
-            phone = fake.numerify("###-###-####")
-            email = f"{first.lower()}.{last.lower()}{random.randint(1, 9999)}@example.com"
-
+        # Seed 180 customers
+        for _ in range(180):
+            city, state, zipcode = random.choice(CITIES)
             RegisteredCustomer.objects.create(
                 unique_customer_id=str(uuid.uuid4()),
-                first_name=first,
-                last_name=last,
-                street_address=street_address,
+                first_name=fake.first_name(),
+                last_name=fake.last_name(),
+                street_address=fake.street_address(),
                 city=city,
                 state=state,
                 zipcode=zipcode,
-                phone=phone,
-                email=email,
+                phone=fake.phone_number(),
+                email=fake.unique.email(),
             )
-            created += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f"Seeded {created} unique customers."))
+            "✅ 180 RegisteredCustomers created in Dallas Metroplex."))
