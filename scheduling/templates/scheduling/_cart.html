@@ -1,0 +1,27 @@
+<!-- scheduling/_cart.html -->
+<div class="mt-5 p-4 border rounded bg-light text-center">
+  <h5>🛒 Drag Employees Here to Create a Booking</h5>
+  <div id="cart-dropzone" class="dropzone p-3 border border-dashed rounded"></div>
+</div>
+
+<script>
+  // Shared drag-drop behavior
+  document.querySelectorAll(".draggable-emp").forEach(btn => {
+    btn.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("text/plain", btn.dataset.empId);
+    });
+  });
+
+  const dropzone = document.getElementById("cart-dropzone");
+  if (dropzone) {
+    dropzone.addEventListener("dragover", e => e.preventDefault());
+    dropzone.addEventListener("drop", e => {
+      e.preventDefault();
+      const empId = e.dataTransfer.getData("text/plain");
+      dropzone.innerHTML += `
+        <div class="alert alert-success mb-2">
+          Employee ${empId} added to booking
+        </div>`;
+    });
+  }
+</script>

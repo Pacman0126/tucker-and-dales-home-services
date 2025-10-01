@@ -1,29 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h2>Search by Time Slot</h2>
+  <h2>Search by Date</h2>
 
   <!-- Search Form -->
   <form method="get" class="mb-4">
     <div class="row g-3">
-      <div class="col-md-4">{{ form.time_slot }}</div>
+      <div class="col-md-4">{{ form.date }}</div>
       <div class="col-md-4">{{ form.service_category }}</div>
-      <div class="col-md-4">
-        <input type="text" name="customer_address" placeholder="Enter your address" class="form-control">
-      </div>
+      <div class="col-md-4">{{ form.customer_address }}</div>
     </div>
     <button type="submit" class="btn btn-primary mt-3">Search Availability</button>
   </form>
 
   <!-- Results -->
   {% if results %}
-    <h3 class="mt-4">Available for slot: {{ form.cleaned_data.time_slot }}</h3>
-    {% for day, employees in results.items %}
+    <h3 class="mt-4">Available for {{ form.cleaned_data.date }}</h3>
+    {% for slot, employees in results.items %}
       <div class="card mb-3">
-        <!-- ✅ Format day nicely -->
-        <div class="card-header fw-bold">
-          {{ day|date:"M d, Y" }} – {{ form.cleaned_data.time_slot }}
-        </div>
+        <div class="card-header fw-bold">{{ slot.label }}</div>
         <div class="card-body">
           {% if employees %}
             <div class="d-flex flex-wrap gap-2">
@@ -45,28 +40,8 @@
       </div>
     {% endfor %}
 
-    <!-- Drag-to-Cart Placeholder -->
-    <div class="mt-5 p-4 border rounded bg-light text-center">
-      <h5>🛒 Drag Employees Here to Create a Booking</h5>
-      <div id="cart-dropzone" class="dropzone p-3 border border-dashed rounded"></div>
-    </div>
+    <!-- Drag-to-Cart -->
+    {% include "scheduling/_cart.html" %}
   {% endif %}
 </div>
-
-<script>
-  // Simple drag-drop placeholder (extend later)
-  document.querySelectorAll(".draggable-emp").forEach(btn => {
-    btn.addEventListener("dragstart", e => {
-      e.dataTransfer.setData("text/plain", btn.dataset.empId);
-    });
-  });
-
-  const dropzone = document.getElementById("cart-dropzone");
-  dropzone.addEventListener("dragover", e => e.preventDefault());
-  dropzone.addEventListener("drop", e => {
-    e.preventDefault();
-    const empId = e.dataTransfer.getData("text/plain");
-    dropzone.innerHTML += `<div class="alert alert-success">Employee ${empId} added to booking</div>`;
-  });
-</script>
 {% endblock %}
