@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.conf import settings
 from .forms import SearchByDateForm, SearchByTimeSlotForm
 from .availability import get_available_employees
 from .models import TimeSlot
@@ -28,15 +29,19 @@ def search_by_date(request):
     return render(
         request,
         "scheduling/search_by_date.html",
-        {"form": form, "results": results},
+        {
+            "form": form,
+            "results": results,
+            "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
+        },
     )
 
 
 def search_by_time_slot(request):
     form = SearchByTimeSlotForm(request.GET or None)
     results = None
+
     if form.is_valid():
-        # ✅ form returns a TimeSlot object directly
         slot = form.cleaned_data["time_slot"]
         category = form.cleaned_data["service_category"]
         customer_address = form.cleaned_data["customer_address"]
@@ -58,5 +63,10 @@ def search_by_time_slot(request):
     return render(
         request,
         "scheduling/search_by_time_slot.html",
-        {"form": form, "results": results},
+        {
+            "form": form,
+            "results": results,
+            # ✅ pass correct variable name expected by template
+            "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
+        },
     )
