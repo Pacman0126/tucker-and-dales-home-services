@@ -18,56 +18,45 @@ class TimeSlot(models.Model):
 
 
 class Employee(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
     service_category = models.ForeignKey(
-        "ServiceCategory", on_delete=models.CASCADE)
+        "ServiceCategory", on_delete=models.CASCADE
+    )
 
     def __str__(self):
-        return f"{self.name} ({self.service_category.name})"
+        return self.name
 
     def current_location(self, date, time_slot):
         """
-        Returns where the employee is during a given date/slot.
-        Priority:
-        - If booked in this slot → that jobsite.
-        - Else if had earlier jobs that day → last jobsite.
-        - Else → home address.
+        Returns the jobsite address if this employee is already assigned
+        to a booking at the given date/slot. Otherwise falls back to home.
         """
-        assignments = (
-            self.jobassignment_set.filter(booking__date=date)
-            .select_related("booking__time_slot")
-            .order_by("booking__time_slot__id")
-        )
+        assignment = self.jobassignment_set.filter(
+            booking__date=date,
+            booking__time_slot=time_slot,
+        ).first()
 
-        slot_job = assignments.filter(booking__time_slot=time_slot).first()
-        if slot_job:
-            return slot_job.jobsite_address
-
-        last_job = assignments.last()
-        if last_job:
-            return last_job.jobsite_address
-
+        if assignment:
+            return assignment.jobsite_address
         return self.home_address
 
     def next_location(self, date, time_slot):
         """
-        Returns where the employee is going after this slot (if booked).
-        Priority:
-        - If has a job in the *next* slot that day → that jobsite.
-        - Else → None (meaning available / end of day).
+        Returns the next jobsite address *after* this slot on the same day.
+        If none, returns None.
         """
-        assignments = (
-            self.jobassignment_set.filter(booking__date=date)
-            .select_related("booking__time_slot")
+        next_assignment = (
+            self.jobassignment_set.filter(
+                booking__date=date,
+                booking__time_slot__id__gt=time_slot.id,  # any later slot that day
+            )
             .order_by("booking__time_slot__id")
+            .first()
         )
 
-        # Find first assignment after this slot
-        for job in assignments:
-            if job.booking.time_slot.id > time_slot.id:
-                return job.jobsite_address
-
+        if next_assignment:
+            return next_assignment.jobsite_address
         return None
 
 
