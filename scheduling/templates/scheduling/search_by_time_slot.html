@@ -1,18 +1,19 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="container mt-4">
   <h2>Search by Time Slot</h2>
 
-  <!-- Search Form -->
+  <!-- 🔍 Search Form -->
   <form method="get" class="mb-4">
     <div class="row g-3">
       <div class="col-md-4">{{ form.time_slot }}</div>
       <div class="col-md-4">{{ form.service_category }}</div>
       <div class="col-md-4">
-        <input 
-          type="text" 
-          name="customer_address" 
-          placeholder="Enter your address" 
+        <input
+          type="text"
+          name="customer_address"
+          placeholder="Enter your address"
           class="form-control"
           value="{{ request.GET.customer_address|default:'' }}"
         >
@@ -21,38 +22,204 @@
     <button type="submit" class="btn btn-primary mt-3">Search Availability</button>
   </form>
 
-  <!-- Results -->
+  <!-- 🧾 Results -->
   {% if results %}
-    <h3 class="mt-4">Available for slot: {{ form.cleaned_data.time_slot }}</h3>
     {% for day, employees in results.items %}
-      <div class="card mb-3">
-        <div class="card-header fw-bold">
-          {{ day|date:"M d, Y" }} – {{ form.cleaned_data.time_slot }}
+      <div class="card my-4 shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{{ day|date:"l, F j" }}</h5>
+          {% if employees and request.GET.customer_address %}
+            <button
+              type="button"
+              class="btn btn-light btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#mapModal"
+              data-routes-source="routes-json-{{ forloop.counter0 }}-{{ day|date:'Ymd' }}"
+            >
+              View routes for {{ employees|length }} employee{{ employees|length|pluralize }}
+            </button>
+          {% endif %}
         </div>
+
         <div class="card-body">
           {% if employees %}
             <div class="d-flex flex-wrap gap-2">
               {% for emp in employees %}
-                <button 
-                  type="button" 
-                  class="btn btn-outline-success rounded-pill draggable-emp" 
+                <button
+                  type="button"
+                  class="btn btn-outline-primary rounded-pill draggable-emp"
                   draggable="true"
-                  data-emp-id="{{ emp.id }}"
+                  data-empname="{{ emp.name }}"
+                  data-start="{{ emp.route_origin|default:emp.home_address|escapejs }}"
+                  data-end="{{ request.GET.customer_address|escapejs }}"
                 >
-                  {{ emp.name }}
+                  {{ emp.name }} <span class="text-muted small">({{ emp.drive_time }})</span>
                 </button>
               {% endfor %}
             </div>
           {% else %}
-            <span class="text-muted">Fully booked</span>
+            <p class="text-muted mb-0">No available employees within 30 minutes.</p>
           {% endif %}
         </div>
       </div>
-    {% endfor %}
 
-    <!-- Shared cart partial -->
-    {% include "scheduling/_cart.html" %}
+      {% if employees and request.GET.customer_address %}
+        <!-- 📦 JSON payload per card -->
+        <script type="application/json" id="routes-json-{{ forloop.counter0 }}-{{ day|date:'Ymd' }}">
+          [
+            {% for emp in employees %}
+              {
+                "name": "{{ emp.name|escapejs }}",
+                "start": "{{ emp.route_origin|default:emp.home_address|escapejs }}",
+                "end": "{{ request.GET.customer_address|escapejs }}"
+              }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          ]
+        </script>
+      {% endif %}
+    {% endfor %}
   {% endif %}
+
+  <!-- 🗺️ Shared Routes Modal -->
+  <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-semibold" id="mapModalLabel">Employee Routes</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body bg-light">
+          <div class="container-fluid">
+            <div class="row justify-content-center g-3">
+              <div class="col-12 col-xl-10">
+                <div class="row g-3 align-items-stretch">
+                  <!-- Map -->
+                  <div class="col-12 col-md-7">
+                    <div id="map" class="border rounded shadow-sm" style="height:520px; width:100%;"></div>
+                  </div>
+                  <!-- Legend -->
+                  <div class="col-12 col-md-5">
+                    <div class="border rounded p-3 h-100 bg-white">
+                      <h6 class="mb-2">Route Legend</h6>
+                      <ul id="routeList" class="list-unstyled mb-0 small"></ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "scheduling/_cart.html" %}
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+let map, directionsService;
+let renderers = [];
+let lastBounds = null;
+
+// 🗺️ Called once by Google after Maps JS loads
+function initMap() {
+  console.log("✅ Google Maps API callback fired");
+  directionsService = new google.maps.DirectionsService();
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 10,
+    center: { lat: 32.7767, lng: -96.7970 }, // Dallas center
+    mapTypeControl: false,
+    streetViewControl: false,
+  });
+}
+
+// 🎨 Unique route colors
+function routeColor(i) {
+  const colors = ["#FF5722","#03A9F4","#4CAF50","#FFC107","#9C27B0","#009688","#E91E63","#795548"];
+  return colors[i % colors.length];
+}
+
+// 🧭 Build routes from payload
+function buildGroupedRoutes(sourceId) {
+  const el = document.getElementById(sourceId);
+  if (!el || !map || !google.maps) return;
+  const routes = JSON.parse(el.textContent || "[]");
+  if (!routes.length) return;
+
+  renderers.forEach(r => r.setMap(null));
+  renderers = [];
+  lastBounds = new google.maps.LatLngBounds();
+  const legend = document.getElementById("routeList");
+  legend.innerHTML = "";
+
+  // Group same start-end pairs (for roommates)
+  const grouped = {};
+  routes.forEach(r => {
+    const key = `${r.start}|${r.end}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(r.name);
+  });
+
+  const entries = Object.entries(grouped);
+  let pending = entries.length;
+  entries.forEach(([key, names], i) => {
+    const [start, end] = key.split("|");
+    const renderer = new google.maps.DirectionsRenderer({
+      map,
+      suppressMarkers: false,
+      preserveViewport: true,
+      polylineOptions: {
+        strokeColor: routeColor(i),
+        strokeOpacity: 0.85,
+        strokeWeight: 4,
+      },
+    });
+    renderers.push(renderer);
+
+    directionsService.route(
+      { origin: start, destination: end, travelMode: google.maps.TravelMode.DRIVING },
+      (res, status) => {
+        pending--;
+        if (status === "OK" && res.routes[0]) {
+          renderer.setDirections(res);
+          res.routes[0].legs.forEach(leg => {
+            lastBounds.extend(leg.start_location);
+            lastBounds.extend(leg.end_location);
+          });
+          legend.insertAdjacentHTML(
+            "beforeend",
+            `<li><span class="legend-swatch" style="background:${routeColor(i)}"></span> ${names.join(" + ")}</li>`
+          );
+        } else {
+          console.warn(`❌ Route failed for ${names.join(", ")}: ${status}`);
+        }
+        if (pending === 0 && !lastBounds.isEmpty()) map.fitBounds(lastBounds);
+      }
+    );
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("mapModal");
+  modal.addEventListener("show.bs.modal", e => {
+    const src = e.relatedTarget?.getAttribute("data-routes-source");
+    if (src) buildGroupedRoutes(src);
+  });
+  modal.addEventListener("shown.bs.modal", () => {
+    if (map) {
+      google.maps.event.trigger(map, "resize");
+      if (lastBounds && !lastBounds.isEmpty()) map.fitBounds(lastBounds);
+    }
+  });
+});
+</script>
+
+<!-- ✅ Official Google Maps loader -->
+<script
+  async
+  defer
+  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_BROWSER_KEY }}&callback=initMap">
+</script>
+{% endblock %}

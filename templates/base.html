@@ -5,6 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- ✅ Mobile-first scaling -->
+  <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
   <title>{% block title %}Tucker & Dale's Home Services{% endblock %}</title>
 
   <!-- ✅ Bootstrap CSS -->
@@ -74,5 +75,13 @@
 
   <!-- ✅ Bootstrap JS for navbar toggler -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+   <!-- ✅ Global Google Maps loader -->
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_BROWSER_KEY }}&callback=initMap">
+</script>
+   <!-- Extra scripts for page-specific JavaScript -->
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

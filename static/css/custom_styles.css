@@ -9,7 +9,7 @@
 
   /* Background & Text */
   --color-bg: #0b3d0b;            /* fallback dark forest green */
-  --bg-image: url("/static/images/grass_texture.jpg"); /* swap texture here */
+  --bg-image: url("../images/subtle-white-feathers.png");/* swap texture here */
   --color-text: #fdfcf4;          /* off-white for contrast */
 
   /* Search bar */
@@ -342,6 +342,18 @@ form.search-form .btn.btn-secondary:hover {
   border-radius: var(--radius-card);
   border: 1px solid rgba(0, 0, 0, 0.2);
 }
+#mapModal .modal-body {
+  padding: 1rem 0.5rem;       /* better spacing than p-0 */
+}
+
+#mapModal .legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: 2px;
+}
+
 
 /* Generic header/footer borders */
 .modal-header {

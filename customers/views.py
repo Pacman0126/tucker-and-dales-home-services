@@ -3,9 +3,11 @@ from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
+
 from .models import RegisteredCustomer
 from .forms import RegisteredCustomerForm
 import logging
+
 
 logger = logging.getLogger(__name__)
 

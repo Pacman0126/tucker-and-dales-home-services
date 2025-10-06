@@ -3,8 +3,10 @@ Django settings for tucker_and_dales_home_services project.
 """
 
 import os
+from dotenv import load_dotenv
 from pathlib import Path
 import environ
+from dotenv import load_dotenv
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,6 +26,11 @@ else:
 
 # --- Google Maps API ---
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")
+
+# Google Maps keys: separate browser and server keys
+GOOGLE_MAPS_BROWSER_KEY = os.environ.get("GOOGLE_MAPS_BROWSER_KEY", "")
+GOOGLE_MAPS_SERVER_KEY = os.environ.get("GOOGLE_MAPS_SERVER_KEY", "")
+
 
 # --- Security ---
 SECRET_KEY = env("SECRET_KEY", default="fallback-secret-key")
@@ -111,33 +118,35 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {"format": "[{asctime}] {levelname} {name} {message}", "style": "{"},
-        "simple": {"format": "{levelname} {message}", "style": "{"},
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
     },
     "handlers": {
-        "django_file": {
+        "file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": logs_dir / "django.log",
-            "formatter": "verbose",
-        },
-        "error_file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "filename": logs_dir / "error.log",
+            "filename": BASE_DIR / "django.log",
             "formatter": "verbose",
         },
         "console": {
-            "level": "WARNING",
+            "level": "INFO",
             "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "formatter": "verbose",
         },
     },
     "loggers": {
-        "django": {"handlers": ["django_file", "error_file", "console"], "level": "INFO", "propagate": True},
-        "core": {"handlers": ["django_file", "error_file"], "level": "DEBUG", "propagate": False},
-        "customers": {"handlers": ["django_file", "error_file"], "level": "DEBUG", "propagate": False},
-        "django.db.backends": {"handlers": ["django_file"], "level": "DEBUG", "propagate": False},
+        "django": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "scheduling.availability": {   # 👈 this one matters
+            "handlers": ["file", "console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
     },
 }
 
