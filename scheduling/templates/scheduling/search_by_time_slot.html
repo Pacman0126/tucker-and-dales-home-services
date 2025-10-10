@@ -152,6 +152,7 @@ function routeColor(i) {
 }
 
 // 🧭 Build grouped routes from hidden JSON
+// 🧭 Group and draw routes — with custom colored markers
 function buildGroupedRoutes(sourceId) {
   const el = document.getElementById(sourceId);
   if (!el || !map || !google.maps) return;
@@ -159,6 +160,7 @@ function buildGroupedRoutes(sourceId) {
   const routes = JSON.parse(el.textContent || "[]");
   if (!routes.length) return;
 
+  // Clear previous
   renderers.forEach(r => r.setMap(null));
   renderers = [];
   lastBounds = new google.maps.LatLngBounds();
@@ -178,13 +180,15 @@ function buildGroupedRoutes(sourceId) {
 
   entries.forEach(([key, names], i) => {
     const [start, end] = key.split("|");
+    const color = routeColor(i);
+
     const renderer = new google.maps.DirectionsRenderer({
       map,
-      suppressMarkers: false,
+      suppressMarkers: true, // 🚫 disable default red/green pins
       preserveViewport: true,
       polylineOptions: {
-        strokeColor: routeColor(i),
-        strokeOpacity: 0.85,
+        strokeColor: color,
+        strokeOpacity: 0.9,
         strokeWeight: 4,
       },
     });
@@ -196,22 +200,65 @@ function buildGroupedRoutes(sourceId) {
         pending--;
         if (status === "OK" && res.routes[0]) {
           renderer.setDirections(res);
-          res.routes[0].legs.forEach(leg => {
-            lastBounds.extend(leg.start_location);
-            lastBounds.extend(leg.end_location);
-          });
+
+          // extract endpoints
+          const leg = res.routes[0].legs[0];
+          if (leg) {
+            const startLoc = leg.start_location;
+            const endLoc = leg.end_location;
+
+            // 🟢 Custom start marker
+            new google.maps.Marker({
+              position: startLoc,
+              map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: color,
+                fillOpacity: 1,
+                strokeWeight: 1.5,
+                strokeColor: "#fff",
+              },
+              title: `${names.join(", ")} — Start`,
+            });
+
+            // 🔵 Custom end marker
+            new google.maps.Marker({
+              position: endLoc,
+              map,
+              icon: {
+                path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z",
+                fillColor: color,
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 1.5,
+                scale: 2.0, // slightly larger than start dot
+              },
+              title: `${names.join(", ")} — Customer Destination`,
+              zIndex: 999,
+            });
+
+            lastBounds.extend(startLoc);
+            lastBounds.extend(endLoc);
+          }
+
+          // 🗒️ Add legend entry
           legend.insertAdjacentHTML(
             "beforeend",
-            `<li><span class="legend-swatch" style="background:${routeColor(i)}"></span> ${names.join(" + ")}</li>`
+            `<li><span class="legend-swatch" style="background:${color}"></span> ${names.join(" + ")}</li>`
           );
         } else {
           console.warn(`❌ Route failed for ${names.join(", ")}: ${status}`);
         }
-        if (pending === 0 && !lastBounds.isEmpty()) map.fitBounds(lastBounds);
+
+        if (pending === 0 && !lastBounds.isEmpty()) {
+          map.fitBounds(lastBounds);
+        }
       }
     );
   });
 }
+
 
 // ✅ Bootstrap modal hooks
 document.addEventListener("DOMContentLoaded", async () => {

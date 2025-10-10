@@ -9,10 +9,6 @@ class SearchByDateForm(forms.Form):
             "class": "form-control",
         })
     )
-    service_category = forms.ModelChoiceField(
-        queryset=ServiceCategory.objects.all(),
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
     customer_address = forms.CharField(
         widget=forms.TextInput(attrs={
             "class": "form-control",

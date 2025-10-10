@@ -9,22 +9,43 @@ from .availability import get_available_employees
 def search_by_date(request):
     form = SearchByDateForm(request.GET or None)
     results = None
+
     if form.is_valid():
         date = form.cleaned_data["date"]
-        category = form.cleaned_data["service_category"]
         customer_address = form.cleaned_data["customer_address"]
 
-        # For each time slot, find available employees
+        # Fetch all time slots and all service categories
         slots = TimeSlot.objects.all().order_by("id")
-        results = {
-            slot: get_available_employees(
-                customer_address,
-                date,
-                slot,
-                category,
-            )
-            for slot in slots
-        }
+        categories = ServiceCategory.objects.all()
+
+        results = {}
+        for slot in slots:
+            # For each slot, build category-based availability
+            day_results = {}
+            for category in categories:
+                employees = get_available_employees(
+                    customer_address=customer_address,
+                    date=date,
+                    time_slot=slot,
+                    service_category=category,
+                )
+                day_results[category] = employees
+            results[slot] = day_results
+
+        print(f"✅ DEBUG: Date={date} Results={len(results)} slots checked")
+
+    else:
+        print(f"❌ DEBUG: Invalid form errors={form.errors}")
+
+    return render(
+        request,
+        "scheduling/search_by_date.html",
+        {
+            "form": form,
+            "results": results,
+            "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
+        },
+    )
 
     return render(
         request,

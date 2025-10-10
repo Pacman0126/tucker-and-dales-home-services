@@ -2,7 +2,7 @@
 {% load static %}
 {% load widget_tweaks %}
 
-{% block title %}Search by Time Slot | Tucker & Dale's{% endblock %}
+{% block title %}Search by Date | Tucker & Dale's{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -10,7 +10,7 @@
   <!-- 🧭 Back Navigation -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
-      ← Back
+      ← Home
     </a>
   </div>
 
@@ -21,28 +21,59 @@
         <div class="card-header bg-success text-white">
           <h5 class="mb-0">{{ day|date:"l, F j" }}</h5>
         </div>
+
         <div class="card-body">
           {% for category, employees in services.items %}
-            <h6 class="fw-bold text-dark mt-2">{{ category }}</h6>
-            {% if employees %}
-              <div class="d-flex flex-wrap gap-2 mb-3">
-                {% for emp in employees %}
+            <div class="border rounded p-3 mb-3 bg-light">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-dark mb-0">{{ category }}</h6>
+
+                {% if employees %}
+                  <!-- 🗺️ View Routes for this category -->
                   <button
                     type="button"
-                    class="btn btn-outline-success rounded-pill draggable-emp"
-                    draggable="true"
-                    data-empname="{{ emp.name }}"
-                    data-start="{{ emp.route_origin|default:emp.home_address|escapejs }}"
-                    data-end="{{ request.GET.customer_address|escapejs }}"
-                  >
-                    {{ emp.name }} 
-                    <span class="text-muted small">({{ emp.drive_time }})</span>
+                    class="btn btn-warning btn-sm fw-semibold rounded-pill"
+                    data-bs-toggle="modal"
+                    data-bs-target="#mapModal"
+                    data-routes-source="routes-json-{{ day|date:'Ymd' }}-{{ category|slugify }}">
+                    <i class="bi bi-geo-alt-fill me-1"></i> View Routes
                   </button>
-                {% endfor %}
+                {% endif %}
               </div>
-            {% else %}
-              <p class="text-muted small">No available employees for this service.</p>
-            {% endif %}
+
+              {% if employees %}
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  {% for emp in employees %}
+                    <button
+                      type="button"
+                      class="btn btn-outline-success rounded-pill draggable-emp"
+                      draggable="true"
+                      data-empname="{{ emp.name }}"
+                      data-start="{{ emp.route_origin|default:emp.home_address|escapejs }}"
+                      data-end="{{ request.GET.customer_address|escapejs }}">
+                      {{ emp.name }}
+                      <span class="text-muted small">({{ emp.drive_time }})</span>
+                    </button>
+                  {% endfor %}
+                </div>
+
+                <!-- 🧩 Hidden JSON for this category/day (used by the modal) -->
+                <script id="routes-json-{{ day|date:'Ymd' }}-{{ category|slugify }}" type="application/json">
+                  [
+                    {% for emp in employees %}
+                      {
+                        "name": "{{ emp.name|escapejs }}",
+                        "start": "{{ emp.route_origin|default:emp.home_address|escapejs }}",
+                        "end": "{{ request.GET.customer_address|escapejs }}"
+                      }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                  ]
+                </script>
+
+              {% else %}
+                <p class="text-muted small mb-0">No available employees for this service.</p>
+              {% endif %}
+            </div>
           {% endfor %}
         </div>
       </div>
@@ -84,13 +115,14 @@
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /modal-body -->
     </div>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script>
 let map, directionsService;
 let renderers = [];
@@ -98,7 +130,6 @@ let lastBounds = null;
 
 // 🗺️ Initialize map safely after Google Maps is ready
 async function initMapWhenReady() {
-  // ✅ Wait until the Maps API finishes loading (gmaps:ready fired by base_search.html)
   if (!window.gmapsReady || !window.google || !window.google.maps) {
     console.warn("⏳ Waiting for Google Maps...");
     await new Promise(res => document.addEventListener("gmaps:ready", res, { once: true }));
@@ -121,6 +152,7 @@ function routeColor(i) {
 }
 
 // 🧭 Group and draw routes
+// 🧭 Group and draw routes — with custom colored markers
 function buildGroupedRoutes(sourceId) {
   const el = document.getElementById(sourceId);
   if (!el || !map || !google.maps) return;
@@ -128,6 +160,7 @@ function buildGroupedRoutes(sourceId) {
   const routes = JSON.parse(el.textContent || "[]");
   if (!routes.length) return;
 
+  // Clear previous
   renderers.forEach(r => r.setMap(null));
   renderers = [];
   lastBounds = new google.maps.LatLngBounds();
@@ -147,13 +180,15 @@ function buildGroupedRoutes(sourceId) {
 
   entries.forEach(([key, names], i) => {
     const [start, end] = key.split("|");
+    const color = routeColor(i);
+
     const renderer = new google.maps.DirectionsRenderer({
       map,
-      suppressMarkers: false,
+      suppressMarkers: true, // 🚫 disable default red/green pins
       preserveViewport: true,
       polylineOptions: {
-        strokeColor: routeColor(i),
-        strokeOpacity: 0.85,
+        strokeColor: color,
+        strokeOpacity: 0.9,
         strokeWeight: 4,
       },
     });
@@ -165,24 +200,67 @@ function buildGroupedRoutes(sourceId) {
         pending--;
         if (status === "OK" && res.routes[0]) {
           renderer.setDirections(res);
-          res.routes[0].legs.forEach(leg => {
-            lastBounds.extend(leg.start_location);
-            lastBounds.extend(leg.end_location);
-          });
+
+          // extract endpoints
+          const leg = res.routes[0].legs[0];
+          if (leg) {
+            const startLoc = leg.start_location;
+            const endLoc = leg.end_location;
+
+            // 🟢 Custom start marker
+            new google.maps.Marker({
+              position: startLoc,
+              map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: color,
+                fillOpacity: 1,
+                strokeWeight: 1.5,
+                strokeColor: "#fff",
+              },
+              title: `${names.join(", ")} — Start`,
+            });
+
+            // 🔵 Custom end marker
+            new google.maps.Marker({
+              position: endLoc,
+              map,
+              icon: {
+                path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z",
+                fillColor: color,
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 1.5,
+                scale: 2.0, // slightly larger than start dot
+              },
+              title: `${names.join(", ")} — Customer Destination`,
+              zIndex: 999,
+            });
+
+            lastBounds.extend(startLoc);
+            lastBounds.extend(endLoc);
+          }
+
+          // 🗒️ Add legend entry
           legend.insertAdjacentHTML(
             "beforeend",
-            `<li><span class="legend-swatch" style="background:${routeColor(i)}"></span> ${names.join(" + ")}</li>`
+            `<li><span class="legend-swatch" style="background:${color}"></span> ${names.join(" + ")}</li>`
           );
         } else {
           console.warn(`❌ Route failed for ${names.join(", ")}: ${status}`);
         }
-        if (pending === 0 && !lastBounds.isEmpty()) map.fitBounds(lastBounds);
+
+        if (pending === 0 && !lastBounds.isEmpty()) {
+          map.fitBounds(lastBounds);
+        }
       }
     );
   });
 }
 
-// ✅ Bootstrap modal hooks
+
+// ✅ Modal hooks
 document.addEventListener("DOMContentLoaded", async () => {
   await initMapWhenReady();
 
@@ -203,4 +281,3 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 </script>
 {% endblock %}
-
