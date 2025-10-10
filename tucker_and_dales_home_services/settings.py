@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "customers",
     "core",
     "scheduling",
+    "widget_tweaks",
 ]
 
 # --- Middleware ---
@@ -79,6 +80,10 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+TEMPLATES[0]["OPTIONS"]["context_processors"] += [
+    "core.context_processors.cart_summary",
 ]
 
 WSGI_APPLICATION = "tucker_and_dales_home_services.wsgi.application"

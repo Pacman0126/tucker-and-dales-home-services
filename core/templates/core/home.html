@@ -1,5 +1,41 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Home | Tucker & Dale's Home Services{% endblock %}
+
 {% block content %}
-<h2>Welcome to Tucker & Dale's Home Services</h2>
-<p>Choose a service category from the navbar.</p>
+<div class="hero-section">
+  <div class="hero-content container py-4 text-center">
+
+    <!-- 🏠 Hero Image -->
+    <div class="mb-4">
+      <img src="{% static 'images/hero.png' %}" 
+           alt="Tucker & Dale's Home Services" 
+           class="img-fluid rounded shadow-sm"
+           style="max-height: 200px; object-fit: cover;">
+    </div>
+
+    <!-- 🧱 Tagline -->
+    <blockquote class="blockquote mb-4 text-light">
+      <p class="mb-0 fs-5">“Reliable, honest, neighborly service.”</p>
+    </blockquote>
+
+    <!-- 🧰 Services Offered -->
+    <h5 class="fw-bold text-uppercase text-light mb-3">Services Offered</h5>
+    <div class="service-badges">
+      <span class="service-badge">🧰 Garage / Basement</span>
+      <span class="service-badge">🌿 Lawncare</span>
+      <span class="service-badge">🧹 House Cleaning</span>
+    </div>
+
+    <!-- 📅 Book a Service CTA -->
+    <div class="mt-5">
+      <a href="{% url 'scheduling:search_by_date' %}" class="btn btn-accent btn-lg rounded-pill shadow-sm">
+        Book a Service
+      </a>
+    </div>
+
+  </div>
+</div>
 {% endblock %}
+

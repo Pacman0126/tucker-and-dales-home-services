@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block secondary_nav %}
+<!-- 🧭 Secondary Context Bar -->
+<nav class="navbar navbar-expand-lg bg-light border-bottom sticky-top shadow-sm" style="z-index: 1030;">
+  <div class="container-fluid flex-wrap justify-content-between py-2">
+
+    <!-- 🔄 Search Mode Toggle Pills -->
+    <div class="btn-group mb-2 mb-lg-0" role="group" aria-label="Search mode selector">
+      <a href="{% url 'scheduling:search_by_date' %}"
+         class="btn btn-outline-primary {% if request.resolver_match.url_name == 'search_by_date' %}active{% endif %}">
+        <i class="bi bi-calendar3"></i> Search by Date
+      </a>
+      <a href="{% url 'scheduling:search_by_time_slot' %}"
+         class="btn btn-outline-primary {% if request.resolver_match.url_name == 'search_by_time_slot' %}active{% endif %}">
+        <i class="bi bi-clock-history"></i> Search by Time Slot
+      </a>
+    </div>
+
+    <!-- 🔍 Search Form -->
+    <form
+      method="get"
+      action="{% url request.resolver_match.app_name|add:':'|add:request.resolver_match.url_name %}"
+      class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-lg-0"
+      role="search">
+
+      {% if request.resolver_match.url_name == "search_by_date" %}
+        <!-- 📅 Date Picker -->
+        <input
+          type="date"
+          name="date"
+          value="{{ request.GET.date|default:'' }}"
+          class="form-control form-control-sm"
+          required>
+
+      {% elif request.resolver_match.url_name == "search_by_time_slot" %}
+        <!-- 🕒 Time Slot Dropdown -->
+        <select name="time_slot" class="form-select form-select-sm" required>
+          <option value="">Select time slot</option>
+          {% for slot in time_slots %}
+            <option value="{{ slot.id }}"
+                    {% if request.GET.time_slot == slot.id|stringformat:"s" %}selected{% endif %}>
+              {{ slot.label }}
+            </option>
+          {% endfor %}
+        </select>
+      {% endif %}
+
+      <!-- 📍 Customer Address -->
+      <input
+        type="text"
+        name="customer_address"
+        placeholder="Enter your address"
+        class="form-control form-control-sm"
+        value="{{ request.GET.customer_address|default:'' }}"
+        required>
+
+      <!-- 🟡 Search Button -->
+      <button type="submit" class="btn btn-warning btn-sm fw-semibold">
+        <i class="bi bi-search"></i> Search
+      </button>
+    </form>
+
+  </div>
+</nav>
+
+<style>
+  @media (max-width: 768px) {
+    .navbar .btn-group {
+      overflow-x: auto;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .navbar .btn-group a {
+      flex: 0 0 auto;
+    }
+    form[role="search"] {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+    form[role="search"] input,
+    form[role="search"] select,
+    form[role="search"] button {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+  window.gmapsReady = false;
+  function initMap() {
+    window.gmapsReady = true;
+    document.dispatchEvent(new Event("gmaps:ready"));
+    console.log("✅ Google Maps initialized globally");
+  }
+</script>
+<script
+  async
+  defer
+  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_BROWSER_KEY }}&callback=initMap">
+</script>
+{% endblock %}

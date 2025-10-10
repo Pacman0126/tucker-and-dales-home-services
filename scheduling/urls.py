@@ -5,5 +5,6 @@ app_name = "scheduling"
 
 urlpatterns = [
     path("search/date/", views.search_by_date, name="search_by_date"),
-    path("search/timeslot/", views.search_by_time_slot, name="search_by_timeslot"),
+    path("search/timeslot/", views.search_by_time_slot,
+         name="search_by_time_slot"),
 ]
