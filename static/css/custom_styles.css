@@ -70,6 +70,7 @@ body {
   background-position: center;
   color: var(--color-text);
   min-height: 100vh;
+  padding-top: 112px; /* 56 + 56 if both navbars are ~56px tall */
 }
 
 

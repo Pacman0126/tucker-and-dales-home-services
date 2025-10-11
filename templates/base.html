@@ -12,10 +12,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link href="{% static 'css/custom_styles.css' %}" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body class="d-flex flex-column min-vh-100 bg-light" style="padding-top:70px;">
 
   <!-- ✅ PRIMARY NAVBAR -->
-  <nav class="navbar navbar-dark bg-dark sticky-top shadow-sm py-2">
+  <nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
     <div class="container-fluid align-items-center justify-content-between">
 
       <!-- Left section: booking summary -->
@@ -56,7 +56,7 @@
   {% block secondary_nav %}{% endblock %}
 
   <!-- Main page content -->
-  <main class="container-fluid py-3">
+  <main class="flex-grow-1 container-fluid py-3">
     {% block content %}{% endblock %}
   </main>
 

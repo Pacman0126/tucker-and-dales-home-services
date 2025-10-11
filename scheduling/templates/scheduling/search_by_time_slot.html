@@ -6,14 +6,6 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-
-  <!-- 🧭 Back Navigation -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
-      ← Home
-    </a>
-  </div>
-
   <!-- 🧾 Results -->
   {% if results %}
     {% for day, services in results.items %}
@@ -223,20 +215,44 @@ function buildGroupedRoutes(sourceId) {
             });
 
             // 🔵 Custom end marker
-            new google.maps.Marker({
+            // 🌟 Customer destination marker (star shape with bold pulse)
+            const destIconBase = {
+              path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z",
+              fillColor: color,
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 1.5,
+              scale: 1.4,
+            };
+
+            const destMarker = new google.maps.Marker({
               position: endLoc,
               map,
-              icon: {
-                path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z",
-                fillColor: color,
-                fillOpacity: 1,
-                strokeColor: "#ffffff",
-                strokeWeight: 1.5,
-                scale: 2.0, // slightly larger than start dot
-              },
+              icon: destIconBase,
               title: `${names.join(", ")} — Customer Destination`,
               zIndex: 999,
             });
+
+            // ✨ Smooth pulse: double in size, then shrink back
+            (function smoothPulse(marker, baseIcon) {
+              const duration = 2000; // total animation duration (ms)
+              const fps = 60;
+              const totalFrames = Math.round((duration / 1000) * fps);
+              let frame = 0;
+
+              const pulse = setInterval(() => {
+                // 🧠 Create a natural sine-wave growth curve
+                const progress = frame / totalFrames;
+                const scaleFactor = 1 + Math.sin(progress * Math.PI) * 1.0; // peaks at 2.0×
+                marker.setIcon({ ...baseIcon, scale: baseIcon.scale * scaleFactor });
+                frame++;
+                if (frame >= totalFrames) {
+                  clearInterval(pulse);
+                  marker.setIcon(baseIcon); // return to normal size
+                }
+              }, 1000 / fps);
+            })(destMarker, destIconBase);
+
 
             lastBounds.extend(startLoc);
             lastBounds.extend(endLoc);
