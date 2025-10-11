@@ -2,11 +2,10 @@
 {% load static %}
 
 {% block secondary_nav %}
-<!-- 🧭 Secondary Context Bar -->
-<nav
+<!-- 🧭 Secondary Navbar (collapsible with loading overlay) -->
+<nav id="secondaryNavbar"
   class="navbar navbar-expand-lg bg-light border-bottom fixed-top shadow-sm"
   style="top:56px; z-index:1039;">
-  <div class="container-fluid flex-wrap justify-content-between py-2">
   <div class="container-fluid flex-wrap justify-content-between py-2">
 
     <!-- 🔄 Search Mode Toggle Pills -->
@@ -23,88 +22,229 @@
 
     <!-- 🔍 Search Form -->
     <form
+      id="searchForm"
       method="get"
       action="{% url request.resolver_match.app_name|add:':'|add:request.resolver_match.url_name %}"
       class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-lg-0"
-      role="search">
-
+      role="search"
+    >
       {% if request.resolver_match.url_name == "search_by_date" %}
-        <!-- 📅 Date Picker -->
         <input
           type="date"
           name="date"
           value="{{ request.GET.date|default:'' }}"
           class="form-control form-control-sm"
-          required>
-
+          required
+        >
       {% elif request.resolver_match.url_name == "search_by_time_slot" %}
-        <!-- 🕒 Time Slot Dropdown -->
         <select name="time_slot" class="form-select form-select-sm" required>
           <option value="">Select time slot</option>
           {% for slot in time_slots %}
-            <option value="{{ slot.id }}"
-                    {% if request.GET.time_slot == slot.id|stringformat:"s" %}selected{% endif %}>
+            <option value="{{ slot.id }}" {% if request.GET.time_slot == slot.id|stringformat:"s" %}selected{% endif %}>
               {{ slot.label }}
             </option>
           {% endfor %}
         </select>
       {% endif %}
 
-      <!-- 📍 Customer Address -->
       <input
         type="text"
         name="customer_address"
         placeholder="Enter your address"
         class="form-control form-control-sm"
         value="{{ request.GET.customer_address|default:'' }}"
-        required>
+        required
+      >
 
-      <!-- 🟡 Search Button -->
-      <button type="submit" class="btn btn-warning btn-sm fw-semibold">
+      <button type="submit" id="searchBtn" class="btn btn-warning btn-sm fw-semibold">
         <i class="bi bi-search"></i> Search
       </button>
     </form>
 
+    <!-- 🆕 New Search Button (shown when collapsed) -->
+    <button id="newSearchBtn" class="btn btn-outline-primary btn-sm fw-semibold">
+      <i class="bi bi-arrow-repeat me-1"></i> New Search
+    </button>
+
   </div>
 </nav>
 
+<!-- 🌀 Global Loading Overlay -->
+<div id="loadingOverlay"
+  class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center"
+  style="z-index:2000;">
+  <div class="text-center">
+    <div class="spinner-border text-success mb-3" role="status" style="width:3rem; height:3rem;"></div>
+    <div class="fw-semibold text-dark">Finding available employees...</div>
+  </div>
+</div>
+
 <style>
-  @media (max-width: 768px) {
-    .navbar .btn-group {
-      overflow-x: auto;
-      white-space: nowrap;
-      width: 100%;
-    }
-    .navbar .btn-group a {
-      flex: 0 0 auto;
-    }
-    form[role="search"] {
-      flex-direction: column;
-      align-items: stretch;
-      width: 100%;
-    }
-    form[role="search"] input,
-    form[role="search"] select,
-    form[role="search"] button {
-      width: 100%;
-    }
+/* ----------------------------- */
+/* 🧱 Base layout + sticky rules */
+/* ----------------------------- */
+body {
+  padding-top: 112px; /* Space for both navbars */
+}
+
+#secondaryNavbar {
+  transition: all 0.35s ease;
+  overflow: hidden;
+}
+
+/* ----------------------------- */
+/* 🎚️ Collapsed State Styles */
+/* ----------------------------- */
+#secondaryNavbar.collapsed {
+  justify-content: center !important;
+  opacity: 0.95;
+  height: 60px; /* compressed height */
+}
+
+#secondaryNavbar.collapsed form,
+#secondaryNavbar.collapsed .btn-group {
+  display: none !important;
+}
+
+#secondaryNavbar.collapsed #newSearchBtn {
+  display: inline-block;
+}
+
+/* hidden by default, shown when collapsed */
+#newSearchBtn {
+  display: none;
+}
+
+/* ----------------------------- */
+/* 🌀 Overlay Transition */
+/* ----------------------------- */
+#loadingOverlay {
+  transition: opacity 0.3s ease;
+}
+
+#loadingOverlay.d-none {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ----------------------------- */
+/* 📱 Responsive Adjustments */
+/* ----------------------------- */
+@media (max-width: 768px) {
+  .navbar .btn-group {
+    overflow-x: auto;
+    white-space: nowrap;
+    width: 100%;
   }
+  .navbar .btn-group a {
+    flex: 0 0 auto;
+  }
+  form[role="search"] {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  form[role="search"] input,
+  form[role="search"] select,
+  form[role="search"] button {
+    width: 100%;
+  }
+}
 </style>
+
+<!-- ⚙️ Navbar Behavior Script -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const navbar = document.getElementById("secondaryNavbar");
+  const form = document.getElementById("searchForm");
+  const newSearchBtn = document.getElementById("newSearchBtn");
+  const overlay = document.getElementById("loadingOverlay");
+  const searchBtn = document.getElementById("searchBtn");
+
+  const hasQuery = window.location.search.length > 0;
+  if (hasQuery) navbar.classList.add("collapsed");
+
+  // --- Submit handler ---
+  form.addEventListener("submit", () => {
+    overlay.classList.remove("d-none");
+    navbar.classList.add("collapsed");
+    // disable search button
+    searchBtn.disabled = true;
+    const originalText = searchBtn.innerHTML;
+    searchBtn.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Searching...';
+    // fallback restore
+    setTimeout(() => {
+      searchBtn.disabled = false;
+      searchBtn.innerHTML = originalText;
+    }, 4000);
+  });
+
+  // --- New Search handler ---
+  newSearchBtn.addEventListener("click", () => {
+    // expand navbar with slide-down animation
+    navbar.classList.remove("collapsed");
+
+    // clear previous input values
+    form.querySelectorAll("input, select").forEach(el => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else el.value = "";
+    });
+
+    // hide overlay and re-enable search button
+    overlay.classList.add("d-none");
+    searchBtn.disabled = false;
+
+    // smooth scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // focus first visible field after expand
+    setTimeout(() => {
+      const first = form.querySelector("input, select");
+      first?.focus();
+    }, 350);
+  });
+});
+</script>
+
+
 {% endblock %}
+
 
 {% block extra_js %}
 {{ block.super }}
+
+<!-- 🌍 Google Maps Async Loader -->
 <script>
+  // Ensure global flags exist
   window.gmapsReady = false;
+  window._gmapsLoaded = false;
+
+  // Called by the Google Maps script when loaded
   function initMap() {
+    if (window._gmapsLoaded) return; // prevent duplicate triggers
+    window._gmapsLoaded = true;
     window.gmapsReady = true;
     document.dispatchEvent(new Event("gmaps:ready"));
     console.log("✅ Google Maps initialized globally");
   }
+
+  // Listen for map load failure (optional safety)
+  window.addEventListener("error", (e) => {
+    if (e.target.tagName === "SCRIPT" && e.target.src.includes("maps.googleapis.com")) {
+      console.error("❌ Google Maps failed to load:", e);
+      window.gmapsReady = false;
+      document.dispatchEvent(new Event("gmaps:error"));
+    }
+  });
 </script>
+
+<!-- 🚀 Asynchronous Maps API load (modern pattern) -->
 <script
+  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_BROWSER_KEY }}&callback=initMap&loading=async"
   async
   defer
-  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_BROWSER_KEY }}&callback=initMap">
-</script>
+></script>
+
 {% endblock %}
+
