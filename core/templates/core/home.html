@@ -1,16 +1,20 @@
 {% extends "base.html" %}
 {% load static %}
 
+{# 1) Add a page-level body class so we can target home only #}
+{% block body_class %}home-page{% endblock %}
+
 {% block title %}Home | Tucker & Dale's Home Services{% endblock %}
 
+
 {% block content %}
-<div class="hero-section">
-  <div class="hero-content container py-4 text-center">
+<div class="hero-section d-flex flex-column justify-content-center align-items-center text-center">
+  <div class="hero-content container py-4">
 
     <!-- 🏠 Hero Image -->
     <div class="mb-4">
-      <img src="{% static 'images/hero.png' %}" 
-           alt="Tucker & Dale's Home Services" 
+      <img src="{% static 'images/hero.png' %}"
+           alt="Tucker & Dale's Home Services"
            class="img-fluid rounded shadow-sm"
            style="max-height: 200px; object-fit: cover;">
     </div>
@@ -22,15 +26,16 @@
 
     <!-- 🧰 Services Offered -->
     <h5 class="fw-bold text-uppercase text-light mb-3">Services Offered</h5>
-    <div class="service-badges">
+    <div class="service-badges mb-4">
       <span class="service-badge">🧰 Garage / Basement</span>
       <span class="service-badge">🌿 Lawncare</span>
       <span class="service-badge">🧹 House Cleaning</span>
     </div>
 
     <!-- 📅 Book a Service CTA -->
-    <div class="mt-5">
-      <a href="{% url 'scheduling:search_by_date' %}" class="btn btn-accent btn-lg rounded-pill shadow-sm">
+    <div class="mt-3">
+      <a href="{% url 'scheduling:search_by_date' %}"
+         class="btn btn-accent btn-lg rounded-pill shadow-sm">
         Book a Service
       </a>
     </div>
@@ -38,4 +43,3 @@
   </div>
 </div>
 {% endblock %}
-

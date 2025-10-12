@@ -65,7 +65,7 @@
   </style>
 </head>
 
-<body class="d-flex flex-column">
+<body class="{% block body_class %}{% endblock %} d-flex flex-column">
 
   <!-- ✅ PRIMARY NAVBAR -->
   <nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">

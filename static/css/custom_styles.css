@@ -76,14 +76,12 @@ body {
 
 /* Improve hero readability */
 .hero-section {
-  background: url("../images/grass_texture.jpg") center/cover no-repeat;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
+  min-height: calc(100vh - 168px); /* 56px + 56px + ~footer height */
+  background: linear-gradient(180deg, #198754 0%, #145a32 100%);
   color: #fff;
-  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Subtle overlay for contrast */
@@ -103,22 +101,18 @@ body {
 
 /* 🧱 Informational Service Badges */
 .service-badge {
-  background-color: #f7d27c;         /* warm muted gold */
-  color: #3a2f0b;                    /* readable dark text */
-  font-weight: 600;
-  border-radius: 30px;
-  padding: 0.6rem 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2rem;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  font-weight: 500;
+  margin: 0.25rem;
   display: inline-block;
-  text-align: center;
-  box-shadow: inset 0 1px 2px rgba(255,255,255,0.3),
-              0 1px 2px rgba(0,0,0,0.1);
-  cursor: default;
-  user-select: none;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.3s ease;
 }
+
 .service-badge:hover {
-  transform: none;                   /* remove hover motion */
-  background-color: #f7d27c;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Slight spacing between them */
@@ -204,11 +198,14 @@ a:hover {
 
 /* Brand pill button */
 .btn-accent {
-  background-color: var(--color-accent) !important;
-  border-color: var(--color-accent) !important;
-  color: #fff !important;
-  border-radius: var(--radius-pill);
-  font-weight: 600;
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+}
+
+.btn-accent:hover {
+  background-color: #ffca2c;
+  color: #000;
 }
 
 /* Green “Book a Service” button */
@@ -238,10 +235,10 @@ a:hover {
   transform: translateY(-1px);
 }
 
-.btn-accent:hover {
+/* .btn-accent:hover {
   background-color: var(--color-accent-hover) !important;
   border-color: var(--color-accent-hover) !important;
-}
+} */
 
 /* ==============================
    Alerts
@@ -599,5 +596,69 @@ form.search-form .btn.btn-secondary:hover {
   text-align: center;
 }
 
+/* === HOME PAGE LAYOUT FIX === */
+/* === BRUTE-FORCE HOMEPAGE HERO FIX === */
+body.home-page {
+  margin: 0 !important;
+  padding: 0 !important;
+  scroll-padding-top: 0 !important;
+  overflow-x: hidden !important;
+}
 
+body.home-page .hero-section {
+  position: relative !important;
+  top: 56px !important;              /* exact navbar height */
+  margin: 0 !important;
+  padding: 0 !important;
+  height: calc(100vh - 56px - 72px) !important; /* viewport minus nav + footer */
+  background: linear-gradient(180deg, #198754 0%, #145a32 100%) !important;
+  color: #fff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 1 !important;
+}
+
+body.home-page .hero-content {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+body.home-page footer {
+  position: relative !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  z-index: 3 !important;
+}
+
+/* 🎯 Homepage-only layout correction */
+body.home-page .py-3 {
+  padding-top: 0 !important;         /* Removes gap under navbar */
+  padding-bottom: 1.3rem !important; /* Adds slight room before footer */
+}
+
+/* 🩹 Fix for gray gutter bleed-through on home page */
+/* 🏠 Home page: match gutters to hero background color */
+body.home-page {
+  background-color: #145a32 !important; /* same solid green as hero */
+  background-image: none !important;
+}
+
+body.home-page .container,
+body.home-page .container-fluid {
+  background-color: #145a32 !important; /* match the gutters */
+}
+
+/* Ensure hero fills full width cleanly without breaking navbar padding */
+body.home-page .hero-section {
+  background: transparent !important; /* use body background instead */
+  padding-left: 1.5rem;  /* match Bootstrap gutter for consistency */
+  padding-right: 1.5rem;
+  min-height: calc(100vh - 56px - 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 
