@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "core",
     "scheduling",
     "widget_tweaks",
+    "billing",
 ]
 
 # --- Middleware ---
@@ -159,3 +160,10 @@ LOGGING = {
 LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+# ---Stripe ---
+STRIPE_PUBLISHABLE_KEY = env.str("STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = env.str("STRIPE_SECRET_KEY")
+# from Stripe Dashboard (test)
+STRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET")
+STRIPE_CURRENCY = "usd"

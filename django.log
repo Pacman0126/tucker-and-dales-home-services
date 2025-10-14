@@ -26301,3 +26301,22 @@ widget_tweaks
 [2025-10-12 20:16:12,077] INFO django.server: "GET / HTTP/1.1" 200 4999
 [2025-10-12 20:16:12,129] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
 [2025-10-12 20:16:12,130] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2686
+[2025-10-12 21:28:15,572] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-12 21:28:20,473] INFO django.server: "GET / HTTP/1.1" 200 4999
+[2025-10-12 21:28:20,514] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-12 21:28:48,239] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 4912
+[2025-10-12 21:28:51,613] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5075
+[2025-10-12 21:29:10,791] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5075
+[2025-10-12 21:29:24,410] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5071
+[2025-10-12 21:29:44,021] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5075
+[2025-10-12 21:29:57,943] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5075
+[2025-10-12 21:30:01,626] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5075
+[2025-10-14 19:13:50,342] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-14 19:13:55,268] INFO django.server: "GET / HTTP/1.1" 200 4999
+[2025-10-14 19:13:55,311] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-14 19:13:55,311] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 304 0
+[2025-10-14 19:14:02,381] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 4912
+[2025-10-14 19:14:02,411] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 304 0
+[2025-10-14 19:14:06,759] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
+[2025-10-14 19:14:07,791] INFO django.server: "GET / HTTP/1.1" 200 5059
+[2025-10-14 19:14:41,421] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 17619

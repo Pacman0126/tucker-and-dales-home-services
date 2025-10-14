@@ -19,9 +19,12 @@ from django.urls import path, include
 from core import views as core_views
 
 urlpatterns = [
+    path("accounts/", include("django.contrib.auth.urls")),
     path('admin/', admin.site.urls),
+    path("billing/", include("billing.urls", namespace="billing")),
     path("customers/", include("customers.urls")),
     path("schedule/", include("scheduling.urls")),
     path("", core_views.home, name="home"),
-    path("accounts/", include("django.contrib.auth.urls")),
+
+
 ]
