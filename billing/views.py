@@ -12,6 +12,13 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 @login_required
+def checkout(request):
+    # Require profile completion first
+    if not hasattr(request.user, "customer_profile"):
+        return redirect("customers:complete_profile")
+
+
+@login_required
 def create_checkout_session(request):
     """Create a Stripe Checkout Session and return its URL."""
 
