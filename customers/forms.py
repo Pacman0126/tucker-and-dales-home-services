@@ -71,3 +71,16 @@ class RegisteredCustomerForm(forms.ModelForm):
                 "Email must be valid and end with .com, .net, or .org."
             )
         return e
+
+
+class CustomerProfileForm(forms.ModelForm):
+    class Meta:
+        model = RegisteredCustomer
+        fields = ["street_address", "city", "state", "zipcode", "phone"]
+        widgets = {
+            "street_address": forms.TextInput(attrs={"class": "form-control", "placeholder": "123 Main St"}),
+            "city": forms.TextInput(attrs={"class": "form-control"}),
+            "state": forms.TextInput(attrs={"class": "form-control"}),
+            "zipcode": forms.TextInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control"}),
+        }

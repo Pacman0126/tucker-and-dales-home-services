@@ -7,6 +7,7 @@ from django.contrib.auth import login
 from django.contrib import messages
 
 from .models import RegisteredCustomer
+from .forms import CustomerProfileForm
 from .forms import RegisteredCustomerForm
 import logging
 
@@ -108,3 +109,22 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, "customers/register.html", {"form": form})
+
+
+@login_required
+def complete_profile(request):
+    # If user already has a profile, skip to checkout
+    if hasattr(request.user, "customer_profile"):
+        return redirect("billing:checkout")
+
+    if request.method == "POST":
+        form = CustomerProfileForm(request.POST)
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.user = request.user
+            profile.save()
+            return redirect("billing:checkout")  # go straight to Stripe
+    else:
+        form = CustomerProfileForm()
+
+    return render(request, "customers/complete_profile.html", {"form": form})
