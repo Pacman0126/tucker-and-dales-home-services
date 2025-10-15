@@ -1,7 +1,9 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import login
 from django.contrib import messages
 
 from .models import RegisteredCustomer
@@ -91,3 +93,18 @@ def customer_delete(request, pk):
         "customers/customer_confirm_delete.html",
         {"customer": customer},
     )
+
+
+def register(request):
+    """Allow new customers to create accounts."""
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(
+                request, "🎉 Account created successfully! You are now logged in.")
+            return redirect("home")
+    else:
+        form = UserCreationForm()
+    return render(request, "customers/register.html", {"form": form})

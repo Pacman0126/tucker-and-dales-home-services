@@ -662,3 +662,12 @@ body.home-page .hero-section {
   text-align: center;
 }
 
+/* Center auth cards vertically on large screens */
+body > .container.py-5 {
+  min-height: calc(100vh - 128px); /* adjust for navbar + footer */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+

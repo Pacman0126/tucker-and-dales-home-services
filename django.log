@@ -26320,3 +26320,35 @@ widget_tweaks
 [2025-10-14 19:14:06,759] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
 [2025-10-14 19:14:07,791] INFO django.server: "GET / HTTP/1.1" 200 5059
 [2025-10-14 19:14:41,421] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 17619
+[2025-10-14 23:45:00,061] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-14 23:45:06,997] INFO django.server: "GET / HTTP/1.1" 200 5059
+[2025-10-14 23:45:11,647] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-14 23:45:11,660] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 4912
+[2025-10-14 23:45:39,570] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
+[2025-10-14 23:45:40,645] INFO django.server: "GET / HTTP/1.1" 200 5058
+[2025-10-14 23:47:23,069] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-14 23:47:23,074] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 4912
+[2025-10-15 16:46:17,227] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-15 16:46:38,208] INFO django.server: "GET / HTTP/1.1" 200 4999
+[2025-10-15 16:46:38,258] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 304 0
+[2025-10-15 16:46:38,259] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-15 16:46:44,171] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 4912
+[2025-10-15 17:19:13,172] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-15 17:19:15,208] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-15 17:26:05,531] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\urls.py changed, reloading.
+[2025-10-15 17:26:06,327] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-15 18:28:11,896] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 5488
+[2025-10-15 18:28:11,969] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16433
+[2025-10-15 18:28:12,025] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-15 18:28:12,168] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-15 18:28:26,952] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 6181
+[2025-10-15 18:28:26,972] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-15 18:29:21,769] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 6261
+[2025-10-15 18:29:21,783] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-15 18:30:10,884] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 6265
+[2025-10-15 18:30:12,633] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-15 18:31:09,434] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 6403
+[2025-10-15 18:31:09,447] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-15 18:31:58,214] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-15 18:31:59,243] INFO django.server: "GET / HTTP/1.1" 200 5062
+[2025-10-15 18:31:59,259] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
