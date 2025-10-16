@@ -6,23 +6,25 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import environ
-from dotenv import load_dotenv
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Env setup ---
-
 env = environ.Env(
     DEBUG=(bool, False)
 )
 
-env_file = os.path.join(BASE_DIR, ".env")
-if os.path.exists(env_file):
-    env.read_env(env_file)  # now uses the Env() object you just created
-else:
-    raise RuntimeError(f" .env file not found at {env_file}")
+# --- Load local .env if present ---
+env_file = BASE_DIR / ".env"
 
+if env_file.exists():
+    # Local dev: use .env file
+    env.read_env(env_file)
+    print(f"✅ Loaded environment from {env_file}")
+else:
+    # Production / Heroku: rely on Config Vars
+    print("⚠️ No .env file found — relying on environment variables from system or Heroku.")
 
 # --- Google Maps API ---
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")
