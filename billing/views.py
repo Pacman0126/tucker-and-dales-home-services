@@ -1,9 +1,10 @@
 import stripe
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Sum
 from .models import Payment
 
 # Create your views here.
@@ -86,3 +87,34 @@ def stripe_webhook(request):
         ).update(status=Payment.Status.SUCCEEDED)
 
     return HttpResponse(status=200)
+
+
+@login_required
+def payment_history(request):
+    """
+    Display the logged-in user's payment records.
+    """
+    payments = Payment.objects.filter(
+        user=request.user).order_by("-created_at")
+    total_spent = payments.aggregate(Sum("amount"))["amount__sum"] or 0
+
+    context = {
+        "payments": payments,
+        "total_spent": total_spent / 100,  # convert cents → dollars
+    }
+    return render(request, "billing/payment_history.html", context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def all_payments_admin(request):
+    """
+    Superuser-only dashboard for all payments.
+    """
+    payments = Payment.objects.select_related("user").order_by("-created_at")
+    total_volume = payments.aggregate(Sum("amount"))["amount__sum"] or 0
+
+    context = {
+        "payments": payments,
+        "total_volume": total_volume / 100,
+    }
+    return render(request, "billing/all_payments_admin.html", context)

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}My Payments | Tucker & Dale{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4 text-center">My Payment History</h3>
+
+  {% if payments %}
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-striped align-middle">
+      <thead class="table-success">
+        <tr>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Description</th>
+          <th>Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
+          <td>${{ p.amount|floatformat:-2|divisibleby:100 }}</td>
+          <td><span class="badge bg-{{ p.status == 'succeeded'|yesno:'success,secondary' }}">{{ p.status }}</span></td>
+          <td>{{ p.description|default:"—" }}</td>
+          <td>
+            {% if p.receipt_url %}
+              <a href="{{ p.receipt_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+            {% else %}
+              <span class="text-muted small">N/A</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-3 text-end">
+    <strong>Total spent:</strong> ${{ total_spent|floatformat:2 }}
+  </div>
+  {% else %}
+    <p class="text-center text-muted mt-5">No payments yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

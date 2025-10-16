@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}All Payments | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4 text-center">All Customer Payments</h3>
+
+  {% if payments %}
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-striped align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Customer</th>
+          <th>Email</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td>{{ p.user.username }}</td>
+          <td>{{ p.user.email }}</td>
+          <td>${{ p.amount|floatformat:-2|divisibleby:100 }}</td>
+          <td><span class="badge bg-{{ p.status == 'succeeded'|yesno:'success,secondary' }}">{{ p.status }}</span></td>
+          <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
+          <td>
+            {% if p.receipt_url %}
+              <a href="{{ p.receipt_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+            {% else %}
+              <span class="text-muted small">N/A</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-3 text-end">
+    <strong>Total volume:</strong> ${{ total_volume|floatformat:2 }}
+  </div>
+  {% else %}
+    <p class="text-center text-muted mt-5">No payments recorded.</p>
+  {% endif %}
+</div>
+{% endblock %}

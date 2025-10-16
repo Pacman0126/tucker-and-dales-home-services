@@ -94,6 +94,17 @@
       <!-- Right section -->
       <div class="d-flex align-items-center gap-2">
         {% if user.is_authenticated %}
+          <a href="{% url 'billing:payment_history' %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-receipt"></i> My Payments
+          </a>
+          {% if user.is_superuser %}
+            <a href="{% url 'billing:all_payments_admin' %}" class="btn btn-warning btn-sm">
+              <i class="bi bi-clipboard-data"></i> All Payments
+            </a>
+          {% endif %}
+        {% endif %}
+
+        {% if user.is_authenticated %}
           <span class="text-white small me-2">Hi, {{ user.username }}</span>
           <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
         {% else %}
