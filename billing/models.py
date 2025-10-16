@@ -50,3 +50,25 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.user} — {self.amount_display()} — {self.status}"
+
+    def refund(self):
+        """
+        Initiates a Stripe refund for this payment.
+        Returns the refund object or raises an exception if fails.
+        """
+        if not self.stripe_payment_intent_id:
+            raise ValueError(
+                "No Stripe payment intent ID associated with this payment.")
+
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+
+        refund = stripe.Refund.create(
+            payment_intent=self.stripe_payment_intent_id,
+            reason="requested_by_customer",
+        )
+
+        # update model state
+        self.status = "refunded"
+        self.metadata["refund_id"] = refund.id
+        self.save(update_fields=["status", "metadata"])
+        return refund

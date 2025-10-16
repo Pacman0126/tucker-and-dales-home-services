@@ -1,8 +1,10 @@
 import stripe
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 from .models import Payment
@@ -118,3 +120,16 @@ def all_payments_admin(request):
         "total_volume": total_volume / 100,
     }
     return render(request, "billing/all_payments_admin.html", context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@require_POST
+def refund_payment(request, pk):
+    payment = get_object_or_404(Payment, pk=pk)
+    try:
+        payment.refund()
+        messages.success(
+            request, f"Refund issued for {payment.user.username}.")
+    except Exception as e:
+        messages.error(request, f"Refund failed: {e}")
+    return redirect("billing:all_payments_admin")

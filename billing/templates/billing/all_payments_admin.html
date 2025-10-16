@@ -16,6 +16,7 @@
           <th>Status</th>
           <th>Date</th>
           <th>Receipt</th>
+          <th>Refund</th>
         </tr>
       </thead>
       <tbody>
@@ -31,6 +32,21 @@
               <a href="{{ p.receipt_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
             {% else %}
               <span class="text-muted small">N/A</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.status == "succeeded" %}
+                <form method="post" action="{% url 'billing:refund_payment' p.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('Refund this payment?')">
+                    Refund
+                </button>
+                </form>
+            {% elif p.status == "refunded" %}
+                <span class="badge bg-secondary">Refunded</span>
+            {% else %}
+                <span class="text-muted small">—</span>
             {% endif %}
           </td>
         </tr>
