@@ -9,6 +9,7 @@ from django.contrib import messages
 from .models import RegisteredCustomer
 from .forms import CustomerProfileForm
 from .forms import RegisteredCustomerForm
+from .forms import CustomerRegistrationForm
 import logging
 
 
@@ -97,17 +98,30 @@ def customer_delete(request, pk):
 
 
 def register(request):
-    """Allow new customers to create accounts."""
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = CustomerRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            # 🪄 Create linked RegisteredCustomer profile automatically
+            RegisteredCustomer.objects.create(
+                user=user,
+                first_name=form.cleaned_data["first_name"],
+                last_name=form.cleaned_data["last_name"],
+                email=form.cleaned_data["email"],
+                street_address="",
+                city="",
+                state="",
+                zipcode="",
+                phone="",
+                region="Unknown"
+            )
             login(request, user)
             messages.success(
-                request, "🎉 Account created successfully! You are now logged in.")
-            return redirect("home")
+                request, f"Welcome, {user.username}! Please complete your profile.")
+            return redirect("customers:complete_profile")
     else:
-        form = UserCreationForm()
+        form = CustomerRegistrationForm()
+
     return render(request, "customers/register.html", {"form": form})
 
 

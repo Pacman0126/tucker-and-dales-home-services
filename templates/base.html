@@ -97,7 +97,9 @@
           <span class="text-white small me-2">Hi, {{ user.username }}</span>
           <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
         {% else %}
-          <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Login / Register</a>
+          <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Login</a>
+          <a href="{% url 'customers:register' %}" class="btn btn-warning btn-sm">Register</a>
+
         {% endif %}
 
         <!-- Cart -->

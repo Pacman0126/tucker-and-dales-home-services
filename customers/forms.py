@@ -1,5 +1,7 @@
 from django import forms
 from .models import RegisteredCustomer
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 
 
 class RegisteredCustomerForm(forms.ModelForm):
@@ -83,4 +85,27 @@ class CustomerProfileForm(forms.ModelForm):
             "state": forms.TextInput(attrs={"class": "form-control"}),
             "zipcode": forms.TextInput(attrs={"class": "form-control"}),
             "phone": forms.TextInput(attrs={"class": "form-control"}),
+        }
+
+
+class CustomerRegistrationForm(UserCreationForm):
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
+        "class": "form-control",
+        "placeholder": "Email address"
+    }))
+    first_name = forms.CharField(required=True, widget=forms.TextInput(attrs={
+        "class": "form-control",
+        "placeholder": "First name"
+    }))
+    last_name = forms.CharField(required=True, widget=forms.TextInput(attrs={
+        "class": "form-control",
+        "placeholder": "Last name"
+    }))
+
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name",
+                  "email", "password1", "password2"]
+        widgets = {
+            "username": forms.TextInput(attrs={"class": "form-control", "placeholder": "Username"}),
         }
