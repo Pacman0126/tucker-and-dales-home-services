@@ -1,4 +1,5 @@
 import stripe
+import json
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -68,29 +69,6 @@ def payment_cancel(request):
     return render(request, "billing/cancel.html")
 
 
-@csrf_exempt
-def stripe_webhook(request):
-    """Handle Stripe webhooks (e.g., payment succeeded)."""
-    payload = request.body
-    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
-    endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
-    except (ValueError, stripe.error.SignatureVerificationError):
-        return HttpResponse(status=400)
-
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        Payment.objects.filter(
-            stripe_checkout_session_id=session["id"]
-        ).update(status=Payment.Status.SUCCEEDED)
-
-    return HttpResponse(status=200)
-
-
 @login_required
 def payment_history(request):
     """
@@ -133,3 +111,47 @@ def refund_payment(request, pk):
     except Exception as e:
         messages.error(request, f"Refund failed: {e}")
     return redirect("billing:all_payments_admin")
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    """
+    Receives and handles Stripe webhook events (payment + refund updates).
+    """
+    payload = request.body
+    sig_header = request.headers.get("Stripe-Signature", None)
+    endpoint_secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", None)
+
+    try:
+        if endpoint_secret:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
+            )
+        else:
+            event = stripe.Event.construct_from(
+                json.loads(payload), stripe.api_key
+            )
+    except Exception as e:
+        return HttpResponse(status=400)
+
+    event_type = event["type"]
+    data = event["data"]["object"]
+
+    # --- Handle events ---
+    if event_type == "payment_intent.succeeded":
+        Payment.objects.filter(
+            stripe_payment_intent_id=data["id"]
+        ).update(status="succeeded")
+
+    elif event_type == "charge.refunded":
+        intent_id = data.get("payment_intent")
+        Payment.objects.filter(
+            stripe_payment_intent_id=intent_id
+        ).update(status="refunded")
+
+    elif event_type == "payment_intent.payment_failed":
+        Payment.objects.filter(
+            stripe_payment_intent_id=data["id"]
+        ).update(status="canceled")
+
+    return HttpResponse(status=200)
