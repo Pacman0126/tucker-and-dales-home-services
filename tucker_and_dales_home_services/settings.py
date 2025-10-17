@@ -155,3 +155,15 @@ GOOGLE_MAPS_SERVER_KEY = env("GOOGLE_MAPS_SERVER_KEY", default="")
 
 # --- Default Auto Field ---
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Staticfiles auto-detect for Heroku ---
+# If running on Heroku (no local .env), always collect static.
+# If running locally with .env, disable collectstatic.
+
+if not (BASE_DIR / ".env").exists():
+    # Heroku / production
+    os.environ.setdefault("DISABLE_COLLECTSTATIC", "0")
+else:
+    # Local development
+    os.environ.setdefault("DISABLE_COLLECTSTATIC", "1")
+    print("🧩 Local dev mode: collectstatic disabled for speed.")
