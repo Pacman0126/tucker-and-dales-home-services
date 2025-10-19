@@ -6,7 +6,6 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-  <!-- 🧾 Results -->
   {% if results %}
     {% for day, services in results.items %}
       <div class="card shadow-sm mb-4">
@@ -18,28 +17,32 @@
           {% for category, employees in services.items %}
             <div class="border rounded p-3 mb-3 bg-light">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold text-dark mb-0">{{ category }}</h6>
+                <h6 class="fw-bold text-dark mb-0">{{ category.name }}</h6>
 
                 {% if employees %}
-                  <!-- 🗺️ View Routes button -->
                   <button
                     type="button"
                     class="btn btn-warning btn-sm fw-semibold rounded-pill"
                     data-bs-toggle="modal"
                     data-bs-target="#mapModal"
-                    data-routes-source="routes-json-{{ day|date:'Ymd' }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                    data-routes-source="routes-json-{{ day|date:'Ymd' }}-{{ category|slugify }}">
                     <i class="bi bi-geo-alt-fill me-1"></i> View Routes
                   </button>
                 {% endif %}
               </div>
 
               {% if employees %}
+                <!-- 🧩 Employee pills -->
                 <div class="d-flex flex-wrap gap-2 mb-3">
                   {% for emp in employees %}
                     <button
                       type="button"
                       class="btn btn-outline-success rounded-pill draggable-emp"
                       draggable="true"
+                      data-employee-id="{{ emp.id }}"
+                      data-service-id="{{ category.id }}"
+                      data-time-slot-id="{{ request.GET.time_slot }}"
+                      data-date="{{ day|date:'Y-m-d' }}"
                       data-empname="{{ emp.name }}"
                       data-start="{{ emp.route_origin|default:emp.home_address|escapejs }}"
                       data-end="{{ request.GET.customer_address|escapejs }}">
@@ -49,17 +52,17 @@
                   {% endfor %}
                 </div>
 
-                <!-- 🧩 Hidden JSON block for this category -->
-                <script id="routes-json-{{ day|date:'Ymd' }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" type="application/json">
-                [
-                  {% for emp in employees %}
-                    {
-                      "name": "{{ emp.name|escapejs }}",
-                      "start": "{{ emp.route_origin|default:emp.home_address|escapejs }}",
-                      "end": "{{ request.GET.customer_address|escapejs }}"
-                    }{% if not forloop.last %},{% endif %}
-                  {% endfor %}
-                ]
+                <!-- Hidden JSON for map modal -->
+                <script id="routes-json-{{ day|date:'Ymd' }}-{{ category|slugify }}" type="application/json">
+                  [
+                    {% for emp in employees %}
+                      {
+                        "name": "{{ emp.name|escapejs }}",
+                        "start": "{{ emp.route_origin|default:emp.home_address|escapejs }}",
+                        "end": "{{ request.GET.customer_address|escapejs }}"
+                      }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                  ]
                 </script>
 
               {% else %}
@@ -70,6 +73,12 @@
         </div>
       </div>
     {% endfor %}
+
+    <!-- 🛒 Cart component -->
+    <div class="mt-5">
+      {% include "scheduling/_cart.html" with cart=cart %}
+    </div>
+
   {% else %}
     <p class="text-center text-muted mt-5">
       No results yet — enter your search criteria in the toolbar above.
@@ -115,19 +124,17 @@
 
 {% block extra_js %}
 {{ block.super }}
+
+<!-- 🗺️ Map logic (identical to search_by_date) -->
 <script>
 let map, directionsService;
 let renderers = [];
 let lastBounds = null;
 
-// 🗺️ Initialize map safely after Google Maps is ready
 async function initMapWhenReady() {
   if (!window.gmapsReady || !window.google || !window.google.maps) {
-    console.warn("⏳ Waiting for Google Maps...");
     await new Promise(res => document.addEventListener("gmaps:ready", res, { once: true }));
   }
-
-  console.log("✅ Google Maps ready — initializing directions service");
   directionsService = new google.maps.DirectionsService();
   map = new google.maps.Map(document.getElementById("map"), {
     zoom: 10,
@@ -137,22 +144,18 @@ async function initMapWhenReady() {
   });
 }
 
-// 🎨 Distinct route colors
 function routeColor(i) {
   const colors = ["#FF5722","#03A9F4","#4CAF50","#FFC107","#9C27B0","#009688","#E91E63","#795548"];
   return colors[i % colors.length];
 }
 
-// 🧭 Build grouped routes from hidden JSON
-// 🧭 Group and draw routes — with custom colored markers
 function buildGroupedRoutes(sourceId) {
   const el = document.getElementById(sourceId);
-  if (!el || !map || !google.maps) return;
+  if (!el || !map) return;
 
   const routes = JSON.parse(el.textContent || "[]");
   if (!routes.length) return;
 
-  // Clear previous
   renderers.forEach(r => r.setMap(null));
   renderers = [];
   lastBounds = new google.maps.LatLngBounds();
@@ -167,133 +170,59 @@ function buildGroupedRoutes(sourceId) {
     grouped[key].push(r.name);
   });
 
-  const entries = Object.entries(grouped);
-  let pending = entries.length;
-
-  entries.forEach(([key, names], i) => {
+  Object.entries(grouped).forEach(([key, names], i) => {
     const [start, end] = key.split("|");
     const color = routeColor(i);
 
     const renderer = new google.maps.DirectionsRenderer({
       map,
-      suppressMarkers: true, // 🚫 disable default red/green pins
+      suppressMarkers: true,
       preserveViewport: true,
-      polylineOptions: {
-        strokeColor: color,
-        strokeOpacity: 0.9,
-        strokeWeight: 4,
-      },
+      polylineOptions: { strokeColor: color, strokeOpacity: 0.9, strokeWeight: 4 },
     });
     renderers.push(renderer);
 
     directionsService.route(
       { origin: start, destination: end, travelMode: google.maps.TravelMode.DRIVING },
       (res, status) => {
-        pending--;
         if (status === "OK" && res.routes[0]) {
           renderer.setDirections(res);
-
-          // extract endpoints
           const leg = res.routes[0].legs[0];
           if (leg) {
             const startLoc = leg.start_location;
             const endLoc = leg.end_location;
-
-            // 🟢 Custom start marker
             new google.maps.Marker({
               position: startLoc,
               map,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: color,
-                fillOpacity: 1,
-                strokeWeight: 1.5,
-                strokeColor: "#fff",
-              },
+              icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: color, fillOpacity: 1, strokeWeight: 1.5, strokeColor: "#fff" },
               title: `${names.join(", ")} — Start`,
             });
-
-            // 🔵 Custom end marker
-            // 🌟 Customer destination marker (star shape with bold pulse)
-            const destIconBase = {
-              path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z",
-              fillColor: color,
-              fillOpacity: 1,
-              strokeColor: "#ffffff",
-              strokeWeight: 1.5,
-              scale: 1.4,
-            };
-
-            const destMarker = new google.maps.Marker({
+            new google.maps.Marker({
               position: endLoc,
               map,
-              icon: destIconBase,
-              title: `${names.join(", ")} — Customer Destination`,
+              icon: { path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z", fillColor: color, fillOpacity: 1, strokeColor: "#fff", strokeWeight: 1.5, scale: 1.4 },
+              title: `${names.join(", ")} — Destination`,
               zIndex: 999,
             });
-
-            // ✨ Smooth pulse: double in size, then shrink back
-            (function smoothPulse(marker, baseIcon) {
-              const duration = 2000; // total animation duration (ms)
-              const fps = 60;
-              const totalFrames = Math.round((duration / 1000) * fps);
-              let frame = 0;
-
-              const pulse = setInterval(() => {
-                // 🧠 Create a natural sine-wave growth curve
-                const progress = frame / totalFrames;
-                const scaleFactor = 1 + Math.sin(progress * Math.PI) * 1.0; // peaks at 2.0×
-                marker.setIcon({ ...baseIcon, scale: baseIcon.scale * scaleFactor });
-                frame++;
-                if (frame >= totalFrames) {
-                  clearInterval(pulse);
-                  marker.setIcon(baseIcon); // return to normal size
-                }
-              }, 1000 / fps);
-            })(destMarker, destIconBase);
-
-
             lastBounds.extend(startLoc);
             lastBounds.extend(endLoc);
           }
-
-          // 🗒️ Add legend entry
-          legend.insertAdjacentHTML(
-            "beforeend",
-            `<li><span class="legend-swatch" style="background:${color}"></span> ${names.join(" + ")}</li>`
-          );
-        } else {
-          console.warn(`❌ Route failed for ${names.join(", ")}: ${status}`);
-        }
-
-        if (pending === 0 && !lastBounds.isEmpty()) {
-          map.fitBounds(lastBounds);
+          legend.insertAdjacentHTML("beforeend", `<li><span class="legend-swatch" style="background:${color}"></span> ${names.join(" + ")}</li>`);
         }
       }
     );
   });
 }
 
-
-// ✅ Bootstrap modal hooks
 document.addEventListener("DOMContentLoaded", async () => {
   await initMapWhenReady();
-
   const modal = document.getElementById("mapModal");
-  if (!modal) return;
-
   modal.addEventListener("show.bs.modal", e => {
     const src = e.relatedTarget?.getAttribute("data-routes-source");
-    console.log("🟢 Modal show event fired:", src);
     if (src) buildGroupedRoutes(src);
   });
-
   modal.addEventListener("shown.bs.modal", () => {
-    if (map) {
-      google.maps.event.trigger(map, "resize");
-      if (lastBounds && !lastBounds.isEmpty()) map.fitBounds(lastBounds);
-    }
+    if (map && lastBounds && !lastBounds.isEmpty()) map.fitBounds(lastBounds);
   });
 });
 </script>

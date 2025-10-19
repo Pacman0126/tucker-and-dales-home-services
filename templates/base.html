@@ -200,11 +200,16 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- 🧩 Navbar Cart Drag-Drop Logic -->
+  <!-- 🧩 Navbar Cart Drag-Drop Logic -->
   <script>
   document.addEventListener("DOMContentLoaded", () => {
     console.log("🧩 Navbar cart drop listener active");
 
-    const navCartZone = document.getElementById("nav-cart-zone");
+    // ✅ Accept either #nav-cart-zone (preferred) or #cart-icon (current markup)
+    const navCartZone =
+      document.getElementById("nav-cart-zone") ||
+      document.getElementById("cart-icon");
+
     const bookingSummary = document.getElementById("booking-summary");
     const cartCount = document.getElementById("cart-count");
     const csrftoken = document.cookie
@@ -238,6 +243,11 @@
         return;
       }
 
+      if (!data.employee_id || !data.service_category_id || !data.time_slot_id || !data.date) {
+        alert("Missing required data.");
+        return;
+      }
+
       try {
         const resp = await fetch("{% url 'scheduling:cart_add' %}", {
           method: "POST",
@@ -245,16 +255,15 @@
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
             "X-CSRFToken": csrftoken
           },
-          body: new URLSearchParams(data).toString()
+          body: new URLSearchParams(data)
         });
         const result = await resp.json();
-
         if (result.ok) {
-          console.log("✅ Added to cart:", result);
-          const count = result.count ?? 0;
+          // Update summary badges (count + subtotal)
+          const count = parseInt(result.item_count ?? result.count ?? 0, 10);
           const total = parseFloat(result.total ?? 0).toFixed(2);
-          bookingSummary.textContent = `(${count}) – ($${total})`;
-          cartCount.textContent = count;
+          if (bookingSummary) bookingSummary.textContent = `(${count}) – ($${total})`;
+          if (cartCount) cartCount.textContent = count;
         } else {
           alert(result.error || "Failed to add item to cart.");
         }
@@ -265,6 +274,29 @@
     });
   });
   </script>
+
+  <script>
+  /* ✅ Global dragstart for any .draggable-emp, works across re-renders */
+  document.addEventListener("dragstart", ev => {
+    const el = ev.target.closest('.draggable-emp[draggable="true"]');
+    if (!el) return;
+    const payload = {
+      employee_id: el.dataset.employeeId,
+      service_category_id: el.dataset.serviceId,
+      time_slot_id: el.dataset.timeSlotId,
+      date: el.dataset.date
+    };
+    try {
+      ev.dataTransfer.setData("application/json", JSON.stringify(payload));
+      ev.dataTransfer.setData("text/plain", "booking-item"); // Safari/Edge hint
+      ev.dataTransfer.effectAllowed = "copy";
+    } catch (e) {
+      console.warn("Drag payload set failed:", e);
+    }
+  });
+  </script>
+
+
 
   {% block extra_js %}{% endblock %}
 </body>

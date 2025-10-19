@@ -231,9 +231,10 @@ def cart_add(request):
                             {"cart": cart}, request=request)
     return JsonResponse({
         "ok": True,
-        "html": html,
+        "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
         "count": cart.items.count(),
-        "total": str(cart.total)
+        "total": str(cart.total),
+        "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"
     })
 
 
@@ -248,7 +249,10 @@ def cart_remove(request):
     item.delete()
     html = render_to_string("scheduling/_cart.html",
                             {"cart": cart}, request=request)
-    return JsonResponse({"ok": True, "html": html, "count": cart.items.count(), "total": str(cart.total)})
+    return JsonResponse({"ok": True,
+                         "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
+                         "total": str(cart.total),
+                         "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"})
 
 
 @require_POST
@@ -257,7 +261,12 @@ def cart_clear(request):
     cart.items.all().delete()
     html = render_to_string("scheduling/_cart.html",
                             {"cart": cart}, request=request)
-    return JsonResponse({"ok": True, "html": html, "count": 0, "total": "0.00"})
+    return JsonResponse({"ok": True,
+                         "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
+                         "count": 0,
+                         "total": "0.00",
+                         "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"
+                         })
 
 
 def cart_detail(request):
