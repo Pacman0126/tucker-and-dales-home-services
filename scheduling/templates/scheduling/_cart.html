@@ -1,27 +1,208 @@
+{% load static %}
 <!-- scheduling/_cart.html -->
-<div class="mt-5 p-4 border rounded bg-light text-center">
-  <h5>🛒 Drag Employees Here to Create a Booking</h5>
-  <div id="cart-dropzone" class="dropzone p-3 border border-dashed rounded"></div>
+
+<div class="card mt-4 shadow-sm">
+  <div class="card-header bg-light d-flex justify-content-between align-items-center">
+    <strong>🛒 Your Booking Cart</strong>
+    <span class="badge bg-dark">{{ cart.items.count }} items</span>
+  </div>
+
+  <div class="card-body">
+
+    {% if cart and cart.items.exists %}
+      <ul class="list-group mb-3" id="cart-item-list">
+        {% for item in cart.items.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">{{ item.service_category.name }}</div>
+              <div class="small text-muted">
+                {{ item.date }} — {{ item.time_slot.label }} — {{ item.employee.name }}
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-secondary">
+                ${{ item.unit_price|floatformat:2 }}
+              </span>
+              <button
+                class="btn btn-sm btn-outline-danger"
+                data-action="remove"
+                data-item-id="{{ item.id }}">
+                Remove
+              </button>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <!-- Totals -->
+      <div class="border-top pt-3 mt-2">
+        <div class="d-flex justify-content-between">
+          <span>Subtotal:</span>
+          <strong>${{ cart.subtotal|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>Sales Tax {{ SALES_TAX_RATE|floatformat:2 }}×:</span>
+          <strong>${{ cart.total|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-2 mt-2">
+          <span class="fw-bold">Total:</span>
+          <strong class="fs-5 text-success">${{ cart.total|floatformat:2 }}</strong>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-outline-secondary" id="cart-clear-btn">Clear Cart</button>
+        <a class="btn btn-success" href="{% url 'billing:checkout' %}">
+          Proceed to Checkout
+        </a>
+      </div>
+
+    {% else %}
+      <div class="alert alert-info mb-0">
+        Your cart is empty — drag available employees here 👇
+      </div>
+    {% endif %}
+
+    <hr class="my-4" />
+
+    <!-- Dropzone -->
+    <div
+      id="cart-dropzone"
+      class="p-4 border border-2 border-dashed rounded text-center"
+      style="min-height: 120px;">
+      <div class="text-muted">
+        Drag available employee pills here to add them to your cart
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-  // Shared drag-drop behavior
-  document.querySelectorAll(".draggable-emp").forEach(btn => {
-    btn.addEventListener("dragstart", e => {
-      e.dataTransfer.setData("text/plain", btn.dataset.empId);
+(function() {
+  // -----------------------------
+  // ⚙️ CSRF Helper
+  // -----------------------------
+  function getCookie(name) {
+    const cookies = document.cookie ? document.cookie.split('; ') : [];
+    for (let i = 0; i < cookies.length; i++) {
+      const parts = cookies[i].split('=');
+      const key = decodeURIComponent(parts[0]);
+      if (key === name) return decodeURIComponent(parts.slice(1).join('='));
+    }
+    return null;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // -----------------------------
+  // 🧩 Drag Source Setup
+  // -----------------------------
+  document.querySelectorAll('.draggable-emp[draggable="true"]').forEach(el => {
+    el.addEventListener('dragstart', ev => {
+      const payload = {
+        employee_id: el.dataset.employeeId,
+        service_category_id: el.dataset.serviceId,
+        time_slot_id: el.dataset.timeSlotId,
+        date: el.dataset.date
+      };
+      ev.dataTransfer.setData('application/json', JSON.stringify(payload));
+      ev.dataTransfer.effectAllowed = 'copy';
     });
   });
 
-  const dropzone = document.getElementById("cart-dropzone");
-  if (dropzone) {
-    dropzone.addEventListener("dragover", e => e.preventDefault());
-    dropzone.addEventListener("drop", e => {
-      e.preventDefault();
-      const empId = e.dataTransfer.getData("text/plain");
-      dropzone.innerHTML += `
-        <div class="alert alert-success mb-2">
-          Employee ${empId} added to booking
-        </div>`;
-    });
+  // -----------------------------
+  // 🧲 Dropzone Setup
+  // -----------------------------
+  const dropzone = document.getElementById('cart-dropzone');
+  if (!dropzone) return;
+
+  dropzone.addEventListener('dragover', ev => {
+    ev.preventDefault();
+    dropzone.classList.add('bg-light');
+    ev.dataTransfer.dropEffect = 'copy';
+  });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('bg-light'));
+
+  dropzone.addEventListener('drop', async ev => {
+    ev.preventDefault();
+    dropzone.classList.remove('bg-light');
+
+    let data;
+    try {
+      data = JSON.parse(ev.dataTransfer.getData('application/json'));
+    } catch (err) {
+      console.warn('Bad drop payload', err);
+      return;
+    }
+
+    if (!data.employee_id || !data.service_category_id || !data.time_slot_id || !data.date) {
+      alert('Missing required data on the dragged element.');
+      return;
+    }
+
+    try {
+      const response = await fetch("{% url 'scheduling:cart_add' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          "X-CSRFToken": csrftoken
+        },
+        body: new URLSearchParams(data).toString()
+      });
+      const result = await response.json();
+      if (result.ok) _replaceCartHTML(result.html);
+      else alert(result.error || "Failed to add item to cart.");
+    } catch (error) {
+      console.error(error);
+      alert("Network error while adding item.");
+    }
+  });
+
+  // -----------------------------
+  // 🧹 Remove / Clear Actions
+  // -----------------------------
+  document.addEventListener('click', async ev => {
+    const removeBtn = ev.target.closest('[data-action="remove"]');
+    if (removeBtn) {
+      ev.preventDefault();
+      const itemId = removeBtn.dataset.itemId;
+      const resp = await fetch("{% url 'scheduling:cart_remove' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          "X-CSRFToken": csrftoken
+        },
+        body: new URLSearchParams({ item_id: itemId })
+      });
+      const result = await resp.json();
+      if (result.ok) _replaceCartHTML(result.html);
+      else alert(result.error || "Failed to remove item.");
+    }
+
+    if (ev.target.id === 'cart-clear-btn') {
+      ev.preventDefault();
+      const resp = await fetch("{% url 'scheduling:cart_clear' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          "X-CSRFToken": csrftoken
+        }
+      });
+      const result = await resp.json();
+      if (result.ok) _replaceCartHTML(result.html);
+      else alert(result.error || "Failed to clear cart.");
+    }
+  });
+
+  // -----------------------------
+  // 🔁 Utility: Replace Cart HTML
+  // -----------------------------
+  function _replaceCartHTML(html) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    const newCard = wrapper.querySelector('.card');
+    const oldCard = document.querySelector('.card.mt-4.shadow-sm');
+    if (newCard && oldCard) oldCard.replaceWith(newCard);
   }
+})();
 </script>

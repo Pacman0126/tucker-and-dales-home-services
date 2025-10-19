@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="text-center mt-5">
-  <h2 class="text-success">✅ Payment Successful</h2>
-  <p>Thank you! Your payment has been received.</p>
-  <a href="{% url 'home' %}" class="btn btn-primary mt-3">Return Home</a>
+<div class="container py-5 text-center">
+  <h2 class="text-success mb-3">✅ Payment Successful!</h2>
+  <p>Your booking has been confirmed. You’ll receive an email receipt from Stripe.</p>
+  <a href="/" class="btn btn-outline-primary mt-3">Return to Home</a>
 </div>
 {% endblock %}

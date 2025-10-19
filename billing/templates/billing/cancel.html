@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="text-center mt-5">
-  <h2 class="text-danger">❌ Payment Canceled</h2>
-  <p>Your payment was not completed.</p>
-  <a href="{% url 'home' %}" class="btn btn-secondary mt-3">Try Again</a>
+<div class="container py-5 text-center">
+  <h2 class="text-warning mb-3">⚠️ Payment Canceled</h2>
+  <p>Your transaction was canceled. You can try again or modify your booking.</p>
+  <a href="/" class="btn btn-outline-secondary mt-3">Back to Home</a>
 </div>
 {% endblock %}
+

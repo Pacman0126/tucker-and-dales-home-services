@@ -26357,3 +26357,1741 @@ widget_tweaks
 [2025-10-17 19:57:15,922] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 304 0
 [2025-10-17 19:57:16,003] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16501
 [2025-10-17 19:57:16,124] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 304 0
+[2025-10-17 23:57:55,112] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-17 23:58:00,070] INFO django.server: "GET / HTTP/1.1" 200 5237
+[2025-10-17 23:58:00,136] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-17 23:58:12,119] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 18225
+[2025-10-17 23:58:12,169] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 304 0
+[2025-10-17 23:58:27,001] WARNING django.request: Not Found: /billing/checkout/
+[2025-10-17 23:58:27,001] WARNING django.server: "GET /billing/checkout/ HTTP/1.1" 404 4136
+[2025-10-17 23:58:27,052] WARNING django.request: Not Found: /favicon.ico
+[2025-10-17 23:58:27,053] WARNING django.server: "GET /favicon.ico HTTP/1.1" 404 2683
+[2025-10-18 00:16:25,506] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\billing\urls.py changed, reloading.
+[2025-10-18 00:16:26,591] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 00:16:41,065] INFO django.server: "GET /billing/checkout/ HTTP/1.1" 200 4236
+[2025-10-18 00:16:41,162] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16501
+[2025-10-18 00:16:41,235] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-18 00:17:21,108] INFO django.server: "GET / HTTP/1.1" 200 5237
+[2025-10-18 00:17:24,206] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 17797
+[2025-10-18 00:17:43,514] INFO scheduling.availability: Available employees:
+[2025-10-18 00:17:43,517] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:17:43,519] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:17:43,570] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 00:17:43,576] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 00:17:43,578] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 00:17:43,633] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:17:43,670] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 00:17:43,704] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 00:17:43,720] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 00:17:43,760] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 00:17:43,788] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 00:17:47,093] INFO scheduling.availability: Available employees:
+[2025-10-18 00:17:47,093] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 00:17:47,094] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 00:17:47,094] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 00:17:47,094] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:17:47,094] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 00:17:47,095] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 00:17:47,095] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 00:17:49,973] INFO scheduling.availability: Available employees:
+[2025-10-18 00:17:49,974] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:17:49,974] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:17:49,974] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:17:49,974] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 00:17:49,974] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 00:17:49,974] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:17:49,980] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 00:17:49,981] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 00:17:49,984] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 00:17:49,987] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 00:17:49,994] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 00:17:53,934] INFO scheduling.availability: Available employees:
+[2025-10-18 00:17:53,934] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:17:53,934] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:17:53,934] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 00:17:53,934] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 00:17:53,934] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 00:17:53,934] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:17:53,934] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 00:17:53,934] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 00:17:53,934] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 00:17:53,948] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 00:17:53,948] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 00:17:56,718] INFO scheduling.availability: Available employees:
+[2025-10-18 00:17:56,718] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 00:17:56,718] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 00:17:56,718] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 00:17:56,718] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 00:17:56,718] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:17:56,718] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 00:17:56,718] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 00:17:56,718] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 00:17:56,718] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 00:17:59,515] INFO scheduling.availability: Available employees:
+[2025-10-18 00:17:59,516] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:17:59,518] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:17:59,519] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:17:59,523] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 00:17:59,524] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 00:17:59,524] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:17:59,525] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 00:17:59,525] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 00:17:59,525] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 00:17:59,526] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 00:17:59,526] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 00:18:02,050] INFO scheduling.availability: Available employees:
+[2025-10-18 00:18:02,050] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:18:02,066] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:18:02,066] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 00:18:02,066] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 00:18:02,067] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 00:18:02,067] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:18:02,067] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 00:18:02,067] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 00:18:02,067] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 00:18:02,067] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 00:18:02,067] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 00:18:04,667] INFO scheduling.availability: Available employees:
+[2025-10-18 00:18:04,667] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 00:18:04,667] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 00:18:04,667] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 00:18:04,667] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 00:18:04,667] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:18:04,667] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 00:18:04,667] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 00:18:04,667] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 00:18:04,667] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 00:18:07,233] INFO scheduling.availability: Available employees:
+[2025-10-18 00:18:07,233] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:18:07,233] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:18:07,233] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:18:07,233] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 00:18:07,233] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 00:18:07,233] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:18:07,233] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 00:18:07,233] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 00:18:07,233] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 00:18:07,233] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 00:18:07,233] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 00:18:09,705] INFO scheduling.availability: Available employees:
+[2025-10-18 00:18:09,705] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:18:09,705] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:18:09,705] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 00:18:09,705] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 00:18:09,705] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 00:18:09,705] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:18:09,705] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 00:18:09,705] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 00:18:09,705] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 00:18:09,705] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 00:18:09,705] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 00:18:11,800] INFO scheduling.availability: Available employees:
+[2025-10-18 00:18:11,800] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 00:18:11,801] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 00:18:11,801] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 00:18:11,801] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 00:18:11,802] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:18:11,802] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 00:18:11,803] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 00:18:11,803] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 00:18:11,803] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 00:18:14,299] INFO scheduling.availability: Available employees:
+[2025-10-18 00:18:14,299] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 00:18:14,299] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:18:14,299] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 00:18:14,299] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 00:18:14,299] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 00:18:14,299] INFO scheduling.availability:  Available employees:
+[2025-10-18 00:18:14,299] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 00:18:14,299] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 00:18:14,299] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 00:18:14,299] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 00:18:14,299] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 00:18:14,542] INFO django.server: "GET /schedule/search/date/?date=2025-10-28&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 200 76197
+[2025-10-18 20:22:22,692] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:28:43,396] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py changed, reloading.
+[2025-10-18 20:28:44,228] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:30:47,973] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:35:09,095] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\core\constants.py changed, reloading.
+[2025-10-18 20:35:09,826] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:35:36,887] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\core\constants.py changed, reloading.
+[2025-10-18 20:35:37,632] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:36:04,670] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\core\constants.py changed, reloading.
+[2025-10-18 20:36:05,503] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:37:15,527] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\billing\views.py changed, reloading.
+[2025-10-18 20:37:16,378] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:37:22,824] INFO django.server: "GET / HTTP/1.1" 200 5084
+[2025-10-18 20:37:22,965] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16501
+[2025-10-18 20:37:22,976] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 200 1514243
+[2025-10-18 20:37:23,375] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-18 20:37:27,908] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 16318
+[2025-10-18 20:37:27,937] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-18 20:37:51,029] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 5573
+[2025-10-18 20:38:12,245] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5736
+[2025-10-18 20:38:45,616] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
+[2025-10-18 20:38:46,663] INFO django.server: "GET / HTTP/1.1" 200 5237
+[2025-10-18 20:38:54,499] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 16471
+[2025-10-18 20:39:08,406] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:08,406] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:39:08,406] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:39:08,406] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:08,407] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:08,407] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:08,407] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:39:08,408] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:39:08,408] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:39:08,408] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:39:10,697] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:10,697] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:39:10,697] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:10,698] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:39:10,698] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:10,698] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:10,698] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:39:10,699] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:39:10,699] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:39:10,699] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:39:13,544] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:13,544] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:13,544] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:13,544] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:39:13,544] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:39:13,544] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:13,544] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:39:13,544] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:39:13,544] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:39:13,544] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:39:15,644] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:15,644] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:39:15,644] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:39:15,644] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:15,644] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:15,644] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:15,644] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:39:15,644] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:39:15,644] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:39:15,644] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:39:18,180] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:18,180] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:39:18,180] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:18,180] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:39:18,180] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:39:18,180] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:18,180] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:18,180] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:39:18,180] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:39:18,180] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:39:18,180] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:39:18,180] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:39:20,816] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:20,817] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:20,817] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:20,817] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:39:20,817] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:39:20,818] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:20,818] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:39:20,818] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:39:20,818] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:39:20,819] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:39:23,288] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:23,288] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:39:23,288] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:39:23,288] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:39:23,289] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:23,289] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:23,289] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:23,289] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:39:23,290] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:39:23,290] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:39:23,290] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:39:23,291] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:39:25,808] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:25,808] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:39:25,808] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:25,809] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:39:25,809] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:39:25,809] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:25,810] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:25,810] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:39:25,810] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:39:25,810] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:39:25,810] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:39:25,810] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:39:27,909] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:27,909] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:27,909] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:27,909] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:39:27,909] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:39:27,909] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:27,909] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:39:27,909] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:39:27,909] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:39:27,925] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:39:30,328] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:30,328] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:39:30,329] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:39:30,329] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:39:30,330] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:30,330] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:30,330] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:30,331] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:39:30,331] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:39:30,331] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:39:30,331] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:39:30,332] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:39:32,802] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:32,803] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:39:32,803] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:39:32,803] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:39:32,804] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:39:32,804] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:39:32,804] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:32,806] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:39:32,806] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:39:32,806] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:39:32,806] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:39:32,807] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:39:36,182] INFO scheduling.availability: Available employees:
+[2025-10-18 20:39:36,182] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:39:36,182] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:36,183] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:39:36,183] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:39:36,183] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:39:36,183] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:39:36,183] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:39:36,183] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:39:36,184] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:39:36,184] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:39:36,184] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:39:36,708] ERROR django.request: Internal Server Error: /schedule/search/date/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py", line 62, in search_by_date
+    return render(
+           ^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\defaulttags.py", line 321, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 197, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 206, in select_template
+    return self.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 175, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 157, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 200, in compile_nodelist
+    return parser.parse()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 513, in parse
+    raise self.error(token, e)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 511, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\defaulttags.py", line 953, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 484, in parse
+    raise self.error(token, e)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 482, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 600, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 673, in __init__
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: Could not parse some characters: |(cart.subtotal||floatformat:2)|add:0
+[2025-10-18 20:39:36,724] ERROR django.server: "GET /schedule/search/date/?date=2025-10-21&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 500 356370
+[2025-10-18 20:39:36,986] WARNING django.request: Not Found: /favicon.ico
+[2025-10-18 20:39:36,987] WARNING django.server: "GET /favicon.ico HTTP/1.1" 404 2683
+[2025-10-18 20:45:19,027] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:19,028] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:45:19,028] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:45:19,028] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:19,028] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:19,029] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:19,029] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:45:19,029] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:45:19,029] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:45:19,030] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:45:21,388] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:21,388] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:45:21,388] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:21,388] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:45:21,389] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:21,389] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:21,389] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:45:21,389] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:45:21,390] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:45:21,390] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:45:24,396] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:24,396] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:24,396] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:24,396] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:45:24,396] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:45:24,396] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:24,396] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:45:24,396] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:45:24,396] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:45:24,396] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:45:26,529] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:26,529] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:45:26,529] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:45:26,529] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:26,529] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:26,529] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:26,529] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:45:26,529] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:45:26,529] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:45:26,529] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:45:29,264] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:29,264] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:45:29,264] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:29,264] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:45:29,265] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:45:29,265] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:29,265] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:29,266] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:45:29,266] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:45:29,266] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:45:29,266] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:45:29,267] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:45:31,831] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:31,833] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:31,833] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:31,833] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:45:31,833] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:45:31,834] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:31,834] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:45:31,834] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:45:31,834] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:45:31,835] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:45:34,728] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:34,728] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:45:34,728] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:45:34,728] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:45:34,728] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:34,728] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:34,728] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:34,728] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:45:34,728] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:45:34,728] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:45:34,728] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:45:34,728] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:45:37,199] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:37,200] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:45:37,200] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:37,200] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:45:37,201] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:45:37,201] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:37,201] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:37,201] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:45:37,202] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:45:37,202] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:45:37,202] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:45:37,202] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:45:39,722] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:39,723] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:39,723] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:39,723] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:45:39,723] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:45:39,724] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:39,724] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:45:39,724] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:45:39,725] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:45:39,725] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:45:42,212] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:42,212] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:45:42,212] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:45:42,212] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:45:42,212] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:42,212] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:42,212] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:42,212] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:45:42,212] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:45:42,212] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:45:42,212] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:45:42,212] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:45:45,040] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:45,041] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:45:45,041] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:45:45,041] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:45:45,042] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:45:45,042] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:45:45,042] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:45,042] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:45:45,042] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:45:45,042] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:45:45,042] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:45:45,042] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:45:47,626] INFO scheduling.availability: Available employees:
+[2025-10-18 20:45:47,626] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:45:47,627] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:47,627] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:45:47,627] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:45:47,627] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:45:47,627] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:45:47,628] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:45:47,628] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:45:47,628] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:45:47,628] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:45:47,628] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:45:48,228] ERROR django.request: Internal Server Error: /schedule/search/date/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py", line 62, in search_by_date
+    return render(
+           ^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\defaulttags.py", line 321, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 197, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 206, in select_template
+    return self.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 175, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 157, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 200, in compile_nodelist
+    return parser.parse()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 513, in parse
+    raise self.error(token, e)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 511, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\defaulttags.py", line 953, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 484, in parse
+    raise self.error(token, e)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 482, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 600, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 673, in __init__
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: Could not parse some characters: |(cart.total||floatformat:2)
+[2025-10-18 20:45:48,236] ERROR django.server: "GET /schedule/search/date/?date=2025-10-21&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 500 356536
+[2025-10-18 20:45:48,644] WARNING django.request: Not Found: /favicon.ico
+[2025-10-18 20:45:48,644] WARNING django.server: "GET /favicon.ico HTTP/1.1" 404 2683
+[2025-10-18 20:46:11,451] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:46:16,027] INFO django.server: "GET / HTTP/1.1" 200 5237
+[2025-10-18 20:46:21,486] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 16471
+[2025-10-18 20:46:33,354] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:33,354] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:33,354] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:33,354] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:46:33,354] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:46:33,354] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:33,354] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:46:33,354] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:46:33,354] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:46:33,354] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:46:36,302] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:36,302] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:46:36,302] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:46:36,302] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:46:36,302] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:46:36,302] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:46:36,302] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:36,302] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:46:36,302] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:46:36,302] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:46:36,302] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:46:36,302] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:46:38,487] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:38,487] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:38,488] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:38,488] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:38,488] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:46:38,489] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:38,489] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:46:38,489] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:46:38,490] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:46:38,490] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:46:41,053] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:41,053] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:41,053] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:41,053] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:46:41,053] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:46:41,053] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:41,053] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:46:41,053] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:46:41,053] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:46:41,053] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:46:43,452] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:43,452] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:46:43,452] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:46:43,452] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:46:43,452] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:46:43,452] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:46:43,452] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:43,467] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:46:43,467] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:46:43,467] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:46:43,467] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:46:43,468] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:46:45,843] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:45,844] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:45,844] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:45,844] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:45,845] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:46:45,845] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:46:45,845] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:45,846] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:46:45,846] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:46:45,846] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:46:45,846] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:46:45,847] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:46:47,985] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:47,985] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:47,985] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:47,985] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:46:47,985] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:46:47,985] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:47,985] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:46:47,985] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:46:47,985] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:46:47,985] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:46:50,067] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:50,067] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:46:50,067] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:46:50,067] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:46:50,067] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:46:50,067] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:50,067] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:46:50,067] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:46:50,067] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:46:50,067] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:46:52,401] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:52,401] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:52,401] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:52,401] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:52,401] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:46:52,401] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:46:52,401] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:52,401] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:46:52,401] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:46:52,401] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:46:52,401] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:46:52,401] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:46:54,401] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:54,401] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:54,401] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:54,401] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:46:54,401] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:46:54,401] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:54,401] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:46:54,401] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:46:54,401] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:46:54,401] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:46:56,717] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:56,717] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:46:56,717] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:46:56,717] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:46:56,717] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:46:56,717] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:46:56,717] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:56,717] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:46:56,717] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:46:56,717] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:46:56,717] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:46:56,717] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:46:59,668] INFO scheduling.availability: Available employees:
+[2025-10-18 20:46:59,668] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:46:59,668] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:59,669] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:46:59,669] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:46:59,669] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:46:59,670] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:46:59,670] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:46:59,671] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:46:59,671] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:46:59,671] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:46:59,671] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:47:00,230] ERROR django.request: Internal Server Error: /schedule/search/date/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py", line 62, in search_by_date
+    return render(
+           ^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\defaulttags.py", line 321, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 197, in render
+    template = context.template.engine.select_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 206, in select_template
+    return self.get_template(template_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 175, in get_template
+    template, origin = self.find_template(template_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\engine.py", line 157, in find_template
+    template = loader.get_template(name, skip=skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+           ^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 200, in compile_nodelist
+    return parser.parse()
+           ^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 513, in parse
+    raise self.error(token, e)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 511, in parse
+    compiled_result = compile_func(self, token)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\defaulttags.py", line 953, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 484, in parse
+    raise self.error(token, e)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 482, in parse
+    filter_expression = self.compile_filter(token.contents)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 600, in compile_filter
+    return FilterExpression(token, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 673, in __init__
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: Could not parse some characters: |(cart.total||floatformat:2)
+[2025-10-18 20:47:00,240] ERROR django.server: "GET /schedule/search/date/?date=2025-10-23&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 500 356297
+[2025-10-18 20:52:04,636] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 20:52:12,294] INFO django.server: "GET / HTTP/1.1" 200 5237
+[2025-10-18 20:52:16,599] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 16471
+[2025-10-18 20:52:30,322] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:30,323] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:30,323] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:30,323] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:52:30,324] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:30,324] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:30,324] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:30,324] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:52:30,324] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:52:30,325] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:52:30,325] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:52:30,325] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:52:32,806] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:32,806] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:52:32,806] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:32,806] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:52:32,806] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:52:32,806] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:32,806] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:32,806] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:52:32,806] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:52:32,806] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:52:32,806] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:52:32,806] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:52:34,939] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:34,939] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:34,954] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:52:34,954] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:52:34,955] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:52:34,955] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:34,955] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:52:34,955] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:52:34,956] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:52:34,956] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:52:37,373] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:37,373] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:37,373] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:37,373] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:52:37,373] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:37,373] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:37,373] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:37,373] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:52:37,373] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:52:37,373] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:52:37,373] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:52:37,373] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:52:39,930] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:39,931] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:52:39,931] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:39,931] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:52:39,932] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:52:39,932] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:39,932] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:39,933] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:52:39,933] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:52:39,933] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:52:39,933] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:52:39,934] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:52:42,634] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:42,635] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:42,635] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:52:42,635] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:52:42,636] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:52:42,636] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:52:42,636] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:42,637] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:52:42,638] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:52:42,638] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:52:42,638] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:52:42,638] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:52:45,254] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:45,254] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:45,270] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:45,270] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:52:45,270] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:45,270] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:45,271] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:45,271] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:52:45,272] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:52:45,272] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:52:45,272] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:52:45,273] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:52:47,988] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:47,988] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:52:47,988] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:47,988] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:52:47,988] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:52:47,988] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:47,988] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:47,988] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:52:47,988] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:52:47,988] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:52:47,988] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:52:47,988] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:52:50,087] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:50,087] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:50,087] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:52:50,087] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:52:50,087] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:52:50,087] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:50,087] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:52:50,087] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:52:50,087] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:52:50,087] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:52:52,495] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:52,495] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:52,495] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:52,495] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 20:52:52,496] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:52,496] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:52,496] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:52,497] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 20:52:52,497] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 20:52:52,497] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 20:52:52,497] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 20:52:52,498] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 20:52:54,903] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:54,903] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 20:52:54,903] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 20:52:54,903] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 20:52:54,903] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 20:52:54,903] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 20:52:54,903] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:54,903] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 20:52:54,903] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 20:52:54,903] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 20:52:54,903] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 20:52:54,903] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 20:52:57,320] INFO scheduling.availability: Available employees:
+[2025-10-18 20:52:57,320] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 20:52:57,320] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:52:57,320] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 20:52:57,320] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 20:52:57,320] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 20:52:57,320] INFO scheduling.availability:  Available employees:
+[2025-10-18 20:52:57,320] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 20:52:57,320] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 20:52:57,320] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 20:52:57,320] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 20:52:57,320] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 20:52:57,969] INFO django.server: "GET /schedule/search/date/?date=2025-10-29&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 200 92784
+[2025-10-18 21:17:43,007] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py changed, reloading.
+[2025-10-18 21:17:43,829] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 21:22:45,069] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py changed, reloading.
+[2025-10-18 21:22:45,966] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 21:23:02,284] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:02,284] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:02,285] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:02,285] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:23:02,286] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:02,286] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:02,286] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:02,287] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:23:02,287] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:23:02,287] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:23:02,287] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:23:02,288] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:23:05,462] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:05,463] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:23:05,463] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:05,464] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:23:05,464] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:23:05,464] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:05,464] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:05,465] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:23:05,465] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:23:05,465] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:23:05,465] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:23:05,466] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:23:07,863] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:07,863] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:07,863] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:23:07,864] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:23:07,864] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:23:07,864] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:07,864] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:23:07,864] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:23:07,865] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:23:07,865] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:23:10,339] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:10,339] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:10,339] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:10,340] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:23:10,340] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:10,340] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:10,341] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:10,341] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:23:10,341] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:23:10,341] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:23:10,342] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:23:10,342] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:23:12,775] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:12,775] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:23:12,775] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:12,775] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:23:12,776] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:23:12,776] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:12,776] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:12,777] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:23:12,777] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:23:12,777] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:23:12,777] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:23:12,778] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:23:15,514] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:15,515] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:15,515] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:23:15,515] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:23:15,516] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:23:15,516] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:23:15,516] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:15,517] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:23:15,517] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:23:15,518] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:23:15,518] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:23:15,518] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:23:17,963] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:17,963] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:17,963] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:17,963] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:23:17,963] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:17,978] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:17,978] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:17,978] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:23:17,978] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:23:17,979] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:23:17,979] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:23:17,979] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:23:20,346] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:20,346] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:23:20,346] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:20,346] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:23:20,346] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:23:20,346] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:20,346] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:20,346] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:23:20,346] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:23:20,346] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:23:20,346] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:23:20,346] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:23:22,478] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:22,478] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:22,478] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:23:22,478] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:23:22,478] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:23:22,478] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:22,478] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:23:22,478] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:23:22,478] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:23:22,478] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:23:24,874] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:24,875] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:24,875] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:24,875] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:23:24,876] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:24,876] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:24,876] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:24,877] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:23:24,877] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:23:24,877] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:23:24,877] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:23:24,877] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:23:28,009] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:28,009] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:23:28,009] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:23:28,009] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:23:28,010] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:23:28,010] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:23:28,010] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:28,010] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:23:28,011] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:23:28,011] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:23:28,011] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:23:28,011] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:23:30,428] INFO scheduling.availability: Available employees:
+[2025-10-18 21:23:30,428] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:23:30,428] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:23:30,428] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:23:30,428] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:23:30,444] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:23:30,444] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:23:30,444] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:23:30,444] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:23:30,444] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:23:30,445] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:23:30,445] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:23:31,095] INFO django.server: "GET /schedule/search/date/?date=2025-10-29&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 200 92784
+[2025-10-18 21:23:31,161] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16501
+[2025-10-18 21:23:31,236] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-18 21:23:31,430] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-18 21:28:15,501] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py changed, reloading.
+[2025-10-18 21:28:16,650] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 21:28:29,677] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:29,678] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:29,678] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:29,678] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:28:29,678] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:29,678] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:29,679] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:29,679] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:28:29,679] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:28:29,679] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:28:29,680] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:28:29,680] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:28:32,737] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:32,737] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:28:32,737] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:32,737] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:28:32,737] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:28:32,737] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:32,737] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:32,737] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:28:32,737] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:28:32,737] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:28:32,737] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:28:32,737] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:28:35,187] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:35,187] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:35,187] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:28:35,188] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:28:35,188] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:28:35,188] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:35,188] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:28:35,188] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:28:35,188] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:28:35,189] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:28:37,787] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:37,787] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:37,787] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:37,787] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:28:37,787] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:37,787] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:37,787] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:37,787] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:28:37,787] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:28:37,787] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:28:37,787] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:28:37,787] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:28:40,570] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:40,570] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:28:40,570] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:40,570] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:28:40,570] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:28:40,570] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:40,570] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:40,570] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:28:40,570] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:28:40,570] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:28:40,570] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:28:40,570] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:28:43,557] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:43,558] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:43,558] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:28:43,558] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:28:43,558] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:28:43,559] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:28:43,559] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:43,559] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:28:43,559] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:28:43,559] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:28:43,560] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:28:43,560] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:28:46,083] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:46,085] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:46,085] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:46,085] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:28:46,085] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:46,085] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:46,085] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:46,086] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:28:46,086] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:28:46,086] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:28:46,088] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:28:46,088] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:28:48,719] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:48,719] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:28:48,719] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:48,719] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:28:48,719] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:28:48,719] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:48,719] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:48,719] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:28:48,719] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:28:48,719] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:28:48,719] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:28:48,719] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:28:50,986] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:50,986] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:50,986] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:28:50,986] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:28:50,986] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:28:50,986] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:50,986] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:28:50,986] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:28:50,986] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:28:50,986] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:28:53,565] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:53,565] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:53,566] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:53,566] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:28:53,566] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:53,567] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:53,567] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:53,567] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:28:53,567] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:28:53,568] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:28:53,568] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:28:53,568] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:28:56,084] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:56,084] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:28:56,085] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:28:56,085] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:28:56,085] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:28:56,085] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:28:56,086] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:56,086] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:28:56,086] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:28:56,086] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:28:56,087] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:28:56,087] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:28:58,636] INFO scheduling.availability: Available employees:
+[2025-10-18 21:28:58,636] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:28:58,636] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:28:58,636] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:28:58,637] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:28:58,637] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:28:58,637] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:28:58,637] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:28:58,637] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:28:58,638] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:28:58,638] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:28:58,638] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:28:59,248] INFO django.server: "GET /schedule/search/date/?date=2025-10-29&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 200 92784
+[2025-10-18 21:28:59,319] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16501
+[2025-10-18 21:28:59,336] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-18 21:28:59,649] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-18 21:29:34,305] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 21:29:39,929] INFO django.server: "GET / HTTP/1.1" 200 5237
+[2025-10-18 21:29:53,280] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-18 21:29:53,292] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 5573
+[2025-10-18 21:30:18,420] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5735
+[2025-10-18 21:30:38,339] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5735
+[2025-10-18 21:30:52,816] INFO django.server: "POST /accounts/login/ HTTP/1.1" 200 5735
+[2025-10-18 21:31:09,831] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
+[2025-10-18 21:31:10,845] INFO django.server: "GET / HTTP/1.1" 200 5237
+[2025-10-18 21:31:17,009] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 16471
+[2025-10-18 21:31:27,981] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:27,981] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:27,981] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:27,981] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:31:27,981] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:27,981] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:27,981] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:27,981] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:31:27,997] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:31:27,997] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:31:27,997] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:31:27,997] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:31:30,515] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:30,515] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:31:30,515] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:30,515] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:31:30,515] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:31:30,515] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:30,515] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:30,515] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:31:30,515] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:31:30,515] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:31:30,515] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:31:30,515] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:31:32,981] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:32,981] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:32,981] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:32,981] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:32,981] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:31:32,981] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:31:32,981] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:32,981] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:31:32,981] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:31:32,981] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:31:32,981] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:31:32,981] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:31:35,445] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:35,445] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:35,445] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:35,446] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:31:35,446] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:35,446] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:35,447] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:35,447] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:31:35,447] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:31:35,448] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:31:35,448] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:31:35,449] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:31:37,847] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:37,847] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:31:37,847] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:37,847] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:31:37,847] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:31:37,847] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:37,847] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:37,847] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:31:37,847] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:31:37,847] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:31:37,847] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:31:37,847] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:31:40,247] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:40,247] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:40,247] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:40,247] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:40,247] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:31:40,247] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:31:40,247] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:40,247] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:31:40,247] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:31:40,247] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:31:40,247] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:31:40,247] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:31:42,664] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:42,664] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:42,664] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:42,664] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:31:42,664] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:42,664] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:42,664] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:42,664] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:31:42,664] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:31:42,664] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:31:42,664] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:31:42,664] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:31:45,046] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:45,046] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:31:45,046] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:45,046] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:31:45,046] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:31:45,046] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:45,046] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:45,046] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:31:45,046] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:31:45,046] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:31:45,046] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:31:45,046] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:31:47,470] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:47,471] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:47,471] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:47,471] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:47,472] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:31:47,472] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:31:47,472] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:47,472] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:31:47,473] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:31:47,473] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:31:47,473] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:31:47,473] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:31:49,796] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:49,796] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:49,796] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:49,796] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 21:31:49,796] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:49,796] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:49,796] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:49,811] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 21:31:49,811] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 21:31:49,811] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 21:31:49,811] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 21:31:49,811] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 21:31:52,179] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:52,179] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 21:31:52,179] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 21:31:52,179] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 21:31:52,179] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 21:31:52,179] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 21:31:52,179] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:52,179] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 21:31:52,179] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 21:31:52,179] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 21:31:52,179] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 21:31:52,179] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 21:31:54,561] INFO scheduling.availability: Available employees:
+[2025-10-18 21:31:54,561] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 21:31:54,561] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:54,561] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 21:31:54,561] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 21:31:54,561] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 21:31:54,577] INFO scheduling.availability:  Available employees:
+[2025-10-18 21:31:54,577] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 21:31:54,577] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 21:31:54,577] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 21:31:54,577] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 21:31:54,577] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 21:31:55,145] INFO django.server: "GET /schedule/search/date/?date=2025-10-30&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 200 94754
+[2025-10-18 21:34:35,124] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-18 21:34:35,125] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-18 21:54:51,280] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 21:55:03,025] ERROR django.request: Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\core\views.py", line 10, in home
+    return render(request, "core/home.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\defaulttags.py", line 471, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\urls\resolvers.py", line 828, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'checkout' not found. 'checkout' is not a valid view function or pattern name.
+[2025-10-18 21:55:03,027] ERROR django.server: "GET / HTTP/1.1" 500 144690
+[2025-10-18 21:55:03,306] WARNING django.request: Not Found: /favicon.ico
+[2025-10-18 21:55:03,306] WARNING django.server: "GET /favicon.ico HTTP/1.1" 404 2683
+[2025-10-18 22:00:55,576] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\billing\urls.py changed, reloading.
+[2025-10-18 22:00:56,715] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 22:03:54,915] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\billing\urls.py changed, reloading.
+[2025-10-18 22:03:55,906] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 22:16:55,182] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\models.py changed, reloading.
+[2025-10-18 22:16:56,454] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 22:17:39,751] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-18 22:17:45,658] INFO django.server: "GET / HTTP/1.1" 200 7198
+[2025-10-18 22:17:54,411] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-18 22:17:56,651] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7542
+[2025-10-18 22:18:10,604] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
+[2025-10-18 22:18:12,011] INFO django.server: "GET / HTTP/1.1" 200 7198
+[2025-10-18 22:18:17,538] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 18713
+[2025-10-18 22:18:31,276] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:31,292] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:31,292] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:31,292] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 22:18:31,292] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:31,292] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:31,292] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:31,292] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 22:18:31,292] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 22:18:31,292] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 22:18:31,292] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 22:18:31,292] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 22:18:34,475] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:34,476] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 22:18:34,476] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:34,476] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 22:18:34,477] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 22:18:34,477] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:34,478] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:34,478] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 22:18:34,478] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 22:18:34,479] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 22:18:34,479] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 22:18:34,479] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 22:18:36,908] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:36,908] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:36,908] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 22:18:36,908] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 22:18:36,908] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 22:18:36,908] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:36,908] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 22:18:36,908] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 22:18:36,908] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 22:18:36,908] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 22:18:39,384] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:39,384] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:39,384] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:39,384] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 22:18:39,384] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:39,384] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:39,384] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:39,390] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 22:18:39,391] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 22:18:39,391] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 22:18:39,391] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 22:18:39,391] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 22:18:42,040] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:42,040] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 22:18:42,040] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:42,040] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 22:18:42,040] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 22:18:42,040] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:42,040] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:42,040] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 22:18:42,040] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 22:18:42,040] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 22:18:42,040] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 22:18:42,040] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 22:18:44,690] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:44,690] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:44,690] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 22:18:44,690] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 22:18:44,690] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 22:18:44,690] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 22:18:44,690] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:44,690] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 22:18:44,690] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 22:18:44,690] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 22:18:44,690] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 22:18:44,690] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 22:18:47,023] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:47,023] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:47,023] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:47,023] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 22:18:47,023] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:47,023] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:47,023] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:47,039] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 22:18:47,039] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 22:18:47,039] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 22:18:47,039] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 22:18:47,039] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 22:18:49,523] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:49,523] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 22:18:49,523] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:49,523] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 22:18:49,523] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 22:18:49,523] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:49,523] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:49,523] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 22:18:49,523] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 22:18:49,523] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 22:18:49,523] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 22:18:49,523] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 22:18:51,723] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:51,723] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:51,723] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 22:18:51,723] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 22:18:51,723] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 22:18:51,723] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:51,723] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 22:18:51,723] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 22:18:51,723] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 22:18:51,723] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 22:18:54,089] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:54,089] INFO scheduling.availability:   - Allison Anderson          | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:54,089] INFO scheduling.availability:   - Jacob Fletcher            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:54,089] INFO scheduling.availability:   - Jillian West              | 12 min | 5600 Ross Ave, Dallas, TX 75206
+[2025-10-18 22:18:54,089] INFO scheduling.availability:   - Justin Ramos              | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:54,089] INFO scheduling.availability:   - Samantha Roberts          | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:54,089] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:54,089] INFO scheduling.availability:    - Allison Anderson          | 26 min
+[2025-10-18 22:18:54,104] INFO scheduling.availability:    - Jacob Fletcher            | 26 min
+[2025-10-18 22:18:54,104] INFO scheduling.availability:    - Jillian West              | 12 min
+[2025-10-18 22:18:54,105] INFO scheduling.availability:    - Justin Ramos              | 27 min
+[2025-10-18 22:18:54,105] INFO scheduling.availability:    - Samantha Roberts          | 6 min
+[2025-10-18 22:18:56,455] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:56,455] INFO scheduling.availability:   - Jessica Patton            | 9 min  | 123 Greenville Ave, Dallas, TX 75206
+[2025-10-18 22:18:56,455] INFO scheduling.availability:   - Patricia Lawson           | 6 min  | 3500 Oak Lawn Ave, Dallas, TX 75219
+[2025-10-18 22:18:56,455] INFO scheduling.availability:   - Nicole Casey              | 23 min | 1000 Ballpark Way, Arlington, TX 76011
+[2025-10-18 22:18:56,455] INFO scheduling.availability:   - Dr. Kyle Jones            | 20 min | 400 W Campbell Rd, Richardson, TX 75080
+[2025-10-18 22:18:56,455] INFO scheduling.availability:   - Amy Carter                | 27 min | 2100 W Walnut St, Garland, TX 75042
+[2025-10-18 22:18:56,455] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:56,455] INFO scheduling.availability:    - Jessica Patton            | 9 min
+[2025-10-18 22:18:56,455] INFO scheduling.availability:    - Patricia Lawson           | 6 min
+[2025-10-18 22:18:56,455] INFO scheduling.availability:    - Nicole Casey              | 23 min
+[2025-10-18 22:18:56,455] INFO scheduling.availability:    - Dr. Kyle Jones            | 20 min
+[2025-10-18 22:18:56,455] INFO scheduling.availability:    - Amy Carter                | 27 min
+[2025-10-18 22:18:59,189] INFO scheduling.availability: Available employees:
+[2025-10-18 22:18:59,189] INFO scheduling.availability:   - Edward Acevedo            | 26 min | 8100 Preston Rd, Plano, TX 75024
+[2025-10-18 22:18:59,189] INFO scheduling.availability:   - Nancy Gutierrez           | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 22:18:59,189] INFO scheduling.availability:   - Thomas Webb               | 20 min | 3000 N Belt Line Rd, Irving, TX 75062
+[2025-10-18 22:18:59,189] INFO scheduling.availability:   - Lisa Hall                 | 11 min | 3900 Gaston Ave, Dallas, TX 75246
+[2025-10-18 22:18:59,189] INFO scheduling.availability:   - Matthew Burgess           | 28 min | 2601 Preston Rd, Frisco, TX 75034
+[2025-10-18 22:18:59,189] INFO scheduling.availability:  Available employees:
+[2025-10-18 22:18:59,189] INFO scheduling.availability:    - Edward Acevedo            | 26 min
+[2025-10-18 22:18:59,189] INFO scheduling.availability:    - Nancy Gutierrez           | 20 min
+[2025-10-18 22:18:59,189] INFO scheduling.availability:    - Thomas Webb               | 20 min
+[2025-10-18 22:18:59,189] INFO scheduling.availability:    - Lisa Hall                 | 11 min
+[2025-10-18 22:18:59,189] INFO scheduling.availability:    - Matthew Burgess           | 28 min
+[2025-10-18 22:19:00,007] INFO django.server: "GET /schedule/search/date/?date=2025-10-29&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 200 90046
+[2025-10-18 22:19:10,003] INFO django.server: "POST /schedule/cart/add/ HTTP/1.1" 200 6823

@@ -1,3 +1,8 @@
+"""
+billing/views.py
+Handles checkout, Stripe integration, payment tracking, and admin management.
+"""
+
 import json
 import stripe
 from decimal import Decimal
@@ -9,61 +14,150 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
+
+from core.constants import SERVICE_PRICES, SALES_TAX_RATE
 from .models import Payment
-from core.constants import SERVICE_PRICES, TAX_RATE
 
 
-# Create your views here.
-# configure stripe keys
+# ----------------------------------------------------------------------
+# ⚙️ Stripe Setup
+# ----------------------------------------------------------------------
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
+# ----------------------------------------------------------------------
+# 🏁 Simple Checkout Page (called by navbar burger)
+# ----------------------------------------------------------------------
 @login_required
 def checkout(request):
-    # Require profile completion first
-    if not hasattr(request.user, "customer_profile"):
-        return redirect("customers:complete_profile")
+    """
+    Renders the primary checkout page where the user confirms and pays.
+    This is the entry point triggered by the navbar burger icon.
+    """
+    context = {
+        "selected_services": [],
+        "hours": 0,
+        "subtotal": Decimal("0.00"),
+        "tax": Decimal("0.00"),
+        "total": Decimal("0.00"),
+    }
+    return render(request, "billing/checkout.html", context)
 
 
+# ----------------------------------------------------------------------
+# 🧾 Checkout Summary (pre-Stripe)
+# ----------------------------------------------------------------------
+@login_required
+def checkout_summary(request):
+    """
+    Displays a summary of selected services before Stripe payment.
+    """
+    selected_services = []
+    hours = 0
+    subtotal = Decimal("0.00")
+    tax = Decimal("0.00")
+    total = Decimal("0.00")
+
+    if request.method == "POST":
+        selected_services = request.POST.getlist("services[]")
+        hours = int(request.POST.get("hours", 2))  # default 2 hours
+
+        subtotal = sum(
+            Decimal(SERVICE_PRICES[s]) * hours for s in selected_services)
+        tax = (subtotal * Decimal(SALES_TAX_RATE)).quantize(Decimal("0.01"))
+        total = (subtotal + tax).quantize(Decimal("0.01"))
+
+        context = {
+            "selected_services": selected_services,
+            "hours": hours,
+            "subtotal": subtotal,
+            "tax": tax,
+            "total": total,
+        }
+        return render(request, "billing/checkout.html", context)
+
+    return render(request, "billing/checkout.html", {
+        "selected_services": selected_services,
+        "hours": hours,
+        "subtotal": subtotal,
+        "tax": tax,
+        "total": total,
+    })
+
+
+# ----------------------------------------------------------------------
+# 💳 Stripe Checkout Session
+# ----------------------------------------------------------------------
 @login_required
 def create_checkout_session(request):
-    """Create a Stripe Checkout Session and return its URL."""
+    """
+    Creates a Stripe Checkout Session and redirects to Stripe's hosted page.
+    """
+    if not hasattr(request.user, "registeredcustomer"):
+        return redirect("customers:register")
 
-    try:
-        # example: total from cart (replace with your basket total)
-        total_cents = 2500  # $25.00
+    if request.method == "POST":
+        selected_services = request.POST.getlist("services[]")
+        hours = int(request.POST.get("hours", 2))
 
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[{
-                "price_data": {
-                    "currency": settings.STRIPE_CURRENCY,
-                    "product_data": {"name": "Tucker & Dale’s Home Service"},
-                    "unit_amount": total_cents,
+        subtotal = sum(SERVICE_PRICES[s] * hours for s in selected_services)
+        tax = round(subtotal * SALES_TAX_RATE, 2)
+        total = round(subtotal + tax, 2)
+
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=["card"],
+                line_items=[
+                    {
+                        "price_data": {
+                            "currency": "usd",
+                            "product_data": {"name": "Selected Services"},
+                            "unit_amount": int(subtotal * 100),
+                        },
+                        "quantity": 1,
+                    },
+                    {
+                        "price_data": {
+                            "currency": "usd",
+                            "product_data": {"name": f"Sales Tax ({SALES_TAX_RATE*100:.2f}%)"},
+                            "unit_amount": int(tax * 100),
+                        },
+                        "quantity": 1,
+                    },
+                ],
+                mode="payment",
+                success_url=request.build_absolute_uri("/billing/success/"),
+                cancel_url=request.build_absolute_uri("/billing/cancel/"),
+                customer_email=request.user.email,
+                metadata={
+                    "user_id": request.user.id,
+                    "services": ",".join(selected_services),
+                    "subtotal": str(subtotal),
+                    "tax": str(tax),
+                    "total": str(total),
                 },
-                "quantity": 1,
-            }],
-            mode="payment",
-            success_url=request.build_absolute_uri("/billing/success/"),
-            cancel_url=request.build_absolute_uri("/billing/cancel/"),
-            customer_email=request.user.email,
-        )
+            )
 
-        # store in DB
-        Payment.objects.create(
-            user=request.user,
-            amount=total_cents,
-            status=Payment.Status.PROCESSING,
-            stripe_checkout_session_id=checkout_session.id,
-            description="Service Booking",
-        )
+            Payment.objects.create(
+                user=request.user,
+                amount=int(total * 100),
+                currency="usd",
+                status=Payment.Status.PROCESSING,
+                stripe_checkout_session_id=checkout_session.id,
+                description=f"Services: {', '.join(selected_services)}",
+            )
 
-        return JsonResponse({"sessionUrl": checkout_session.url})
+            return redirect(checkout_session.url, code=303)
 
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    return redirect("billing:checkout")
 
 
+# ----------------------------------------------------------------------
+# ✅ Payment Success / Cancel
+# ----------------------------------------------------------------------
 def payment_success(request):
     return render(request, "billing/success.html")
 
@@ -72,40 +166,39 @@ def payment_cancel(request):
     return render(request, "billing/cancel.html")
 
 
+# ----------------------------------------------------------------------
+# 🧾 Payment History (user)
+# ----------------------------------------------------------------------
 @login_required
 def payment_history(request):
-    """
-    Display the logged-in user's payment records.
-    """
     payments = Payment.objects.filter(
         user=request.user).order_by("-created_at")
     total_spent = payments.aggregate(Sum("amount"))["amount__sum"] or 0
 
-    context = {
+    return render(request, "billing/payment_history.html", {
         "payments": payments,
-        "total_spent": total_spent / 100,  # convert cents → dollars
-    }
-    return render(request, "billing/payment_history.html", context)
+        "total_spent": total_spent / 100,
+    })
 
 
+# ----------------------------------------------------------------------
+# 🧾 All Payments (admin)
+# ----------------------------------------------------------------------
 @user_passes_test(lambda u: u.is_superuser)
 def all_payments_admin(request):
-    """
-    Superuser-only dashboard for all payments.
-    """
     payments = Payment.objects.select_related("user").order_by("-created_at")
     total_volume = payments.aggregate(Sum("amount"))["amount__sum"] or 0
 
-    context = {
+    return render(request, "billing/all_payments_admin.html", {
         "payments": payments,
         "total_volume": total_volume / 100,
-    }
-    return render(request, "billing/all_payments_admin.html", context)
+    })
 
 
 @user_passes_test(lambda u: u.is_superuser)
 @require_POST
 def refund_payment(request, pk):
+    """Allows admin to issue Stripe refunds."""
     payment = get_object_or_404(Payment, pk=pk)
     try:
         payment.refund()
@@ -116,96 +209,42 @@ def refund_payment(request, pk):
     return redirect("billing:all_payments_admin")
 
 
+# ----------------------------------------------------------------------
+# 🌐 Stripe Webhook Listener
+# ----------------------------------------------------------------------
 @csrf_exempt
 def stripe_webhook(request):
     """
-    Receives and handles Stripe webhook events (payment + refund updates).
+    Receives events from Stripe (payment succeeded, refund, failure, etc.)
     """
     payload = request.body
-    sig_header = request.headers.get("Stripe-Signature", None)
+    sig_header = request.headers.get("Stripe-Signature")
     endpoint_secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", None)
 
     try:
         if endpoint_secret:
             event = stripe.Webhook.construct_event(
-                payload, sig_header, endpoint_secret
-            )
+                payload, sig_header, endpoint_secret)
         else:
             event = stripe.Event.construct_from(
-                json.loads(payload), stripe.api_key
-            )
-    except Exception as e:
+                json.loads(payload), stripe.api_key)
+    except Exception:
         return HttpResponse(status=400)
 
     event_type = event["type"]
     data = event["data"]["object"]
 
-    # --- Handle events ---
     if event_type == "payment_intent.succeeded":
         Payment.objects.filter(
-            stripe_payment_intent_id=data["id"]
-        ).update(status="succeeded")
+            stripe_payment_intent_id=data["id"]).update(status="succeeded")
 
     elif event_type == "charge.refunded":
-        intent_id = data.get("payment_intent")
         Payment.objects.filter(
-            stripe_payment_intent_id=intent_id
+            stripe_payment_intent_id=data.get("payment_intent")
         ).update(status="refunded")
 
     elif event_type == "payment_intent.payment_failed":
         Payment.objects.filter(
-            stripe_payment_intent_id=data["id"]
-        ).update(status="canceled")
+            stripe_payment_intent_id=data["id"]).update(status="canceled")
 
     return HttpResponse(status=200)
-
-
-@login_required
-def create_checkout_session(request):
-    if request.method == "POST":
-        selected_services = request.POST.getlist(
-            "services[]")  # e.g. ["house_cleaning", "lawncare"]
-        hours = int(request.POST.get("hours", 2))  # default 2 hours per block
-
-        subtotal = sum(SERVICE_PRICES[s] * hours for s in selected_services)
-        tax = round(subtotal * TAX_RATE, 2)
-        total = round(subtotal + tax, 2)
-
-        stripe.api_key = settings.STRIPE_SECRET_KEY
-
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[
-                {
-                    "price_data": {
-                        "currency": "usd",
-                        "product_data": {"name": ", ".join(selected_services)},
-                        "unit_amount": int(total * 100),  # in cents
-                    },
-                    "quantity": 1,
-                }
-            ],
-            mode="payment",
-            success_url=request.build_absolute_uri("/billing/success/"),
-            cancel_url=request.build_absolute_uri("/billing/cancel/"),
-            metadata={
-                "user_id": request.user.id,
-                "services": ",".join(selected_services),
-                "subtotal": str(subtotal),
-                "tax": str(tax),
-                "total": str(total),
-            },
-        )
-
-        Payment.objects.create(
-            user=request.user,
-            amount=int(total * 100),
-            currency="usd",
-            status=Payment.Status.PROCESSING,
-            stripe_checkout_session_id=checkout_session.id,
-            description=f"Services: {', '.join(selected_services)}"
-        )
-
-        return redirect(checkout_session.url, code=303)
-
-    return render(request, "billing/checkout.html")

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Checkout | Tucker & Dale's Home Services{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h2 class="mb-4">Checkout Summary</h2>
+
+  {% if selected_services %}
+  <table class="table table-bordered w-75 mx-auto">
+    <thead class="table-light">
+      <tr>
+        <th>Service</th>
+        <th>Rate ($/hr)</th>
+        <th>Hours</th>
+        <th>Subtotal ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in selected_services %}
+      <tr>
+        <td>{{ s|title }}</td>
+        <td>{{ SERVICE_PRICES.s }}</td>
+        <td>{{ hours }}</td>
+        <td>{{ subtotal }}</td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="3" class="text-end fw-bold">Sales Tax (8.25%)</td>
+        <td>{{ tax }}</td>
+      </tr>
+      <tr class="table-success">
+        <td colspan="3" class="text-end fw-bold">Total</td>
+        <td><strong>${{ total }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <form
+    method="post"
+    action="{% url 'billing:create_checkout_session' %}"
+    class="text-center mt-4"
+  >
+    {% csrf_token %}
+    {% for s in selected_services %}
+    <input type="hidden" name="services[]" value="{{ s }}">
+    {% endfor %}
+    <input type="hidden" name="hours" value="{{ hours }}">
+    <button type="submit" class="btn btn-primary btn-lg">
+      Proceed to Secure Payment
+    </button>
+  </form>
+
+  {% else %}
+  <p class="text-center text-muted">Your cart is empty.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
