@@ -91,6 +91,7 @@ def search_by_date(request):
             "form": form,
             "results": results,
             "cart": cart,
+            "navbar_mode": "booking",
             "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
         },
     )
@@ -135,6 +136,7 @@ def search_by_time_slot(request):
             "results": results,
             "time_slots": TimeSlot.objects.all(),
             "cart": cart,
+            "navbar_mode": "booking",
             "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
         },
     )

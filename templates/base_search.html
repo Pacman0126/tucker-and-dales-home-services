@@ -4,7 +4,7 @@
 {% block secondary_nav %}
 <!-- 🧭 Secondary Navbar (collapsible with loading overlay) -->
 <nav id="secondaryNavbar"
-  class="navbar navbar-expand-lg bg-light border-bottom fixed-top shadow-sm"
+  class="navbar secondary-navbar fixed-top shadow-sm"
   style="top:56px; z-index:1039;">
   <div class="container-fluid flex-wrap justify-content-between py-2">
 
@@ -79,7 +79,7 @@
   </div>
 </div>
 
-<style>
+{% comment %} <style>
 /* ----------------------------- */
 /* 🧱 Base layout + sticky rules */
 /* ----------------------------- */
@@ -150,7 +150,7 @@ body {
     width: 100%;
   }
 }
-</style>
+</style> {% endcomment %}
 
 <!-- ⚙️ Navbar Behavior Script -->
 <script>

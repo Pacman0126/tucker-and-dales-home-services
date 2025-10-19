@@ -57,57 +57,123 @@
 <body class="{% block body_class %}{% endblock %} d-flex flex-column">
 
   <!-- ✅ PRIMARY NAVBAR -->
+  {% comment %}
+  ====================================================================
+  PRIMARY NAVBAR — DYNAMIC BETWEEN "HOME" AND "BOOKING" MODES
+  ====================================================================
+  {% endcomment %}
+
+  {% if navbar_mode == "home" %}
+  <!-- 🏠 HOME NAVBAR -->
   <nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
-    <div class="container-fluid align-items-center justify-content-between">
+    <div class="container-fluid justify-content-between">
 
-      <!-- LEFT SECTION: booking summary -->
-      <div class="d-flex align-items-center">
-        <span id="booking-summary" class="text-white fw-semibold me-3">
-          ({{ cart_summary.item_count|default:0 }}) - (${{ cart_summary.subtotal|floatformat:2 }})
-        </span>
-      </div>
+      <!-- Left: Active Home pill -->
+      <a href="{% url 'home' %}"
+        class="btn btn-teal-highlight btn-sm fw-semibold px-3 active">
+        <i class="bi bi-house-door-fill me-1"></i> Home 
+      </a>
 
-      <!-- CENTER SECTION: Cart icon (drop target) -->
-      <div class="d-flex align-items-center">
-        <button
-          id="nav-cart-zone"
-          class="btn btn-warning btn-sm rounded-circle position-relative me-3"
-          title="Drag items here to add to your cart"
-        >
-          <i class="bi bi-cart3 fs-5"></i>
-          <span
-            id="cart-count"
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-          >{{ cart.items.count|default:0 }}</span>
-        </button>
-      </div>
-
-      <!-- RIGHT SECTION: burger and user -->
+      <!-- Right: Login / Logout + greeting -->
       <div class="d-flex align-items-center gap-2">
-        <!-- Burger → Checkout -->
-        <a class="btn btn-outline-light btn-sm" href="{% url 'billing:checkout' %}">
-          <i class="bi bi-list fs-5"></i>
-        </a>
-
         {% if user.is_authenticated %}
-          <a href="{% url 'billing:payment_history' %}" class="btn btn-outline-light btn-sm">
-            <i class="bi bi-receipt"></i> My Payments
+          <!-- Logout pill -->
+          <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-box-arrow-right me-1"></i> Logout
           </a>
-          {% if user.is_superuser %}
-            <a href="{% url 'billing:all_payments_admin' %}" class="btn btn-warning btn-sm">
-              <i class="bi bi-clipboard-data"></i> All Payments
-            </a>
-          {% endif %}
-          <span class="text-white small me-2">Hi, {{ user.username }}</span>
-          <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
+          <!-- Greeting -->
+          <span class="text-white small">Hi, {{ user.username }}</span>
         {% else %}
-          <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Login</a>
-          <a href="{% url 'customers:register' %}" class="btn btn-warning btn-sm">Register</a>
+          <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Login
+          </a>
         {% endif %}
       </div>
 
     </div>
   </nav>
+
+  {% elif navbar_mode == "booking" %}
+  <!-- 📅 BOOKING / SEARCH NAVBAR -->
+  <nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
+    <div class="container-fluid align-items-center justify-content-between">
+
+      <!-- Left group: (x)–($y) summary + burger -->
+      <div class="d-flex align-items-center">
+        <span id="booking-summary" class="text-white fw-semibold me-2">
+          ({{ cart_summary.item_count|default:0 }}) – (${{ cart_summary.subtotal|floatformat:2 }})
+        </span>
+
+        <!-- Burger dropdown -->
+        <div class="dropdown">
+          <button
+            class="btn btn-outline-light btn-sm"
+            type="button"
+            id="navbarBurgerDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarBurgerDropdown">
+            {% if user.is_authenticated %}
+              <li>
+                <a class="dropdown-item" href="{% url 'billing:payment_history' %}">
+                  <i class="bi bi-receipt"></i> My Payments
+                </a>
+              </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="{% url 'billing:checkout' %}">
+                <i class="bi bi-cart-check"></i> Go to Checkout
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'scheduling:search_by_date' %}">
+                <i class="bi bi-calendar-event"></i> Book a Service
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{% url 'home' %}">
+                <i class="bi bi-house"></i> Return Home
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Center/right group: Home + Cart -->
+      <div class="d-flex align-items-center gap-2">
+
+        <!-- Neutral Home pill (not highlighted) -->
+        <a href="{% url 'home' %}" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-house-fill"></i> Home
+        </a>
+
+        <!-- Cart icon -->
+        <button
+          id="cart-icon"
+          class="btn btn-warning btn-sm rounded-circle position-relative"
+          data-bs-toggle="modal"
+          data-bs-target="#cartModal"
+          aria-label="Open cart"
+        >
+          <i class="bi bi-cart3"></i>
+          <span
+            id="cart-count"
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+          >
+            {{ cart_summary.item_count|default:0 }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </nav>
+  {% endif %}
+
+
+
 
   <!-- ✅ SECONDARY NAVBAR (optional contextual bar for search pages) -->
   {% block secondary_nav %}{% endblock %}

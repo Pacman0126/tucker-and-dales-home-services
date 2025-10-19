@@ -28095,3 +28095,171 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'checkout' not found. 'checko
 [2025-10-18 22:18:59,189] INFO scheduling.availability:    - Matthew Burgess           | 28 min
 [2025-10-18 22:19:00,007] INFO django.server: "GET /schedule/search/date/?date=2025-10-29&customer_address=2101+Cedar+Springs+Rd%2C+Dallas%2C+TX+75201 HTTP/1.1" 200 90046
 [2025-10-18 22:19:10,003] INFO django.server: "POST /schedule/cart/add/ HTTP/1.1" 200 6823
+[2025-10-19 14:37:48,065] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-19 14:37:59,274] INFO django.server: "GET / HTTP/1.1" 200 7198
+[2025-10-19 14:37:59,315] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 14:38:05,239] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-19 14:38:07,510] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7542
+[2025-10-19 14:38:17,904] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
+[2025-10-19 14:38:19,339] INFO django.server: "GET / HTTP/1.1" 200 7198
+[2025-10-19 14:39:19,298] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 14:39:19,298] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 14:42:24,986] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 14:42:24,987] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 14:42:40,840] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 18713
+[2025-10-19 14:42:40,890] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 14:42:40,892] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 14:43:42,145] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 14:43:42,145] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 14:43:42,242] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 14:43:42,242] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 14:55:32,469] INFO django.server: "GET / HTTP/1.1" 200 7634
+[2025-10-19 14:55:32,507] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 14:55:32,508] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 14:55:32,649] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16501
+[2025-10-19 14:55:32,668] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 200 1514243
+[2025-10-19 14:55:32,934] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 15:34:49,505] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py changed, reloading.
+[2025-10-19 15:34:50,471] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-19 15:37:53,885] INFO django.server: "GET / HTTP/1.1" 200 6141
+[2025-10-19 15:37:53,925] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 15:37:53,926] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 15:37:53,996] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16637
+[2025-10-19 15:37:54,027] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 200 1514243
+[2025-10-19 15:37:54,144] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 15:39:50,223] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19105
+[2025-10-19 15:39:50,283] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 15:39:50,290] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 15:39:50,290] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 15:53:19,348] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19693
+[2025-10-19 15:53:19,370] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16904
+[2025-10-19 15:53:19,377] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 15:53:19,377] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 15:53:19,386] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 15:53:21,457] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 15:58:12,349] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19693
+[2025-10-19 15:58:12,389] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16986
+[2025-10-19 15:58:12,401] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 15:58:12,402] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 15:58:12,441] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 15:58:12,842] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 15:59:38,088] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19693
+[2025-10-19 15:59:38,143] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16985
+[2025-10-19 15:59:38,151] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 15:59:38,153] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 15:59:38,175] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 15:59:38,562] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 16:00:30,235] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19693
+[2025-10-19 16:00:30,250] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16719
+[2025-10-19 16:00:30,267] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:00:30,268] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:00:30,321] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 16:00:30,653] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 16:01:00,853] INFO django.server: "GET / HTTP/1.1" 200 6218
+[2025-10-19 16:01:00,883] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:01:00,884] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:01:00,886] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 16:01:57,758] INFO django.server: "GET / HTTP/1.1" 200 6200
+[2025-10-19 16:01:57,792] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:01:57,793] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:01:57,801] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 16719
+[2025-10-19 16:01:57,817] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 200 1514243
+[2025-10-19 16:01:57,929] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 16:02:20,654] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19693
+[2025-10-19 16:02:20,710] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 16:02:20,723] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:02:20,725] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:02:39,944] INFO django.server: "GET / HTTP/1.1" 200 6200
+[2025-10-19 16:02:39,977] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 16:02:39,984] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:02:39,985] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:14:17,960] INFO django.server: "GET / HTTP/1.1" 200 6488
+[2025-10-19 16:14:17,986] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 17622
+[2025-10-19 16:14:17,995] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:14:17,996] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:14:18,011] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 200 1514243
+[2025-10-19 16:14:18,628] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 16:14:59,437] INFO django.server: "GET / HTTP/1.1" 200 6471
+[2025-10-19 16:14:59,468] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 17622
+[2025-10-19 16:14:59,474] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:14:59,476] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:14:59,488] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 200 1514243
+[2025-10-19 16:14:59,786] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 16:16:21,969] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19693
+[2025-10-19 16:16:22,001] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 16:16:22,011] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:16:22,012] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:25:37,515] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 19693
+[2025-10-19 16:25:37,536] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 18356
+[2025-10-19 16:25:37,545] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 16:25:37,546] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 16:25:37,556] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 16:25:39,386] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 17:02:08,776] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 18210
+[2025-10-19 17:02:08,811] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 19049
+[2025-10-19 17:02:08,821] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 17:02:08,822] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 17:02:08,861] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 17:02:09,078] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 17:17:06,258] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 18210
+[2025-10-19 17:17:06,280] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 20157
+[2025-10-19 17:17:06,303] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 17:17:06,304] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 17:17:06,371] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 17:17:06,699] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 17:17:49,804] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 17:17:49,849] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 17:17:49,851] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 17:17:49,851] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 17:24:44,634] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 17:24:44,663] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 20862
+[2025-10-19 17:24:44,673] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 17:24:44,673] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 17:24:44,762] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 17:24:47,047] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 17:35:00,219] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 17:35:00,257] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 21970
+[2025-10-19 17:35:00,270] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 17:35:00,271] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 17:35:00,347] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 17:35:00,722] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 17:48:13,173] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 17:48:13,202] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 23220
+[2025-10-19 17:48:13,221] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 17:48:13,221] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 17:48:13,290] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 17:48:13,635] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 17:50:32,070] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 17:50:32,097] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 23511
+[2025-10-19 17:50:32,103] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 17:50:32,103] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 17:50:32,138] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 17:50:32,509] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 18:02:02,363] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 18:02:02,637] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 24289
+[2025-10-19 18:02:02,645] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 18:02:02,645] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 18:02:02,671] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 18:02:03,017] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 18:07:13,165] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 18:07:13,201] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 25156
+[2025-10-19 18:07:13,222] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 18:07:13,223] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 18:07:13,294] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 18:07:13,635] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 18:10:04,281] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 18:10:04,307] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 24961
+[2025-10-19 18:10:04,320] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 18:10:04,320] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 18:10:04,374] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 18:10:04,691] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 18:16:13,180] INFO django.server: "GET /schedule/search/timeslot/ HTTP/1.1" 200 19683
+[2025-10-19 18:16:13,206] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 25182
+[2025-10-19 18:16:13,218] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 18:16:13,219] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794
+[2025-10-19 18:16:13,277] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-19 18:16:13,675] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-19 18:16:26,758] INFO django.server: "GET /schedule/search/date/ HTTP/1.1" 200 18210
+[2025-10-19 18:16:26,817] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-19 18:16:26,829] WARNING django.request: Not Found: /.well-known/appspecific/com.chrome.devtools.json
+[2025-10-19 18:16:26,830] WARNING django.server: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 2794

@@ -160,6 +160,22 @@ a:hover {
   color: #fff !important;
 }
 
+/* MOBILE-FIRST NAVBAR REFINEMENTS */
+@media (max-width: 420px) {
+  #booking-summary {
+    font-size: 0.85rem;
+    margin-right: 0.25rem;
+  }
+  .navbar .btn-sm {
+    padding: 0.25rem 0.45rem;
+    font-size: 0.8rem;
+  }
+  /* Always keep Home visible; just tighten spacing */
+  .navbar a.btn-outline-light.btn-sm {
+    padding-inline: 0.5rem;
+  }
+}
+
 
 /* Active page highlight */
 .navbar .nav-link.active {
@@ -167,6 +183,287 @@ a:hover {
   color: #fff !important;
 }
 
+/* --- 🔍 Secondary Navbar Global Styles --- */
+.secondary-navbar {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 0.4rem 0.5rem;
+  transition: all 0.35s ease;
+  overflow: hidden;
+}
+
+/* Collapsed state */
+.secondary-navbar.collapsed {
+  justify-content: center !important;
+  opacity: 0.95;
+  height: 60px;
+}
+.secondary-navbar.collapsed form,
+.secondary-navbar.collapsed .btn-group {
+  display: none !important;
+}
+.secondary-navbar.collapsed #newSearchBtn {
+  display: inline-block;
+}
+
+/* Hidden by default */
+#newSearchBtn { display: none; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .secondary-navbar .btn-group {
+    overflow-x: auto;
+    white-space: nowrap;
+    width: 100%;
+  }
+  .secondary-navbar .btn-group a {
+    flex: 0 0 auto;
+  }
+  .secondary-navbar form[role="search"] {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .secondary-navbar form[role="search"] input,
+  .secondary-navbar form[role="search"] select,
+  .secondary-navbar form[role="search"] button {
+    width: 100%;
+  }
+}
+
+/* ✅ Micro-tweak for narrow screens */
+@media (max-width: 368px) {
+  .secondary-navbar .btn {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.45rem;
+    line-height: 1.1;
+  }
+  .secondary-navbar .btn i {
+    font-size: 0.8rem;
+  }
+  .secondary-navbar {
+    padding: 0.25rem 0.3rem;
+  }
+}
+
+/* ------------------------------------------------------ */
+/* 🧭 Secondary Navbar Precision Fixes (369-383 & ≤368 px) */
+/* ------------------------------------------------------ */
+
+/* Fix micro overflow gap between 369-383 px */
+@media (min-width: 369px) and (max-width: 383px) {
+  .secondary-navbar .btn-group {
+    justify-content: center;       /* re-center horizontally */
+    gap: 0.25rem;                  /* slightly tighter spacing */
+    padding-inline: 0.25rem;       /* trim side padding */
+  }
+  .secondary-navbar .btn {
+    font-size: 0.8rem;             /* subtle downscale to fit */
+    padding: 0.3rem 0.5rem;
+  }
+}
+
+/* Center buttons and tighten below 368 px */
+@media (max-width: 368px) {
+  .secondary-navbar .btn-group {
+    justify-content: center;       /* center horizontally */
+    gap: 0.35rem;
+    width: 100%;
+  }
+  .secondary-navbar .btn {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.45rem;
+    line-height: 1.1;
+  }
+  .secondary-navbar .btn i {
+    font-size: 0.8rem;
+  }
+  .secondary-navbar {
+    padding: 0.25rem 0.3rem;
+  }
+}
+
+/* ------------------------------------------------------ */
+/* 🧭 Consistent Button Group Alignment */
+/* ------------------------------------------------------ */
+
+/* Default: center button group for all widths */
+.secondary-navbar .btn-group {
+  display: flex;
+  justify-content: center;     /* always center horizontally */
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+/* Prevent stretching on large screens */
+@media (min-width: 992px) {
+  .secondary-navbar .btn-group {
+    width: auto;               /* revert to natural size */
+    justify-content: center;   /* keep centered visually */
+    margin: 0 auto;            /* ensure centering in container */
+  }
+}
+
+/* ------------------------------------------------------ */
+/* Eliminate 384-389 px clipping */
+/* ------------------------------------------------------ */
+
+/* Re-establish base centering with padding awareness */
+.secondary-navbar .btn-group {
+  display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-inline: 0.25rem;   /* give breathing room at both edges */
+  box-sizing: border-box;
+}
+
+/* Tighten between 369-389 px to avoid fractional overflow */
+@media (min-width: 369px) and (max-width: 389px) {
+  .secondary-navbar .btn-group {
+    gap: 0.25rem;
+    padding-inline: 0.35rem;
+    justify-content: center;
+  }
+  .secondary-navbar .btn {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+  }
+}
+
+/* Still shrink + center ≤368 px (kept from before) */
+@media (max-width: 368px) {
+  .secondary-navbar .btn-group {
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+  }
+  .secondary-navbar .btn {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.45rem;
+    line-height: 1.1;
+  }
+}
+
+
+
+/* On wider tablets (≥768px) give a little breathing room */
+@media (min-width: 768px) {
+  .secondary-navbar form[role="search"] {
+    gap: 0.75rem;
+  }
+}
+
+/* ------------------------------------------------------ */
+/* 🧭 Secondary Navbar Form — fixed-width Search Button ≥576px */
+/* ------------------------------------------------------ */
+
+/* Base: stacked vertically on small screens */
+#secondaryNavbar form[role="search"] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  width: 100%;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+}
+
+/* ≥576px: one horizontal line */
+@media (min-width: 576px) {
+  #secondaryNavbar form[role="search"] {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    column-gap: 0.5rem !important;
+    width: 100%;
+  }
+
+  /* Date or Time Slot inputs */
+  #secondaryNavbar form[role="search"] input[type="date"],
+  #secondaryNavbar form[role="search"] select[name="time_slot"] {
+    flex: 0 1 150px !important;
+    min-width: 130px;
+    max-width: 190px;
+    height: 2rem;
+    font-size: 0.85rem;
+  }
+
+  /* Address field: main grower */
+  #secondaryNavbar form[role="search"] input[name="customer_address"] {
+    flex: 2 1 260px !important;
+    min-width: 180px;
+    max-width: 520px;
+    height: 2rem;
+    font-size: 0.85rem;
+  }
+
+  /* 🔍 Search button — truly fixed width and height */
+  #secondaryNavbar form[role="search"] button[type="submit"].btn {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    width: auto !important;           /* natural width */
+    max-width: 90px !important;
+    padding: 0.3rem 0.9rem !important; /* wider sides to balance pill shape */
+    font-size: 0.82rem !important;
+    line-height: 1.1 !important;
+    border-radius: 9999px !important;  /* 🟢 full stadium look */
+    height: 2rem !important;
+    align-self: center !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease-in-out;
+  }
+
+  #secondaryNavbar form[role="search"] button[type="submit"] i {
+    margin-right: 0.30rem;
+  }
+}
+
+  /* Subtle hover style */
+  #secondaryNavbar form[role="search"] button[type="submit"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+
+/* ≥768px: slightly roomier */
+@media (min-width: 768px) {
+  #secondaryNavbar form[role="search"] {
+    column-gap: 0.75rem !important;
+  }
+  #secondaryNavbar form[role="search"] input[type="date"],
+  #secondaryNavbar form[role="search"] select[name="time_slot"] {
+    max-width: 210px;
+  }
+  #secondaryNavbar form[role="search"] input[name="customer_address"] {
+    max-width: 640px;
+  }
+}
+
+
+
+/* ≥768px: add breathing room */
+@media (min-width: 768px) {
+  #secondaryNavbar form[role="search"] {
+    gap: 0.75rem;
+  }
+
+  #secondaryNavbar form[role="search"] input,
+  #secondaryNavbar form[role="search"] select {
+    max-width: 240px;
+  }
+}
+
+
+/* ≥768px: roomier layout */
+@media (min-width: 768px) {
+  #secondaryNavbar form[role="search"] {
+    gap: 0.75rem;
+  }
+}
 
 
 /* --- Context bar --- */
@@ -239,10 +536,38 @@ a:hover {
   transform: translateY(-1px);
 }
 
-/* .btn-accent:hover {
-  background-color: var(--color-accent-hover) !important;
-  border-color: var(--color-accent-hover) !important;
-} */
+/* --- Custom teal-transparent highlight for active Home pill --- */
+.btn-teal-highlight {
+  background: rgba(0, 200, 150, 0.35);
+  border: 1px solid rgba(0, 255, 200, 0.6);
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(0, 255, 200, 0.25);
+  backdrop-filter: blur(3px);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-teal-highlight:hover,
+.btn-teal-highlight:focus {
+  background: rgba(0, 255, 200, 0.45);
+  box-shadow: 0 0 10px rgba(0, 255, 200, 0.4);
+}
+
+/* Slight glow to emphasize "active" pill over dark navbar */
+.navbar-dark .btn-teal-highlight.active {
+  border-color: rgba(0, 255, 200, 0.8);
+}
+
+/* Tighten layout for home navbar at smaller widths */
+@media (max-width: 420px) {
+  .btn-teal-highlight {
+    padding-inline: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .navbar .btn-outline-light.btn-sm {
+    padding-inline: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
 
 /* ==============================
    Alerts
