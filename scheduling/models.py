@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.conf import settings
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 
 class ServiceCategory(models.Model):
@@ -110,9 +111,9 @@ class CartManager(models.Manager):
 
 class Cart(models.Model):
     """
-    A shopping/booking cart linked either to an authenticated user
-    or an anonymous session_key. Exactly one of (user, session_key)
-    should normally be set.
+    Represents a booking or shopping cart for a single customer session.
+    Each cart is tied to either a logged-in user or an anonymous session_key,
+    and optionally to a specific normalized address (address_key).
     """
 
     user = models.ForeignKey(
@@ -120,18 +121,28 @@ class Cart(models.Model):
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        related_name="carts"
+        related_name="carts",
     )
     session_key = models.CharField(
         max_length=40,
         null=True,
         blank=True,
-        db_index=True
+        db_index=True,
+        help_text="Anonymous session identifier for guests.",
     )
+    address_key = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Normalized address string for session-level cart isolation.",
+    )
+
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
-    objects = CartManager()
+    if TYPE_CHECKING:
+        from scheduling.models import CartItem
+        items: 'models.Manager[CartItem]'
 
     def __str__(self):
         owner = self.user or self.session_key or "anonymous"
@@ -142,24 +153,21 @@ class Cart(models.Model):
     # ----------------------------------------------------
     @property
     def subtotal(self) -> Decimal:
-        """
-        Sum of all cart item subtotals (before tax).
-        """
-        return sum((item.subtotal for item in self.items.all()), Decimal("0.00"))
+        """Sum of all item subtotals (PRE-TAX)."""
+        total = sum((item.subtotal for item in self.items.all()),
+                    Decimal("0.00"))
+        return total.quantize(Decimal("0.01"))
 
     @property
     def tax(self) -> Decimal:
-        """
-        Computed sales tax for the current subtotal.
-        """
+        """Tax computed once on total subtotal."""
         from core.constants import SALES_TAX_RATE
-        return (self.subtotal * Decimal(str(SALES_TAX_RATE))).quantize(Decimal("0.01"))
+        tax = self.subtotal * Decimal(str(SALES_TAX_RATE))
+        return tax.quantize(Decimal("0.01"))
 
     @property
     def total(self) -> Decimal:
-        """
-        Final amount including sales tax.
-        """
+        """Grand total = subtotal + tax."""
         return (self.subtotal + self.tax).quantize(Decimal("0.01"))
 
     # ----------------------------------------------------
@@ -171,7 +179,7 @@ class Cart(models.Model):
 
     @property
     def item_count(self) -> int:
-        """Convenience property used in navbar badge."""
+        """Convenience property for navbar badge count."""
         return self.items.count()
 
 
@@ -181,19 +189,34 @@ class CartItem(models.Model):
     Uniqueness prevents duplicate same-slot/employee entries in the same cart.
     """
     cart = models.ForeignKey(
-        Cart, on_delete=models.CASCADE, related_name="items")
+        "scheduling.Cart",
+        on_delete=models.CASCADE,
+        related_name="items",          # enables cart.items.all()
+    )
     service_category = models.ForeignKey(
-        "scheduling.ServiceCategory", on_delete=models.PROTECT)
+        "scheduling.ServiceCategory",
+        on_delete=models.PROTECT,      # prevent deletion if still referenced
+    )
     time_slot = models.ForeignKey(
-        "scheduling.TimeSlot", on_delete=models.PROTECT)
-    date = models.DateField()
+        "scheduling.TimeSlot",
+        on_delete=models.PROTECT,
+    )
     employee = models.ForeignKey(
-        "scheduling.Employee", on_delete=models.PROTECT)
+        "scheduling.Employee",
+        on_delete=models.PROTECT,
+    )
+    date = models.DateField()
 
-    # optional pricing; you can compute dynamically if you prefer
-    unit_price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    # --- Pricing fields ---
+    unit_price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+        help_text="Stored as PRE-TAX price per 2-hour service block.",
+    )
     quantity = models.PositiveIntegerField(default=1)
 
+    # --- Metadata ---
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -206,4 +229,4 @@ class CartItem(models.Model):
 
     @property
     def subtotal(self) -> Decimal:
-        return (self.unit_price or 0) * self.quantity
+        return (self.unit_price * self.quantity).quantize(Decimal("0.01"))

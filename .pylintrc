@@ -1,0 +1,73 @@
+[MASTER]
+# Enable Django ORM awareness
+load-plugins = pylint_django
+
+# Allow following symbolic links for virtualenvs
+ignore-paths = .venv
+
+# Files or directories to skip
+ignore = migrations,static,media,__pycache__
+
+# Recognize Django settings and manage.py context
+init-hook = 
+    import sys, os; sys.path.append(os.getcwd())
+
+[MESSAGES CONTROL]
+# Disable a few noisy rules that don't fit Django conventions
+disable =
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    no-member,                # handled via pylint-django anyway
+    too-many-arguments,
+    too-many-locals,
+    too-many-instance-attributes,
+    consider-using-f-string
+
+[TYPECHECK]
+# Django dynamically adds these attributes to model classes
+generated-members = 
+    objects,
+    DoesNotExist,
+    MultipleObjectsReturned,
+    id,
+    pk
+
+[FORMAT]
+# Style preferences
+max-line-length = 100
+indent-string = "    "
+expected-line-ending-format = LF
+
+[BASIC]
+good-names = 
+    i,
+    j,
+    k,
+    pk,
+    id,
+    qs,
+    rv,
+    db,
+    ex,
+    obj
+
+[REPORTS]
+output-format = colorized
+reports = no
+score = no
+
+[DESIGN]
+# Keep function and class size warnings at sane thresholds
+max-args = 10
+max-attributes = 12
+max-locals = 25
+
+[LOGGING]
+logging-format-style = new
+logging-modules = logging
+
+[IMPORTS]
+known-third-party = django,rest_framework
+

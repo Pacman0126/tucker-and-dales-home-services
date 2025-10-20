@@ -4,8 +4,9 @@ Handles checkout, Stripe integration, payment tracking, and admin management.
 """
 
 import json
-import stripe
 from decimal import Decimal
+import stripe
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -17,7 +18,7 @@ from django.db.models import Sum
 
 from core.constants import SERVICE_PRICES, SALES_TAX_RATE
 from .models import Payment
-
+f
 
 # ----------------------------------------------------------------------
 # ⚙️ Stripe Setup
@@ -49,40 +50,29 @@ def checkout(request):
 # ----------------------------------------------------------------------
 @login_required
 def checkout_summary(request):
-    """
-    Displays a summary of selected services before Stripe payment.
-    """
-    selected_services = []
-    hours = 0
-    subtotal = Decimal("0.00")
-    tax = Decimal("0.00")
-    total = Decimal("0.00")
+    cart = _get_or_create_cart(request)
+    if not cart.items.exists():
+        messages.warning(request, "Your cart is empty.")
+        return redirect("scheduling:search_by_date")
+
+    from .forms import CheckoutForm
 
     if request.method == "POST":
-        selected_services = request.POST.getlist("services[]")
-        hours = int(request.POST.get("hours", 2))  # default 2 hours
+        form = CheckoutForm(request.POST, user=request.user)
+        if form.is_valid():
+            request.session["billing_data"] = form.cleaned_data
+            return redirect("billing:create_checkout_session")
+    else:
+        form = CheckoutForm(user=request.user)
 
-        subtotal = sum(
-            Decimal(SERVICE_PRICES[s]) * hours for s in selected_services)
-        tax = (subtotal * Decimal(SALES_TAX_RATE)).quantize(Decimal("0.01"))
-        total = (subtotal + tax).quantize(Decimal("0.01"))
-
-        context = {
-            "selected_services": selected_services,
-            "hours": hours,
-            "subtotal": subtotal,
-            "tax": tax,
-            "total": total,
-        }
-        return render(request, "billing/checkout.html", context)
-
-    return render(request, "billing/checkout.html", {
-        "selected_services": selected_services,
-        "hours": hours,
-        "subtotal": subtotal,
-        "tax": tax,
-        "total": total,
-    })
+    context = {
+        "cart": cart,
+        "form": form,
+        "subtotal": cart.subtotal,
+        "tax": cart.tax,
+        "total": cart.total,
+    }
+    return render(request, "billing/checkout.html", context)
 
 
 # ----------------------------------------------------------------------
@@ -91,74 +81,93 @@ def checkout_summary(request):
 @login_required
 def create_checkout_session(request):
     """
-    Creates a Stripe Checkout Session and redirects to Stripe's hosted page.
+    Creates a Stripe Checkout Session from the current user's cart.
     """
-    if not hasattr(request.user, "registeredcustomer"):
-        return redirect("customers:register")
+    from scheduling.models import Cart
 
-    if request.method == "POST":
-        selected_services = request.POST.getlist("services[]")
-        hours = int(request.POST.get("hours", 2))
+    cart = Cart.objects.filter(
+        user=request.user).order_by("-updated_at").first()
+    if not cart or not cart.items.exists():
+        messages.info(request, "Your cart is empty.")
+        return redirect("scheduling:search_by_date")
 
-        subtotal = sum(SERVICE_PRICES[s] * hours for s in selected_services)
-        tax = round(subtotal * SALES_TAX_RATE, 2)
-        total = round(subtotal + tax, 2)
+    subtotal = cart.subtotal
+    tax = (subtotal * Decimal(str(SALES_TAX_RATE))).quantize(Decimal("0.01"))
+    total = (subtotal + tax).quantize(Decimal("0.01"))
 
-        try:
-            checkout_session = stripe.checkout.Session.create(
-                payment_method_types=["card"],
-                line_items=[
-                    {
-                        "price_data": {
-                            "currency": "usd",
-                            "product_data": {"name": "Selected Services"},
-                            "unit_amount": int(subtotal * 100),
-                        },
-                        "quantity": 1,
-                    },
-                    {
-                        "price_data": {
-                            "currency": "usd",
-                            "product_data": {"name": f"Sales Tax ({SALES_TAX_RATE*100:.2f}%)"},
-                            "unit_amount": int(tax * 100),
-                        },
-                        "quantity": 1,
-                    },
-                ],
-                mode="payment",
-                success_url=request.build_absolute_uri("/billing/success/"),
-                cancel_url=request.build_absolute_uri("/billing/cancel/"),
-                customer_email=request.user.email,
-                metadata={
-                    "user_id": request.user.id,
-                    "services": ",".join(selected_services),
-                    "subtotal": str(subtotal),
-                    "tax": str(tax),
-                    "total": str(total),
+    try:
+        line_items = [
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": "Selected Services"},
+                    "unit_amount": int(subtotal * 100),
                 },
+                "quantity": 1,
+            }
+        ]
+        if tax > 0:
+            line_items.append(
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {"name": "Sales Tax"},
+                        "unit_amount": int(tax * 100),
+                    },
+                    "quantity": 1,
+                }
             )
 
-            Payment.objects.create(
-                user=request.user,
-                amount=int(total * 100),
-                currency="usd",
-                status=Payment.Status.PROCESSING,
-                stripe_checkout_session_id=checkout_session.id,
-                description=f"Services: {', '.join(selected_services)}",
-            )
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=line_items,
+            mode="payment",
+            success_url=request.build_absolute_uri("/billing/success/"),
+            cancel_url=request.build_absolute_uri("/billing/cancel/"),
+            customer_email=request.user.email,
+            metadata={
+                "user_id": request.user.id,
+                "subtotal": str(subtotal),
+                "tax": str(tax),
+                "total": str(total),
+            },
+        )
 
-            return redirect(checkout_session.url, code=303)
+        Payment.objects.create(
+            user=request.user,
+            amount=int(total * 100),  # cents
+            currency="usd",
+            status=Payment.Status.PROCESSING,
+            stripe_checkout_session_id=checkout_session.id,
+            description="Cart checkout",
+        )
 
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+        return redirect(checkout_session.url, code=303)
 
-    return redirect("billing:checkout")
+    except Exception as e:
+        messages.error(request, f"Stripe error: {e}")
+        return redirect("billing:checkout")
 
 
 # ----------------------------------------------------------------------
 # ✅ Payment Success / Cancel
 # ----------------------------------------------------------------------
+@login_required
 def payment_success(request):
+    """
+    Renders success confirmation after Stripe payment
+    and clears the user's active cart.
+    """
+    from scheduling.models import Cart
+
+    # Clear cart items for this user
+    cart = Cart.objects.filter(
+        user=request.user).order_by("-updated_at").first()
+    if cart:
+        cart.items.all().delete()
+
+    messages.success(
+        request, "✅ Payment successful! Your cart has been cleared.")
     return render(request, "billing/success.html")
 
 

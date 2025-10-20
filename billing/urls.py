@@ -10,7 +10,7 @@ urlpatterns = [
     path("refund/<int:pk>/", views.refund_payment, name="refund_payment"),
 
     # 💳 Customer Checkout & Payments
-    path("checkout/", views.checkout, name="checkout"),
+    path("checkout/", views.checkout_summary, name="checkout"),
     path("create-checkout-session/", views.create_checkout_session,
          name="create_checkout_session"),
     path("success/", views.payment_success, name="payment_success"),

@@ -41,8 +41,8 @@
           <strong>${{ cart.subtotal|floatformat:2 }}</strong>
         </div>
         <div class="d-flex justify-content-between">
-          <span>Sales Tax:</span>
-          <strong>${{ cart.total|floatformat:2 }}</strong>
+          <span>Sales Tax ({{ SALES_TAX_RATE|floatformat:2 }}×):</span>
+          <strong>${{ cart.tax|floatformat:2 }}</strong>
         </div>
         <div class="d-flex justify-content-between border-top pt-2 mt-2">
           <span class="fw-bold">Total:</span>

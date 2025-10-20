@@ -17,7 +17,7 @@
           {% for category, employees in services.items %}
             <div class="border rounded p-3 mb-3 bg-light">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold text-dark mb-0">{{ category.name }}</h6>
+                <h6 class="fw-bold text-dark mb-0">{{ category.name|default:category }}</h6>
 
                 {% if employees %}
                   <button
@@ -40,8 +40,8 @@
                       class="btn btn-outline-success rounded-pill draggable-emp"
                       draggable="true"
                       data-employee-id="{{ emp.id }}"
-                      data-service-id="{{ category.id }}"
-                      data-time-slot-id="{{ request.GET.time_slot }}"
+                      data-service-id="{{ emp.service_category_id }}"
+                      data-time-slot-id="{{ emp.time_slot_id }}"
                       data-date="{{ day|date:'Y-m-d' }}"
                       data-empname="{{ emp.name }}"
                       data-start="{{ emp.route_origin|default:emp.home_address|escapejs }}"

@@ -17,14 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from core import views as core_views
+from scheduling import views as scheduling_views
 
 urlpatterns = [
+    # built-in login/password reset
+    path("accounts/logout/", core_views.custom_logout, name="logout"),
     path("accounts/", include("django.contrib.auth.urls")),
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
     path("billing/", include("billing.urls", namespace="billing")),
     path("customers/", include("customers.urls")),
     path("schedule/", include("scheduling.urls")),
     path("", core_views.home, name="home"),
-
-
 ]

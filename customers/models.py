@@ -1,11 +1,9 @@
 from django.db import models
-
-# Create your models here.
-
-
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+
+# Create your models here.
 
 
 class RegisteredCustomer(models.Model):

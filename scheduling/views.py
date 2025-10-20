@@ -1,8 +1,10 @@
-import datetime
 from decimal import Decimal
+import datetime
 from datetime import datetime as dt
 
-from django.shortcuts import render
+from django.contrib.auth import logout
+from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.http import JsonResponse
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -22,47 +24,44 @@ from .availability import get_available_employees
 
 
 # =========================================================
-# 🔎 SEARCH VIEWS
+#  SEARCH VIEWS
 # =========================================================
-def _get_or_create_cart(request):
-    """
-    Retrieve or initialize the user's active cart.
-    Works for both logged-in users and anonymous sessions.
-    """
-    if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.create()
-            session_key = request.session.session_key
-
-        cart = Cart.objects.filter(session_key=session_key).first()
-        if not cart:
-            cart = Cart.objects.create(session_key=session_key)
-            request.session["cart_id"] = cart.id
-
-    return cart
-
-
 def search_by_date(request):
     """
     Handles searching available employees for a given date and address.
-    Displays results grouped by time slot and service category.
-    Also provides an initialized Cart object for drag-and-drop additions.
+    Locks the first valid service address for the current session.
     """
-    form = SearchByDateForm(request.GET or None)
+    # --- get locked address (if any) ---
+    locked_address = get_service_address(request)
+
+    # --- initialize form, prefilling locked address if exists ---
+    form = SearchByDateForm(request.GET or None, user=request.user)
+    if locked_address and not form.data.get("customer_address"):
+        form.initial["customer_address"] = locked_address
+
     results = None
 
     if form.is_valid():
         date = form.cleaned_data["date"]
-        customer_address = form.cleaned_data["customer_address"]
+        customer_address = form.cleaned_data["customer_address"].strip()
 
-        # Retrieve all time slots and categories
+        # --- lock service address if not already locked ---
+        if not locked_address:
+            lock_service_address(request, customer_address)
+            locked_address = customer_address
+
+        # --- enforce address lock: ignore new input if changed ---
+        if locked_address and customer_address.lower() != locked_address.lower():
+            messages.warning(
+                request,
+                f" Service address is locked for this session: {locked_address}. "
+                "Start a new session to change it."
+            )
+            customer_address = locked_address
+
+        # --- build search results ---
         slots = TimeSlot.objects.all().order_by("id")
         categories = ServiceCategory.objects.all()
-
-        # Build nested results: { slot -> { category -> [employees] } }
         results = {
             slot: {
                 category: get_available_employees(
@@ -75,15 +74,12 @@ def search_by_date(request):
             }
             for slot in slots
         }
-
         print(
-            f"✅ DEBUG: Date={date}, Results built for {len(results)} time slots")
+            f" DEBUG: Date={date}, Locked={locked_address}, Results={len(results)} slots")
     else:
-        print(f"❌ DEBUG: Invalid form data: {form.errors}")
+        print(f" DEBUG: Invalid form: {form.errors}")
 
-    # Always provide a cart instance (for drag-and-drop functionality)
     cart = _get_or_create_cart(request)
-
     return render(
         request,
         "scheduling/search_by_date.html",
@@ -98,44 +94,80 @@ def search_by_date(request):
 
 
 def search_by_time_slot(request):
-    form = SearchByTimeSlotForm(request.GET or None)
+    """
+    Allows searching by time slot across next 28 days.
+    Respects locked service address for the session.
+    """
+    locked_address = get_service_address(request)
+
+    form = SearchByTimeSlotForm(request.GET or None, user=request.user)
+    if locked_address and not form.data.get("customer_address"):
+        form.initial["customer_address"] = locked_address
+
     results = None
 
     if form.is_valid():
         slot = form.cleaned_data["time_slot"]
-        customer_address = form.cleaned_data["customer_address"]
+        customer_address = form.cleaned_data["customer_address"].strip()
 
-        results = {}
+        # --- lock if not already locked ---
+        if not locked_address:
+            lock_service_address(request, customer_address)
+            locked_address = customer_address
+
+        # --- enforce lock ---
+        if locked_address and customer_address.lower() != locked_address.lower():
+            messages.warning(
+                request,
+                f" Service address is locked for this session: {locked_address}. "
+                "Start a new session to change it."
+            )
+            customer_address = locked_address
+
+        # --- build results for 28 days ---
         today = datetime.date.today()
         days = [today + datetime.timedelta(days=i) for i in range(28)]
-        all_categories = ServiceCategory.objects.all()
+        categories = ServiceCategory.objects.all()
 
+        results = {}
         for day in days:
             results[day] = {}
-            for category in all_categories:
-                results[day][category.name] = get_available_employees(
+            for category in categories:
+                employees = get_available_employees(
                     customer_address=customer_address,
                     date=day,
                     time_slot=slot,
                     service_category=category,
                 )
+                enriched = [
+                    {
+                        "id": emp.id,
+                        "name": emp.name,
+                        "home_address": emp.home_address,
+                        "drive_time": getattr(emp, "drive_time", None),
+                        "route_origin": getattr(emp, "route_origin", None),
+                        "service_category_id": category.id,
+                        "time_slot_id": slot.id,
+                        "date": day.strftime("%Y-%m-%d"),
+                    }
+                    for emp in employees
+                ]
+                results[day][category.name] = enriched
 
         print(
-            f"✅ DEBUG: VALID FORM slot={slot} addr={customer_address} results={len(results)}")
+            f" DEBUG: Slot={slot}, Locked={locked_address}, Days={len(results)}")
     else:
-        print(f"❌ DEBUG: INVALID FORM — errors={form.errors}")
+        print(f" DEBUG: Invalid form: {form.errors}")
 
-    # Pass the current cart to the template
     cart = _get_or_create_cart(request)
-
     return render(
         request,
         "scheduling/search_by_time_slot.html",
         {
             "form": form,
             "results": results,
-            "time_slots": TimeSlot.objects.all(),
             "cart": cart,
+            "time_slots": TimeSlot.objects.all(),
             "navbar_mode": "booking",
             "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
         },
@@ -158,24 +190,39 @@ def _ensure_session(request):
 
 
 def _get_or_create_cart(request):
-    """Return the active Cart for this request (user or session)."""
+    """Shared helper for both authenticated and anonymous carts."""
     if request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user)
-        return cart
-    session_key = _ensure_session(request)
-    cart, _ = Cart.objects.get_or_create(session_key=session_key, user=None)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        cart, _ = Cart.objects.get_or_create(
+            session_key=request.session.session_key)
     return cart
 
 
+def lock_service_address(request, address):
+    key = address.strip().lower()
+    request.session["service_address"] = key
+    request.session.modified = True
+    return key
+
+
+def get_service_address(request):
+    return request.session.get("service_address")
 # =========================================================
-# 🧩 CART VIEWS
+#  CART VIEWS
 # =========================================================
+
+
 @require_POST
 def cart_add(request):
     """
-    AJAX endpoint called when a pill is dropped into the cart.
-    Applies hourly rate and sales tax from core/constants.py
+    Adds a booking item to the cart.
+    Stores PRE-TAX unit_price; Cart handles tax in totals.
     """
+    from core.constants import SERVICE_PRICES, SALES_TAX_RATE
+
     cart = _get_or_create_cart(request)
 
     employee_id = request.POST.get("employee_id")
@@ -198,43 +245,39 @@ def cart_add(request):
     except (Employee.DoesNotExist, ServiceCategory.DoesNotExist, TimeSlot.DoesNotExist):
         return JsonResponse({"ok": False, "error": "Invalid reference."}, status=404)
 
-    # --------------------------------------------------------
-    # 💰 Look up base hourly rate from constants
-    # --------------------------------------------------------
-    base_rate = Decimal("0.00")
-    for key, value in SERVICE_PRICES.items():
-        if key.lower() in service.name.lower():
-            base_rate = Decimal(str(value))
-            break
+    # --- Pricing (PRE-TAX) ---
+    base_rate = Decimal(str(SERVICE_PRICES.get(service.name, 25.00)))
+    hours = Decimal("2")  # each slot = 2h block
+    unit_price_pre_tax = (base_rate * hours).quantize(Decimal("0.01"))
 
-    # Apply your sales tax multiplier
-    tax_multiplier = Decimal("1.00") + Decimal(str(SALES_TAX_RATE))
-    unit_price = (base_rate * tax_multiplier).quantize(Decimal("0.01"))
-
-    # --------------------------------------------------------
-    # 🧾 Create or update the cart item
-    # --------------------------------------------------------
+    # Create/update the item (store PRE-TAX price)
     item, created = CartItem.objects.get_or_create(
         cart=cart,
         employee=employee,
         service_category=service,
         time_slot=slot,
         date=date_obj,
-        defaults={"unit_price": unit_price, "quantity": 1},
+        defaults={"unit_price": unit_price_pre_tax, "quantity": 1},
     )
-
     if not created:
-        item.unit_price = unit_price  # update if changed
+        item.unit_price = unit_price_pre_tax
         item.save(update_fields=["unit_price"])
+
+    # Session persistence for guests
+    if not request.user.is_authenticated:
+        request.session.modified = True
 
     html = render_to_string("scheduling/_cart.html",
                             {"cart": cart}, request=request)
+    summary_text = f"({cart.items.count()}) - (${cart.total:.2f})"
+
     return JsonResponse({
         "ok": True,
-        "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
+        "html": html,
         "count": cart.items.count(),
-        "total": str(cart.total),
-        "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"
+        "subtotal": f"{cart.subtotal:.2f}",
+        "total": f"{cart.total:.2f}",
+        "summary_text": summary_text,
     })
 
 
@@ -274,3 +317,27 @@ def cart_detail(request):
     cart = _get_or_create_cart(request)
     get_token(request)  # ensure CSRF cookie
     return render(request, "scheduling/cart_detail.html", {"cart": cart})
+
+
+def logout_and_clear_cart(request):
+    """
+    Logs the user out and clears any associated cart.
+    Works for both authenticated and session-based carts.
+    """
+    try:
+        # delete authenticated user's cart(s)
+        if request.user.is_authenticated:
+            Cart.objects.filter(user=request.user).delete()
+        else:
+            # clear session cart if anonymous
+            if request.session.session_key:
+                Cart.objects.filter(
+                    session_key=request.session.session_key).delete()
+                request.session.flush()
+    except Exception as e:
+        print(f" Cart cleanup failed on logout: {e}")
+
+    logout(request)
+    messages.info(
+        request, "You have been logged out and your booking cart has been cleared.")
+    return redirect("home")
