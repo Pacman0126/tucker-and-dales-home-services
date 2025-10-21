@@ -71,7 +71,7 @@
       <!-- Left: Active Home pill -->
       <a href="{% url 'home' %}"
         class="btn btn-teal-highlight btn-sm fw-semibold px-3 active">
-        <i class="bi bi-house-door-fill me-1"></i> Home 
+        <i class="bi bi-house-door-fill me-1"></i> Home
       </a>
 
       <!-- Right: Login / Logout + greeting -->
@@ -85,7 +85,7 @@
           <span class="text-white small">Hi, {{ user.username }}</span>
         {% else %}
           <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
-            <i class="bi bi-box-arrow-in-right me-1"></i> Login
+            <i class="bi bi-box-arrow-in-right me-1"></i> Login (username or email)
           </a>
         {% endif %}
       </div>

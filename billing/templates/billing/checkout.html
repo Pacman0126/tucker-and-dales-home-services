@@ -6,6 +6,12 @@
 {% block content %}
 <div class="container py-5">
   <h2 class="mb-4">Checkout Summary</h2>
+    {% if service_address %}
+      <div class="alert alert-info">
+        <strong>Service Address:</strong> {{ service_address }}<br>
+        <strong>Billing Address:</strong> {{ billing_address }}
+      </div>
+    {% endif %}
 
   {% if cart and cart.items.exists %}
   <div class="table-responsive">

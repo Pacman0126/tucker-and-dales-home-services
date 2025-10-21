@@ -81,12 +81,19 @@ DATABASES = {
 }
 
 # --- Authentication ---
+AUTHENTICATION_BACKENDS = [
+    "core.backends.EmailOrUsernameModelBackend",  # custom backend
+    "django.contrib.auth.backends.ModelBackend",  # keep default
+]
+
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
 
 # --- I18N / TZ ---
 LANGUAGE_CODE = "en-us"

@@ -10,7 +10,7 @@ urlpatterns = [
     path("search/date/", views.search_by_date, name="search_by_date"),
     path("search/timeslot/", views.search_by_time_slot,
          name="search_by_time_slot"),
-    path("choose/", views.choose_search, name="choose_search"),
+    path("base-search/", views.base_search, name="base_search"),
 
     # =========================================================
     # 🛒 CART ROUTES

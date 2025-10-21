@@ -18,7 +18,7 @@ from django.db.models import Sum
 
 from core.constants import SERVICE_PRICES, SALES_TAX_RATE
 from .models import Payment
-f
+from scheduling.models import Cart
 
 # ----------------------------------------------------------------------
 # ⚙️ Stripe Setup
@@ -29,6 +29,21 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 # ----------------------------------------------------------------------
 # 🏁 Simple Checkout Page (called by navbar burger)
 # ----------------------------------------------------------------------
+def _get_or_create_cart(request):
+    """
+    Shared helper for retrieving the active cart.
+    Works for both logged-in users and anonymous sessions.
+    """
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        cart, _ = Cart.objects.get_or_create(
+            session_key=request.session.session_key)
+    return cart
+
+
 @login_required
 def checkout(request):
     """
@@ -50,13 +65,42 @@ def checkout(request):
 # ----------------------------------------------------------------------
 @login_required
 def checkout_summary(request):
+    """
+    Shows the cart summary before payment.
+    Auto-fills service/billing addresses from session or RegisteredCustomer.
+    """
     cart = _get_or_create_cart(request)
     if not cart.items.exists():
         messages.warning(request, "Your cart is empty.")
         return redirect("scheduling:search_by_date")
 
     from .forms import CheckoutForm
+    from customers.models import RegisteredCustomer
 
+    # --- Load address defaults ---
+    service_address = request.session.get("service_address")
+    billing_address = request.session.get("billing_address")
+
+    if not service_address or not billing_address:
+        try:
+            rc = RegisteredCustomer.objects.get(user=request.user)
+            if all([rc.street_address, rc.city, rc.state, rc.zipcode]):
+                full_addr = f"{rc.street_address}, {rc.city}, {rc.state} {rc.zipcode}"
+                service_address = service_address or full_addr
+                billing_address = billing_address or full_addr
+                request.session["service_address"] = service_address
+                request.session["billing_address"] = billing_address
+                request.session.modified = True
+            else:
+                messages.info(
+                    request, "Please complete your address details before checkout.")
+                return redirect("customers:complete_profile")
+        except RegisteredCustomer.DoesNotExist:
+            messages.info(
+                request, "Please complete your profile before checkout.")
+            return redirect("customers:complete_profile")
+
+    # --- Standard checkout form flow ---
     if request.method == "POST":
         form = CheckoutForm(request.POST, user=request.user)
         if form.is_valid():
@@ -71,13 +115,16 @@ def checkout_summary(request):
         "subtotal": cart.subtotal,
         "tax": cart.tax,
         "total": cart.total,
+        "service_address": service_address,
+        "billing_address": billing_address,
     }
     return render(request, "billing/checkout.html", context)
-
 
 # ----------------------------------------------------------------------
 # 💳 Stripe Checkout Session
 # ----------------------------------------------------------------------
+
+
 @login_required
 def create_checkout_session(request):
     """

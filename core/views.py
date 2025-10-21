@@ -21,3 +21,8 @@ def custom_logout(request):
     messages.info(
         request, "You've been logged out — your cart has been cleared.")
     return redirect("home")
+
+
+def base_search(request):
+    """Project-level landing page with search buttons."""
+    return render(request, "base_search.html")

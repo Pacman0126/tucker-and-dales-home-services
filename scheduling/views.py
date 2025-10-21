@@ -174,8 +174,12 @@ def search_by_time_slot(request):
     )
 
 
-def choose_search(request):
-    return render(request, "scheduling/choose_search.html")
+def base_search(request):
+    """
+    Landing page after profile completion or login.
+    Displays search options for available services.
+    """
+    return render(request, "base_search.html")
 
 
 # =========================================================

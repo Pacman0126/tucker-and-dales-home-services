@@ -11,13 +11,21 @@ class SearchByDateForm(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+
+        # Safely prefill service address from user's RegisteredCustomer profile
         if user and user.is_authenticated:
-            try:
-                rc = user.registeredcustomer
-                if rc.address:
-                    self.fields["customer_address"].initial = rc.address
-            except ObjectDoesNotExist:
-                pass
+            rc = getattr(user, "registeredcustomer", None)
+
+            # Fallback if related_name or object not found
+            if rc is None:
+                rc = RegisteredCustomer.objects.filter(user=user).first()
+
+            if rc:
+                # Prefer the full street address for service location
+                if rc.street_address:
+                    self.fields["customer_address"].initial = rc.street_address
+                elif rc.city:
+                    self.fields["customer_address"].initial = rc.city
 
 
 class SearchByTimeSlotForm(forms.Form):

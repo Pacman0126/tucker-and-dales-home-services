@@ -1,111 +1,84 @@
 from django import forms
-from .models import RegisteredCustomer
-from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
 
-class RegisteredCustomerForm(forms.ModelForm):
-    class Meta:
-        model = RegisteredCustomer
-        fields = [
-            "first_name",
-            "last_name",
-            "street_address",
-            "city",
-            "state",
-            "zipcode",
-            "phone",
-            "email",
-        ]
-        widgets = {
-            "first_name": forms.TextInput(attrs={
-                "class": "form-control mb-3",
-                "placeholder": "First name",
-                "autocomplete": "given-name",
-            }),
-            "last_name": forms.TextInput(attrs={
-                "class": "form-control mb-3",
-                "placeholder": "Last name",
-                "autocomplete": "family-name",
-            }),
-            "street_address": forms.TextInput(attrs={
-                "class": "form-control mb-3",
-                "placeholder": "Street address",
-                "autocomplete": "address-line1",
-            }),
-            "city": forms.TextInput(attrs={
-                "class": "form-control mb-3",
-                "placeholder": "City",
-                "autocomplete": "address-level2",
-            }),
-            "state": forms.TextInput(attrs={
-                "class": "form-control mb-3",
-                "placeholder": "State",
-                "autocomplete": "address-level1",
-            }),
-            "zipcode": forms.TextInput(attrs={
-                "class": "form-control mb-3",
-                "placeholder": "Zipcode",
-                "autocomplete": "postal-code",
-            }),
-            "phone": forms.TextInput(attrs={
-                "class": "form-control mb-3",
-                "placeholder": "Phone number",
-                "autocomplete": "tel",
-            }),
-            "email": forms.EmailInput(attrs={
-                "class": "form-control mb-3",
+class LoginOrRegisterForm(UserCreationForm):
+    """
+    Registration/login hybrid form.
+    - Allows existing usernames/emails (uniqueness handled in the view)
+    - Keeps Django’s password validation & field normalization
+    """
+
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(
+            attrs={
+                "class": "form-control",
                 "placeholder": "Email address",
                 "autocomplete": "email",
-            }),
-        }
-
-    def clean_phone(self):
-        p = self.cleaned_data.get("phone", "").strip()
-        if not any(ch.isdigit() for ch in p):
-            raise forms.ValidationError("Phone number must include digits.")
-        return p
-
-    def clean_email(self):
-        e = self.cleaned_data.get("email", "").strip()
-        if e and not e.endswith((".com", ".net", ".org")):  # simple example rule
-            raise forms.ValidationError(
-                "Email must be valid and end with .com, .net, or .org."
-            )
-        return e
-
-
-class CustomerProfileForm(forms.ModelForm):
-    class Meta:
-        model = RegisteredCustomer
-        fields = ["street_address", "city", "state", "zipcode", "phone"]
-        widgets = {
-            "street_address": forms.TextInput(attrs={"class": "form-control", "placeholder": "123 Main St"}),
-            "city": forms.TextInput(attrs={"class": "form-control"}),
-            "state": forms.TextInput(attrs={"class": "form-control"}),
-            "zipcode": forms.TextInput(attrs={"class": "form-control"}),
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
-        }
-
-
-class CustomerRegistrationForm(UserCreationForm):
-    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
-        "class": "form-control",
-        "placeholder": "Email address"
-    }))
-    first_name = forms.CharField(required=True, widget=forms.TextInput(attrs={
-        "class": "form-control",
-        "placeholder": "First name"
-    }))
-    last_name = forms.CharField(required=True, widget=forms.TextInput(attrs={
-        "class": "form-control",
-        "placeholder": "Last name"
-    }))
+            }
+        ),
+    )
+    first_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "First name",
+                "autocomplete": "given-name",
+            }
+        ),
+    )
+    last_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Last name",
+                "autocomplete": "family-name",
+            }
+        ),
+    )
 
     class Meta:
         model = User
-        fields = ["username", "first_name", "last_name",
-                  "email", "password1", "password2"]
+        fields = [
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "password1",
+            "password2",
+        ]
         widgets = {
-            "username": forms.TextInput(attrs={"class": "form-control", "placeholder": "Username"}),
+            "username": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Username",
+                    "autocomplete": "username",
+                }
+            ),
         }
+
+    def clean_username(self):
+        """
+        Disable built-in unique username enforcement.
+        Let the view decide whether to log in or create a new user.
+        """
+        username = self.cleaned_data.get("username", "").strip()
+        return username
+
+    def clean_email(self):
+        """
+        Normalize email without enforcing uniqueness.
+        """
+        return self.cleaned_data.get("email", "").strip().lower()
+
+    def validate_unique(self):
+        """
+        Override the model’s unique-field checks entirely.
+        (Django calls this during ModelForm.save())
+        """
+        # Intentionally skip uniqueness validation
+        return

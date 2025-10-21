@@ -28,4 +28,5 @@ urlpatterns = [
     path("customers/", include("customers.urls")),
     path("schedule/", include("scheduling.urls")),
     path("", core_views.home, name="home"),
+    path("base-search/", core_views.base_search, name="base_search"),
 ]

@@ -35143,3 +35143,522 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'checkout' not found. 'checko
 [2025-10-19 23:55:57,787] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
 [2025-10-19 23:56:10,465] INFO django.server: "POST /schedule/cart/add/ HTTP/1.1" 200 10920
 [2025-10-19 23:56:21,482] INFO django.server: "GET /billing/checkout/ HTTP/1.1" 200 8081
+[2025-10-20 17:22:10,144] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 17:23:49,115] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\billing\views.py changed, reloading.
+[2025-10-20 17:23:49,947] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 17:23:56,230] INFO django.server: "GET / HTTP/1.1" 200 7600
+[2025-10-20 17:23:56,281] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-20 17:24:18,827] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 17:24:18,831] INFO django.server: "GET / HTTP/1.1" 200 7475
+[2025-10-20 17:24:22,272] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 17:24:31,638] INFO django.server: "POST /accounts/login/ HTTP/1.1" 302 0
+[2025-10-20 17:24:32,642] INFO django.server: "GET / HTTP/1.1" 200 7600
+[2025-10-20 17:24:43,257] ERROR django.request: Internal Server Error: /schedule/search/date/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py", line 38, in search_by_date
+    form = SearchByDateForm(request.GET or None, user=request.user)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\forms.py", line 16, in __init__
+    rc = user.registeredcustomer
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\utils\functional.py", line 268, in inner
+    return func(_wrapped, *args)
+           ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'registeredcustomer'
+[2025-10-20 17:24:43,277] ERROR django.server: "GET /schedule/search/date/ HTTP/1.1" 500 84442
+[2025-10-20 17:24:43,491] WARNING django.request: Not Found: /favicon.ico
+[2025-10-20 17:24:43,492] WARNING django.server: "GET /favicon.ico HTTP/1.1" 404 2814
+[2025-10-20 17:25:45,220] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 17:25:51,378] INFO django.server: "GET / HTTP/1.1" 200 7600
+[2025-10-20 17:25:57,935] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 17:25:57,940] INFO django.server: "GET / HTTP/1.1" 200 7475
+[2025-10-20 17:25:59,276] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 17:26:03,466] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8278
+[2025-10-20 17:27:00,239] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 17:27:01,256] INFO django.server: "GET /customers/complete-profile/ HTTP/1.1" 200 7354
+[2025-10-20 17:30:14,546] ERROR django.request: Internal Server Error: /customers/complete-profile/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UniqueViolation: duplicate key value violates unique constraint "customers_registeredcustomer_user_id_key"
+DETAIL:  Key (user_id)=(1055) already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py", line 139, in complete_profile
+    profile.save()
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 814, in save
+    self.save_base(
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 877, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 1020, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 1061, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\query.py", line 1805, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1822, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "customers_registeredcustomer_user_id_key"
+DETAIL:  Key (user_id)=(1055) already exists.
+[2025-10-20 17:30:14,559] ERROR django.server: "POST /customers/complete-profile/ HTTP/1.1" 500 173852
+[2025-10-20 17:40:53,826] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-20 17:40:54,825] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 17:41:06,927] INFO django.server: "GET / HTTP/1.1" 200 7594
+[2025-10-20 17:41:12,929] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 17:41:12,934] INFO django.server: "GET / HTTP/1.1" 200 7475
+[2025-10-20 17:41:14,866] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 17:41:17,559] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8278
+[2025-10-20 17:41:54,604] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8443
+[2025-10-20 17:42:41,171] ERROR django.request: Internal Server Error: /customers/register/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UniqueViolation: duplicate key value violates unique constraint "customers_registeredcustomer_email_key"
+DETAIL:  Key (email)=(oliver.p.hartmann@gmail.com) already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py", line 106, in register
+    RegisteredCustomer.objects.create(
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\query.py", line 658, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 814, in save
+    self.save_base(
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 877, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 1020, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 1061, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\query.py", line 1805, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1822, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "customers_registeredcustomer_email_key"
+DETAIL:  Key (email)=(oliver.p.hartmann@gmail.com) already exists.
+[2025-10-20 17:42:41,181] ERROR django.server: "POST /customers/register/ HTTP/1.1" 500 179241
+[2025-10-20 17:52:02,044] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-20 17:52:02,944] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 18:26:05,999] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 18:26:11,179] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 18:26:11,223] INFO django.server: "GET /static/images/hero.png HTTP/1.1" 304 0
+[2025-10-20 18:26:25,746] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 18:26:28,446] ERROR django.request: Internal Server Error: /customers/register/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py", line 173, in register
+    form = RegistrationForm()
+           ^^^^^^^^^^^^^^^^
+NameError: name 'RegistrationForm' is not defined
+[2025-10-20 18:26:28,456] ERROR django.server: "GET /customers/register/ HTTP/1.1" 500 75364
+[2025-10-20 18:29:16,106] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-20 18:29:17,046] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 18:41:06,189] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 18:47:04,594] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 18:47:08,588] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 18:47:13,333] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 18:47:24,316] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 9122
+[2025-10-20 18:49:03,262] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 9380
+[2025-10-20 18:51:19,909] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 9498
+[2025-10-20 19:25:47,625] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-20 19:25:48,611] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 19:33:32,005] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 19:33:37,084] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 19:33:39,982] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 19:33:41,759] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 9122
+[2025-10-20 19:34:49,034] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 9380
+[2025-10-20 19:44:51,877] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-20 19:44:52,884] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 19:46:30,038] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 19:46:38,941] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 19:46:38,985] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-20 19:46:41,692] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 19:46:43,220] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 9122
+[2025-10-20 19:47:44,008] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 9380
+[2025-10-20 19:48:35,508] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 9444
+[2025-10-20 19:57:02,880] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 19:57:07,219] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 19:57:10,974] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 19:57:12,561] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 9122
+[2025-10-20 19:57:56,406] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 9380
+[2025-10-20 20:09:37,425] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 20:09:41,502] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 20:09:43,630] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 20:09:45,388] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8175
+[2025-10-20 20:10:10,964] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8342
+[2025-10-20 20:33:28,528] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 20:33:32,901] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 20:33:35,162] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 20:33:36,887] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 11410
+[2025-10-20 20:35:22,196] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8691
+[2025-10-20 20:35:36,566] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8809
+[2025-10-20 20:36:02,472] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8691
+[2025-10-20 20:40:37,969] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 20:40:46,844] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 20:40:49,145] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 20:40:51,470] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8221
+[2025-10-20 20:41:17,827] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8691
+[2025-10-20 20:52:22,768] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 20:52:27,158] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 20:52:29,510] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 20:52:31,495] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8221
+[2025-10-20 20:52:54,881] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8691
+[2025-10-20 20:54:50,570] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8691
+[2025-10-20 20:54:50,647] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 200 25182
+[2025-10-20 20:54:50,763] INFO django.server: "GET /static/images/subtle-white-feathers.png HTTP/1.1" 200 177395
+[2025-10-20 20:54:50,947] INFO django.server: "GET /static/favicon.ico HTTP/1.1" 200 15406
+[2025-10-20 20:56:19,703] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\forms.py changed, reloading.
+[2025-10-20 20:56:20,839] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 20:56:28,118] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 20:56:35,535] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 20:56:37,947] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8221
+[2025-10-20 20:57:11,094] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 20:57:12,109] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:09:23,980] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 21:09:29,770] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:09:34,601] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 21:09:34,616] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 21:09:36,029] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 21:09:37,939] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8819
+[2025-10-20 21:10:12,332] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 21:10:13,610] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:15:23,271] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 21:15:28,932] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:15:34,461] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 21:15:34,461] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 21:15:35,551] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 21:15:37,393] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8819
+[2025-10-20 21:16:15,075] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 21:16:16,080] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:40:13,910] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 21:40:19,559] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:40:23,533] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 21:40:23,537] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 21:40:25,163] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 21:40:26,817] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8917
+[2025-10-20 21:40:52,654] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 21:40:53,682] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:43:06,723] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 21:43:06,727] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 21:44:31,584] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 21:44:33,245] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8917
+[2025-10-20 21:45:01,357] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8711
+[2025-10-20 21:51:50,938] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-20 21:51:51,981] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 21:52:02,134] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 21:52:07,570] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 21:52:12,021] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 21:52:13,580] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8319
+[2025-10-20 21:52:40,245] INFO django.server: "POST /customers/register/ HTTP/1.1" 200 8711
+[2025-10-20 21:59:02,455] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 21:59:08,272] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 21:59:10,263] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 21:59:12,623] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8319
+[2025-10-20 21:59:37,663] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 21:59:38,679] INFO django.server: "GET / HTTP/1.1" 200 7595
+[2025-10-20 21:59:46,055] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 21:59:46,065] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 21:59:47,903] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 21:59:49,690] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8917
+[2025-10-20 22:43:09,021] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 22:43:12,745] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 22:43:16,567] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 22:43:23,137] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8319
+[2025-10-20 22:44:40,153] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 22:44:41,272] INFO django.server: "GET /customers/complete-profile/ HTTP/1.1" 200 7328
+[2025-10-20 22:45:15,549] ERROR django.request: Internal Server Error: /customers/complete-profile/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py", line 310, in complete_profile
+    return redirect("billing:checkout_summary")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\shortcuts.py", line 48, in redirect
+    return redirect_class(resolve_url(to, *args, **kwargs))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\shortcuts.py", line 145, in resolve_url
+    return reverse(to, args=args, kwargs=kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\urls\resolvers.py", line 828, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'checkout_summary' not found. 'checkout_summary' is not a valid view function or pattern name.
+[2025-10-20 22:45:15,556] ERROR django.server: "POST /customers/complete-profile/ HTTP/1.1" 500 102514
+[2025-10-20 22:45:15,813] WARNING django.request: Not Found: /favicon.ico
+[2025-10-20 22:45:15,813] WARNING django.server: "GET /favicon.ico HTTP/1.1" 404 2814
+[2025-10-20 23:06:50,501] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\billing\views.py changed, reloading.
+[2025-10-20 23:06:51,819] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 23:07:39,292] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 23:07:43,746] INFO django.server: "GET / HTTP/1.1" 200 7599
+[2025-10-20 23:07:48,959] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-20 23:07:48,978] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 23:07:50,685] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 23:07:52,361] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 9514
+[2025-10-20 23:09:11,082] ERROR django.request: Internal Server Error: /customers/register/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\contrib\auth\__init__.py", line 121, in login
+    backend = backend or user.backend
+                         ^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'backend'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py", line 220, in register
+    login(request, user)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\contrib\auth\__init__.py", line 127, in login
+    raise ValueError(
+ValueError: You have multiple authentication backends configured and therefore must provide the `backend` argument or set the `backend` attribute on the user.
+[2025-10-20 23:09:11,088] ERROR django.server: "POST /customers/register/ HTTP/1.1" 500 89969
+[2025-10-20 23:25:23,507] INFO django.utils.autoreload: C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py changed, reloading.
+[2025-10-20 23:25:24,669] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-20 23:25:31,388] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-20 23:25:34,193] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-20 23:25:36,504] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8649
+[2025-10-20 23:26:30,576] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-20 23:26:31,710] INFO django.server: "GET /customers/complete-profile/ HTTP/1.1" 200 7328
+[2025-10-20 23:28:09,101] INFO django.server: "POST /customers/complete-profile/ HTTP/1.1" 302 0
+[2025-10-20 23:28:10,671] INFO django.server: "GET /billing/checkout/ HTTP/1.1" 302 0
+[2025-10-20 23:28:11,682] ERROR django.request: Internal Server Error: /schedule/search/date/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py", line 38, in search_by_date
+    form = SearchByDateForm(request.GET or None, user=request.user)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\forms.py", line 16, in __init__
+    rc = user.registeredcustomer
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\utils\functional.py", line 268, in inner
+    return func(_wrapped, *args)
+           ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'registeredcustomer'
+[2025-10-20 23:28:11,692] ERROR django.server: "GET /schedule/search/date/ HTTP/1.1" 500 84691
+[2025-10-21 00:02:16,029] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-21 00:02:21,242] INFO django.server: "GET / HTTP/1.1" 200 7592
+[2025-10-21 00:02:21,281] INFO django.server: "GET /static/css/custom_styles.css HTTP/1.1" 304 0
+[2025-10-21 00:02:26,425] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-21 00:02:26,431] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-21 00:02:28,411] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-21 00:02:30,275] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 9499
+[2025-10-21 00:03:08,998] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-21 00:03:10,005] INFO django.server: "GET / HTTP/1.1" 200 7592
+[2025-10-21 00:03:17,355] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-21 00:03:17,358] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-21 00:03:20,318] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-21 00:03:21,835] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8917
+[2025-10-21 00:04:11,492] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-21 00:04:12,606] INFO django.server: "GET /customers/complete-profile/ HTTP/1.1" 200 7328
+[2025-10-21 00:04:46,486] INFO django.server: "POST /customers/complete-profile/ HTTP/1.1" 302 0
+[2025-10-21 00:04:47,539] ERROR django.request: Internal Server Error: /schedule/choose/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\scheduling\views.py", line 178, in choose_search
+    return render(request, "scheduling/choose_search.html")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: scheduling/choose_search.html
+[2025-10-21 00:04:47,539] ERROR django.server: "GET /schedule/choose/ HTTP/1.1" 500 92958
+[2025-10-21 00:23:05,792] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-10-21 00:23:10,907] INFO django.server: "GET / HTTP/1.1" 200 7593
+[2025-10-21 00:23:15,658] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-21 00:23:15,658] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-21 00:23:19,078] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-21 00:23:20,768] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 9537
+[2025-10-21 00:23:57,742] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-21 00:23:58,753] INFO django.server: "GET / HTTP/1.1" 200 7593
+[2025-10-21 00:24:07,307] INFO django.server: "GET /accounts/logout/ HTTP/1.1" 302 0
+[2025-10-21 00:24:07,311] INFO django.server: "GET / HTTP/1.1" 200 7494
+[2025-10-21 00:24:10,991] INFO django.server: "GET /accounts/login/ HTTP/1.1" 200 7273
+[2025-10-21 00:24:12,302] INFO django.server: "GET /customers/register/ HTTP/1.1" 200 8917
+[2025-10-21 00:24:48,246] INFO django.server: "POST /customers/register/ HTTP/1.1" 302 0
+[2025-10-21 00:24:49,492] INFO django.server: "GET /customers/complete-profile/ HTTP/1.1" 200 7328
+[2025-10-21 00:25:29,274] ERROR django.request: Internal Server Error: /customers/complete-profile/
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UniqueViolation: duplicate key value violates unique constraint "customers_registeredcustomer_email_key"
+DETAIL:  Key (email)=() already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\customers\views.py", line 326, in complete_profile
+    form.save()
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\forms\models.py", line 542, in save
+    self.instance.save()
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 814, in save
+    self.save_base(
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 877, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 1020, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\base.py", line 1061, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\query.py", line 1805, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1822, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 102, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\django\db\backends\utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\paxto\Desktop\My Web Sites\tucker_and_dales_home_services\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "customers_registeredcustomer_email_key"
+DETAIL:  Key (email)=() already exists.
+[2025-10-21 00:25:29,274] ERROR django.server: "POST /customers/complete-profile/ HTTP/1.1" 500 178341
+[2025-10-21 14:20:22,778] INFO django.utils.autoreload: Watching for file changes with StatReloader
