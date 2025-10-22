@@ -1,6 +1,6 @@
 from django.contrib.auth.signals import user_logged_out, user_logged_in
 from django.dispatch import receiver
-from .models import Cart, CartItem
+from billing.models import Cart, CartItem
 
 
 @receiver(user_logged_out)

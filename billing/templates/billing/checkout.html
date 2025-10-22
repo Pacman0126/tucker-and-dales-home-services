@@ -6,11 +6,12 @@
 {% block content %}
 <div class="container py-5">
   <h2 class="mb-4">Checkout Summary</h2>
-    {% if service_address %}
-      <div class="alert alert-info">
-        <strong>Service Address:</strong> {{ service_address }}<br>
-        <strong>Billing Address:</strong> {{ billing_address }}
-      </div>
+    {% if billing_address %}
+      <strong>Billing Address:</strong>
+      {{ billing_address.street }}, {{ billing_address.city }},
+      {{ billing_address.state }} {{ billing_address.zip }}
+    {% else %}
+      <strong>Billing Address:</strong> Not set. <a href="{% url 'customers:complete_profile' %}">Add now</a>
     {% endif %}
 
   {% if cart and cart.items.exists %}

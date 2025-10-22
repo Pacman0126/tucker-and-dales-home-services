@@ -2,7 +2,8 @@
 billing/views.py
 Handles checkout, Stripe integration, payment tracking, and admin management.
 """
-
+import datetime
+from datetime import datetime as dt
 import json
 from decimal import Decimal
 import stripe
@@ -11,37 +12,26 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_POST
+from django.middleware.csrf import get_token
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
-
-from core.constants import SERVICE_PRICES, SALES_TAX_RATE
+from customers.models import RegisteredCustomer
+from scheduling.models import Employee, TimeSlot, ServiceCategory
+from billing.utils import _get_or_create_cart, get_service_address, lock_service_address
 from .models import Payment
-from scheduling.models import Cart
-
+from .constants import SERVICE_PRICES, SALES_TAX_RATE
+from .forms import CheckoutForm
+from .models import Cart, CartItem, CartManager
 # ----------------------------------------------------------------------
 # ⚙️ Stripe Setup
 # ----------------------------------------------------------------------
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-
 # ----------------------------------------------------------------------
 # 🏁 Simple Checkout Page (called by navbar burger)
 # ----------------------------------------------------------------------
-def _get_or_create_cart(request):
-    """
-    Shared helper for retrieving the active cart.
-    Works for both logged-in users and anonymous sessions.
-    """
-    if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-    else:
-        if not request.session.session_key:
-            request.session.create()
-        cart, _ = Cart.objects.get_or_create(
-            session_key=request.session.session_key)
-    return cart
 
 
 @login_required
@@ -66,49 +56,78 @@ def checkout(request):
 @login_required
 def checkout_summary(request):
     """
-    Shows the cart summary before payment.
-    Auto-fills service/billing addresses from session or RegisteredCustomer.
+    Displays the cart summary before payment.
+    Auto-fills service and billing addresses from session or RegisteredCustomer.
+    Ensures the service address is locked for this session.
+    Updates billing info back to RegisteredCustomer on submit.
     """
+
+    # --- 1️⃣ Retrieve or create active cart ---
     cart = _get_or_create_cart(request)
     if not cart.items.exists():
         messages.warning(request, "Your cart is empty.")
         return redirect("scheduling:search_by_date")
 
-    from .forms import CheckoutForm
-    from customers.models import RegisteredCustomer
+    # --- 2️⃣ Retrieve service address from session ---
+    service_address = get_service_address(request)
 
-    # --- Load address defaults ---
-    service_address = request.session.get("service_address")
-    billing_address = request.session.get("billing_address")
+    # --- 3️⃣ Retrieve user billing address from profile ---
+    billing_address_str = request.session.get("billing_address", "")
+    rc = None
 
-    if not service_address or not billing_address:
-        try:
-            rc = RegisteredCustomer.objects.get(user=request.user)
-            if all([rc.street_address, rc.city, rc.state, rc.zipcode]):
-                full_addr = f"{rc.street_address}, {rc.city}, {rc.state} {rc.zipcode}"
-                service_address = service_address or full_addr
-                billing_address = billing_address or full_addr
-                request.session["service_address"] = service_address
-                request.session["billing_address"] = billing_address
-                request.session.modified = True
-            else:
-                messages.info(
-                    request, "Please complete your address details before checkout.")
-                return redirect("customers:complete_profile")
-        except RegisteredCustomer.DoesNotExist:
-            messages.info(
-                request, "Please complete your profile before checkout.")
-            return redirect("customers:complete_profile")
+    try:
+        rc = RegisteredCustomer.objects.get(user=request.user)
+        if not billing_address_str and rc.has_valid_billing_address():
+            billing_address_str = rc.full_billing_address
+            request.session["billing_address"] = billing_address_str
+            request.session.modified = True
+    except RegisteredCustomer.DoesNotExist:
+        messages.info(request, "Please complete your profile before checkout.")
+        return redirect("customers:complete_profile")
 
-    # --- Standard checkout form flow ---
+    # --- 4️⃣ Require address info before proceeding ---
+    if not service_address or not billing_address_str:
+        messages.info(
+            request, "Please complete your address details before checkout.")
+        return redirect("customers:complete_profile")
+
+    # --- 5️⃣ Handle checkout form submission ---
     if request.method == "POST":
         form = CheckoutForm(request.POST, user=request.user)
         if form.is_valid():
-            request.session["billing_data"] = form.cleaned_data
+            billing_data = form.cleaned_data
+
+            # ✅ Update RegisteredCustomer with submitted billing info
+            if rc:
+                rc.billing_street_address = billing_data.get(
+                    "billing_street_address", rc.billing_street_address)
+                rc.billing_city = billing_data.get(
+                    "billing_city", rc.billing_city)
+                rc.billing_state = billing_data.get(
+                    "billing_state", rc.billing_state)
+                rc.billing_zipcode = billing_data.get(
+                    "billing_zipcode", rc.billing_zipcode)
+                rc.region = billing_data.get("billing_country", rc.region)
+                rc.save(update_fields=[
+                    "billing_street_address",
+                    "billing_city",
+                    "billing_state",
+                    "billing_zipcode",
+                    "region",
+                ])
+
+            # ✅ Store billing data for Stripe session
+            request.session["billing_data"] = billing_data
+            request.session.modified = True
+
             return redirect("billing:create_checkout_session")
+        else:
+            messages.error(
+                request, "Please correct the billing form errors below.")
     else:
         form = CheckoutForm(user=request.user)
 
+    # --- 6️⃣ Render checkout summary page ---
     context = {
         "cart": cart,
         "form": form,
@@ -116,8 +135,9 @@ def checkout_summary(request):
         "tax": cart.tax,
         "total": cart.total,
         "service_address": service_address,
-        "billing_address": billing_address,
+        "billing_address": billing_address_str,
     }
+
     return render(request, "billing/checkout.html", context)
 
 # ----------------------------------------------------------------------
@@ -130,7 +150,7 @@ def create_checkout_session(request):
     """
     Creates a Stripe Checkout Session from the current user's cart.
     """
-    from scheduling.models import Cart
+    from billing.models import Cart
 
     cart = Cart.objects.filter(
         user=request.user).order_by("-updated_at").first()
@@ -205,7 +225,7 @@ def payment_success(request):
     Renders success confirmation after Stripe payment
     and clears the user's active cart.
     """
-    from scheduling.models import Cart
+    from billing.models import Cart
 
     # Clear cart items for this user
     cart = Cart.objects.filter(
@@ -304,3 +324,140 @@ def stripe_webhook(request):
             stripe_payment_intent_id=data["id"]).update(status="canceled")
 
     return HttpResponse(status=200)
+
+# =========================================================
+# 🛒 CART UTILITIES
+# =========================================================
+
+
+# =========================================================
+#  CART VIEWS
+# =========================================================
+
+
+@require_POST
+def cart_add(request):
+    """
+    Adds a booking item to the cart.
+    Stores PRE-TAX unit_price; Cart handles tax in totals.
+    """
+    from billing.constants import SERVICE_PRICES, SALES_TAX_RATE
+
+    cart = _get_or_create_cart(request)
+
+    employee_id = request.POST.get("employee_id")
+    service_id = request.POST.get("service_category_id")
+    slot_id = request.POST.get("time_slot_id")
+    date_str = request.POST.get("date")
+
+    if not all([employee_id, service_id, slot_id, date_str]):
+        return JsonResponse({"ok": False, "error": "Missing parameters."}, status=400)
+
+    try:
+        date_obj = dt.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return JsonResponse({"ok": False, "error": "Bad date format."}, status=400)
+
+    try:
+        employee = Employee.objects.get(pk=employee_id)
+        service = ServiceCategory.objects.get(pk=service_id)
+        slot = TimeSlot.objects.get(pk=slot_id)
+    except (Employee.DoesNotExist, ServiceCategory.DoesNotExist, TimeSlot.DoesNotExist):
+        return JsonResponse({"ok": False, "error": "Invalid reference."}, status=404)
+
+    # --- Pricing (PRE-TAX) ---
+    base_rate = Decimal(str(SERVICE_PRICES.get(service.name, 25.00)))
+    hours = Decimal("2")  # each slot = 2h block
+    unit_price_pre_tax = (base_rate * hours).quantize(Decimal("0.01"))
+
+    # Create/update the item (store PRE-TAX price)
+    item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        employee=employee,
+        service_category=service,
+        time_slot=slot,
+        date=date_obj,
+        defaults={"unit_price": unit_price_pre_tax, "quantity": 1},
+    )
+    if not created:
+        item.unit_price = unit_price_pre_tax
+        item.save(update_fields=["unit_price"])
+
+    # Session persistence for guests
+    if not request.user.is_authenticated:
+        request.session.modified = True
+
+    html = render_to_string("scheduling/_cart.html",
+                            {"cart": cart}, request=request)
+    summary_text = f"({cart.items.count()}) - (${cart.total:.2f})"
+
+    return JsonResponse({
+        "ok": True,
+        "html": html,
+        "count": cart.items.count(),
+        "subtotal": f"{cart.subtotal:.2f}",
+        "total": f"{cart.total:.2f}",
+        "summary_text": summary_text,
+    })
+
+
+@require_POST
+def cart_remove(request):
+    cart = _get_or_create_cart(request)
+    item_id = request.POST.get("item_id")
+    try:
+        item = cart.items.get(pk=item_id)
+    except CartItem.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Not found."}, status=404)
+    item.delete()
+    html = render_to_string("scheduling/_cart.html",
+                            {"cart": cart}, request=request)
+    return JsonResponse({"ok": True,
+                         "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
+                         "total": str(cart.total),
+                         "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"})
+
+
+@require_POST
+def cart_clear(request):
+    cart = _get_or_create_cart(request)
+    cart.items.all().delete()
+    html = render_to_string("scheduling/_cart.html",
+                            {"cart": cart}, request=request)
+    return JsonResponse({"ok": True,
+                         "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
+                         "count": 0,
+                         "total": "0.00",
+                         "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"
+                         })
+
+
+def cart_detail(request):
+    """Optional full-page cart view (non-AJAX)."""
+    cart = _get_or_create_cart(request)
+    get_token(request)  # ensure CSRF cookie
+    return render(request, "scheduling/cart_detail.html", {"cart": cart})
+
+
+def logout_and_clear_cart(request):
+    """
+    Logs the user out and clears any associated cart.
+    Works for both authenticated and session-based carts.
+    """
+    try:
+        # delete authenticated user's cart(s)
+        if request.user.is_authenticated:
+            Cart.objects.filter(user=request.user).delete()
+        else:
+            # clear session cart if anonymous
+            if request.session.session_key:
+                Cart.objects.filter(
+                    session_key=request.session.session_key).delete()
+                request.session.flush()
+    except Exception as e:
+        print(f" Cart cleanup failed on logout: {e}")
+
+    logout(request)
+    messages.info(
+        request, "You have been logged out and your booking cart has been cleared.")
+    return redirect("home")

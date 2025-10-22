@@ -145,10 +145,11 @@ LOGGING = {
     },
 }
 
-# --- Auth Redirects ---
-LOGIN_URL = "/admin/login/"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
+# --- Auth Redirects (Frontend vs Admin) ---
+# where users get to Register / Sign-In modal
+LOGIN_URL = "/customers/register/"
+LOGIN_REDIRECT_URL = "/"                # redirect after successful login
+LOGOUT_REDIRECT_URL = "/"               # redirect after logout
 
 # --- Stripe ---
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY", default="")

@@ -1,5 +1,5 @@
 from decimal import Decimal
-from scheduling.models import Cart
+from billing.models import Cart
 
 
 def cart_summary(request):

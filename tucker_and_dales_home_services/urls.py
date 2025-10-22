@@ -24,9 +24,10 @@ urlpatterns = [
     path("accounts/logout/", core_views.custom_logout, name="logout"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
+    # path("", include("core.urls")),
     path("billing/", include("billing.urls", namespace="billing")),
     path("customers/", include("customers.urls")),
     path("schedule/", include("scheduling.urls")),
-    path("", core_views.home, name="home"),
-    path("base-search/", core_views.base_search, name="base_search"),
+
+    # path("base-search/", core_views.base_search, name="base_search"),
 ]

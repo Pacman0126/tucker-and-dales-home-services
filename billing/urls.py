@@ -21,4 +21,16 @@ urlpatterns = [
 
     # 🌐 Stripe Webhook
     path("webhook/", views.stripe_webhook, name="stripe_webhook"),
+
+    # =========================================================
+    # 🛒 CART ROUTES
+    # =========================================================
+    # full-page cart (optional)
+    path("cart/", views.cart_detail, name="cart_detail"),
+    # AJAX add endpoint
+    path("cart/add/", views.cart_add, name="cart_add"),
+    path("cart/remove/", views.cart_remove,
+         name="cart_remove"),   # AJAX remove endpoint
+    path("cart/clear/", views.cart_clear,
+         name="cart_clear"),      # AJAX clear endpoint
 ]

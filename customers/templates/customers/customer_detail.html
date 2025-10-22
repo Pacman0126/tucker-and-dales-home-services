@@ -42,22 +42,21 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      
+
       <!-- Header styled via global variable -->
       <div class="modal-header modal-header-danger">
         <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      
+
       <div class="modal-body">
-        Are you sure you want to delete <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>?  
+        Are you sure you want to delete <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>?
         This action cannot be undone.
       </div>
-      
+
       <div class="modal-footer">
         <form method="post" action="{% url 'customers:customer_delete' customer.pk %}">
           {% csrf_token %}
@@ -65,7 +64,7 @@
           <button type="submit" class="btn btn-danger">Yes, Delete</button>
         </form>
       </div>
-      
+
     </div>
   </div>
 </div>
