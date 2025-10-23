@@ -7,97 +7,64 @@
     <div class="col-md-7 col-lg-6">
       <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
 
-        <!-- 🔹 Header -->
+        <!-- Header -->
         <div class="card-header bg-dark text-white text-center py-3">
           <h4 class="mb-0">Verify or Update Your Profile</h4>
         </div>
 
+        <!-- Body -->
         <div class="card-body bg-light">
-          <!-- 🧭 Informational Message -->
-          {% if messages %}
-            {% for message in messages %}
-              <div class="alert alert-{{ message.tags }} mb-3">
-                {{ message }}
-              </div>
+          <p class="text-muted mb-3">
+            We detected a difference between your stored and entered login details.
+            Please confirm or update your username, email, and billing address before continuing.
+          </p>
+
+          <!-- ✅ Display field-specific errors -->
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for field, errors in form.errors.items %}
+              <strong>{{ field|title }}</strong>: {{ errors|join:", " }}<br>
             {% endfor %}
-          {% else %}
-            <p class="text-muted small">
-              We detected a difference between your stored and entered login details.
-              Please confirm or update your username, email, and billing information before continuing.
-            </p>
+          </div>
           {% endif %}
 
           <form method="post" novalidate>
             {% csrf_token %}
 
-            <!-- 🧩 Username comparison section -->
+            <!-- Username section -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">Entered Username (from login)</label>
-              <input
-                type="text"
-                class="form-control bg-secondary-subtle"
-                value="{{ request.session.entered_username|default:user.username }}"
-                readonly
-              >
+              {{ form.entered_username_display.label_tag }}
+              {{ form.entered_username_display }}
+              <small class="form-text text-muted">
+                This is the username you entered when logging in.
+              </small>
             </div>
 
             <div class="mb-3">
-              <label for="id_username" class="form-label fw-semibold">Stored Username (you can update this)</label>
-              <input
-                type="text"
-                name="username"
-                id="id_username"
-                class="form-control"
-                value="{{ user.username }}"
-                maxlength="150"
-                required
-              >
-              <div class="form-text">This will be your permanent login name for future sessions.</div>
+              {{ form.username.label_tag }}
+              {{ form.username }}
+              <small class="form-text text-muted">
+                You can keep your existing username or update it.
+              </small>
             </div>
 
-            <!-- 🧾 Customer & Billing Fields -->
-            <div class="row g-2">
-              <div class="col-md-6">
-                <label for="id_first_name" class="form-label fw-semibold">First Name</label>
-                {{ form.first_name }}
-              </div>
-              <div class="col-md-6">
-                <label for="id_last_name" class="form-label fw-semibold">Last Name</label>
-                {{ form.last_name }}
-              </div>
+            <hr>
+
+            <!-- Core contact fields -->
+            <div class="row">
+              <div class="col-md-6 mb-3">{{ form.first_name.label_tag }}{{ form.first_name }}</div>
+              <div class="col-md-6 mb-3">{{ form.last_name.label_tag }}{{ form.last_name }}</div>
             </div>
+            <div class="mb-3">{{ form.email.label_tag }}{{ form.email }}</div>
+            <div class="mb-3">{{ form.phone.label_tag }}{{ form.phone }}</div>
 
-            <div class="mt-3">
-              <label for="id_email" class="form-label fw-semibold">Email Address</label>
-              {{ form.email }}
-            </div>
-
-            <div class="mt-3">
-              <label for="id_phone" class="form-label fw-semibold">Phone</label>
-              {{ form.phone }}
-            </div>
-
-            <hr class="my-4">
-
-            <h6 class="fw-semibold text-uppercase mb-3">Billing Address</h6>
-            <div class="mb-3">
-              <label for="id_billing_street_address" class="form-label fw-semibold">Street</label>
-              {{ form.billing_street_address }}
-            </div>
-
-            <div class="row g-2">
-              <div class="col-md-6">
-                <label for="id_billing_city" class="form-label fw-semibold">City</label>
-                {{ form.billing_city }}
-              </div>
-              <div class="col-md-3">
-                <label for="id_billing_state" class="form-label fw-semibold">State</label>
-                {{ form.billing_state }}
-              </div>
-              <div class="col-md-3">
-                <label for="id_billing_zipcode" class="form-label fw-semibold">ZIP</label>
-                {{ form.billing_zipcode }}
-              </div>
+            <!-- Billing address -->
+            <h5 class="mt-4 mb-2 text-secondary">Billing Address</h5>
+            <div class="mb-3">{{ form.billing_street_address.label_tag }}{{ form.billing_street_address }}</div>
+            <div class="row">
+              <div class="col-md-6 mb-3">{{ form.billing_city.label_tag }}{{ form.billing_city }}</div>
+              <div class="col-md-3 mb-3">{{ form.billing_state.label_tag }}{{ form.billing_state }}</div>
+              <div class="col-md-3 mb-3">{{ form.billing_zipcode.label_tag }}{{ form.billing_zipcode }}</div>
             </div>
 
             <div class="d-grid mt-4">
@@ -106,10 +73,6 @@
               </button>
             </div>
           </form>
-        </div>
-
-        <div class="card-footer bg-dark-subtle text-center py-2 small text-muted">
-          <em>All information is stored securely and used only for billing and scheduling.</em>
         </div>
 
       </div>

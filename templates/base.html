@@ -62,117 +62,111 @@
   PRIMARY NAVBAR — DYNAMIC BETWEEN "HOME" AND "BOOKING" MODES
   ====================================================================
   {% endcomment %}
+{% if navbar_mode == "home" %}
+<!-- 🏠 HOME NAVBAR -->
+<nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
+  <div class="container-fluid justify-content-between">
 
-  {% if navbar_mode == "home" %}
-  <!-- 🏠 HOME NAVBAR -->
-  <nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
-    <div class="container-fluid justify-content-between">
+    <!-- Left: Active Home pill -->
+    <a href="{% url 'home' %}"
+      class="btn btn-teal-highlight btn-sm fw-semibold px-3 active">
+      <i class="bi bi-house-door-fill me-1"></i> Home
+    </a>
 
-      <!-- Left: Active Home pill -->
-      <a href="{% url 'home' %}"
-        class="btn btn-teal-highlight btn-sm fw-semibold px-3 active">
-        <i class="bi bi-house-door-fill me-1"></i> Home
+    <!-- Right: Login / Logout + greeting -->
+    <div class="d-flex align-items-center gap-2">
+      {% if user.is_authenticated %}
+        <span class="text-white small me-2">Hi, {{ user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-box-arrow-right me-1"></i> Logout
+        </a>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Login / Register
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+</nav>
+
+{% elif navbar_mode == "booking" %}
+<!-- 📅 BOOKING / SEARCH NAVBAR -->
+<nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
+  <div class="container-fluid align-items-center justify-content-between">
+
+    <!-- Left group: (x)–($y) summary + burger -->
+    <div class="d-flex align-items-center">
+      <span id="booking-summary" class="text-white fw-semibold me-2">
+        ({{ cart_item_count|default:0 }}) – (${{ cart_total|default:"0.00" }})
+      </span>
+
+      <!-- Burger dropdown -->
+      <div class="dropdown">
+        <button
+          class="btn btn-outline-light btn-sm"
+          type="button"
+          id="navbarBurgerDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          <i class="bi bi-list fs-5"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarBurgerDropdown">
+          {% if user.is_authenticated %}
+            <li>
+              <a class="dropdown-item" href="{% url 'billing:payment_history' %}">
+                <i class="bi bi-receipt"></i> My Payments
+              </a>
+            </li>
+          {% endif %}
+
+          <!-- Always visible checkout (handles redirect logic internally) -->
+          <li>
+            <a class="dropdown-item" href="{% url 'billing:checkout' %}">
+              <i class="bi bi-cart-check"></i> Go to Checkout
+            </a>
+          </li>
+
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{% url 'home' %}">
+              <i class="bi bi-house"></i> Return Home
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right group: Home + Cart -->
+    <div class="d-flex align-items-center gap-2">
+
+      <!-- Neutral Home pill -->
+      <a href="{% url 'home' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-house-fill"></i> Home
       </a>
 
-      <!-- Right: Login / Logout + greeting -->
-      <div class="d-flex align-items-center gap-2">
-        {% if user.is_authenticated %}
-          <!-- Logout pill -->
-          <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
-            <i class="bi bi-box-arrow-right me-1"></i> Logout
-          </a>
-          <!-- Greeting -->
-          <span class="text-white small">Hi, {{ user.username }}</span>
-        {% else %}
-          <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
-            <i class="bi bi-box-arrow-in-right me-1"></i> Login (username or email)
-          </a>
-        {% endif %}
-      </div>
-
-    </div>
-  </nav>
-
-  {% elif navbar_mode == "booking" %}
-  <!-- 📅 BOOKING / SEARCH NAVBAR -->
-  <nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
-    <div class="container-fluid align-items-center justify-content-between">
-
-      <!-- Left group: (x)–($y) summary + burger -->
-      <div class="d-flex align-items-center">
-        <span id="booking-summary" class="text-white fw-semibold me-2">
-          ({{ cart_summary.item_count|default:0 }}) – (${{ cart_summary.subtotal|floatformat:2 }})
-        </span>
-
-        <!-- Burger dropdown -->
-        <div class="dropdown">
-          <button
-            class="btn btn-outline-light btn-sm"
-            type="button"
-            id="navbarBurgerDropdown"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            <i class="bi bi-list fs-5"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarBurgerDropdown">
-            {% if user.is_authenticated %}
-              <li>
-                <a class="dropdown-item" href="{% url 'billing:payment_history' %}">
-                  <i class="bi bi-receipt"></i> My Payments
-                </a>
-              </li>
-            {% endif %}
-            <li>
-              {% if user.is_authenticated %}
-              <a class="dropdown-item" href="{% url 'billing:checkout' %}">
-                <i class="bi bi-cart-check"></i> Go to Checkout
-              </a>
-              {% else %}
-              <a class="dropdown-item" href="{% url 'billing:checkout' %}">
-                <i class="bi bi-cart-check"></i> Go to Checkout
-              </a>
-              {% endif %}
-            </li>
-
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{% url 'home' %}">
-                <i class="bi bi-house"></i> Return Home
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Center/right group: Home + Cart -->
-      <div class="d-flex align-items-center gap-2">
-
-        <!-- Neutral Home pill (not highlighted) -->
-        <a href="{% url 'home' %}" class="btn btn-outline-light btn-sm">
-          <i class="bi bi-house-fill"></i> Home
-        </a>
-
-        <!-- Cart icon -->
-        <button
-          id="cart-icon"
-          class="btn btn-warning btn-sm rounded-circle position-relative"
-          data-bs-toggle="modal"
-          data-bs-target="#cartModal"
-          aria-label="Open cart"
+      <!-- Cart icon with badge -->
+      <button
+        id="cart-icon"
+        class="btn btn-warning btn-sm rounded-circle position-relative"
+        data-bs-toggle="modal"
+        data-bs-target="#cartModal"
+        aria-label="Open cart"
+      >
+        <i class="bi bi-cart3"></i>
+        <span
+          id="cart-count"
+          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
         >
-          <i class="bi bi-cart3"></i>
-          <span
-            id="cart-count"
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-          >
-            {{ cart_summary.item_count|default:0 }}
-          </span>
-        </button>
-      </div>
+          {{ cart_item_count|default:0 }}
+        </span>
+      </button>
     </div>
-  </nav>
-  {% endif %}
+  </div>
+</nav>
+{% endif %}
+
 
 
 
@@ -250,7 +244,7 @@
       }
 
       try {
-        const resp = await fetch("{% url 'scheduling:cart_add' %}", {
+        const resp = await fetch("{% url 'billing:cart_add' %}", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",

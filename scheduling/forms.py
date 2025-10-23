@@ -1,47 +1,88 @@
+from scheduling.models import TimeSlot
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
-from .models import ServiceCategory, TimeSlot
+
 from customers.models import RegisteredCustomer
+from .models import ServiceCategory, TimeSlot
 
 
 class SearchByDateForm(forms.Form):
-    date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
-    customer_address = forms.CharField(max_length=255, label="Service Address")
+    """
+    Lets users search available employees by a specific date and address.
+    Prefills service address from the user's billing info if logged in.
+    """
+    date = forms.DateField(
+        label="Select Date",
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"})
+    )
+
+    customer_address = forms.CharField(
+        max_length=255,
+        label="Service Address",
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
-        # Safely prefill service address from user's RegisteredCustomer profile
-        if user and user.is_authenticated:
-            rc = getattr(user, "registeredcustomer", None)
-
-            # Fallback if related_name or object not found
-            if rc is None:
-                rc = RegisteredCustomer.objects.filter(user=user).first()
-
-            if rc:
-                # Prefer the full street address for service location
-                if rc.street_address:
-                    self.fields["customer_address"].initial = rc.street_address
-                elif rc.city:
-                    self.fields["customer_address"].initial = rc.city
-
-
-class SearchByTimeSlotForm(forms.Form):
-    time_slot = forms.ModelChoiceField(queryset=None)
-    customer_address = forms.CharField(max_length=255, label="Service Address")
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop("user", None)
-        super().__init__(*args, **kwargs)
-        from scheduling.models import TimeSlot
-        self.fields["time_slot"].queryset = TimeSlot.objects.all()
-
+        # ✅ Prefill from registered customer profile
         if user and user.is_authenticated:
             try:
                 rc = user.registered_customer_profile
-                if rc.address:
-                    self.fields["customer_address"].initial = rc.address
+                if hasattr(rc, "billing_street_address"):
+                    full_address = ", ".join(
+                        filter(None, [
+                            rc.billing_street_address,
+                            rc.billing_city,
+                            rc.billing_state,
+                            rc.billing_zipcode,
+                        ])
+                    )
+                    if full_address:
+                        self.fields["customer_address"].initial = full_address
+            except ObjectDoesNotExist:
+                pass
+
+
+class SearchByTimeSlotForm(forms.Form):
+    """
+    Lets users search for available employees by time slot (across next 28 days).
+    Prefills service address from the user's billing info if logged in.
+    """
+    time_slot = forms.ModelChoiceField(
+        label="Time Slot",
+        queryset=TimeSlot.objects.none(),
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    customer_address = forms.CharField(
+        max_length=255,
+        label="Service Address",
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+        # ✅ Safe queryset assignment (type-checker friendly)
+        self.fields["time_slot"].queryset = TimeSlot.objects.all()
+
+        # ✅ Prefill address from RegisteredCustomer billing info
+        if user and user.is_authenticated:
+            try:
+                rc = user.registered_customer_profile
+                if hasattr(rc, "billing_street_address"):
+                    full_address = ", ".join(
+                        filter(None, [
+                            rc.billing_street_address,
+                            rc.billing_city,
+                            rc.billing_state,
+                            rc.billing_zipcode,
+                        ])
+                    )
+                    if full_address:
+                        self.fields["customer_address"].initial = full_address
             except ObjectDoesNotExist:
                 pass

@@ -133,7 +133,7 @@
       }
 
       try {
-        const response = await fetch("{% url 'scheduling:cart_add' %}", {
+        const response = await fetch("{% url 'billing:cart_add' %}", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -164,8 +164,8 @@
 
     ev.preventDefault();
     const endpoint = removeBtn
-      ? "{% url 'scheduling:cart_remove' %}"
-      : "{% url 'scheduling:cart_clear' %}";
+      ? "{% url 'billing:cart_remove' %}"
+      : "{% url 'billing:cart_clear' %}";
     const body = removeBtn
       ? new URLSearchParams({ item_id: removeBtn.dataset.itemId })
       : undefined;

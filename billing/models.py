@@ -8,6 +8,9 @@ from django.conf import settings
 from django.db import models
 import stripe
 
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
 # Create your models here.
 
 
@@ -81,23 +84,28 @@ class Payment(models.Model):
         return refund
 
 
-class CartManager(models.Manager):
-    """
-    Centralized helper to fetch or create a cart
-    for the current request (user or anonymous session).
-    """
+class CartManager(models.Manager["Cart"]):
+    """Custom manager with helper for resolving current user's or session's cart."""
 
-    def get_for_request(self, request):
-        # Ensure session exists
+    def get_for_request(self, request: "HttpRequest"):
+        """
+        Return the active cart for this request (user or session-based).
+        Creates one if none exists.
+        """
+        from billing.models import Cart  # local import to avoid circulars
+
         if not request.session.session_key:
-            request.session.save()
+            request.session.create()
+
+        address_key = request.session.get("service_address", "")
+        lookup = {"address_key": address_key}
 
         if request.user.is_authenticated:
-            cart, _ = self.get_or_create(user=request.user)
+            lookup["user"] = request.user
         else:
-            cart, _ = self.get_or_create(
-                session_key=request.session.session_key)
+            lookup["session_key"] = request.session.session_key
 
+        cart, _ = Cart.objects.get_or_create(**lookup)
         return cart
 
 
@@ -107,6 +115,8 @@ class Cart(models.Model):
     Each cart is tied to either a logged-in user or an anonymous session_key,
     and optionally to a normalized address_key for address-based isolation.
     """
+
+    objects: CartManager = CartManager()
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

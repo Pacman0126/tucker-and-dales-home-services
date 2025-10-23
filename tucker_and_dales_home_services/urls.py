@@ -21,6 +21,7 @@ from scheduling import views as scheduling_views
 
 urlpatterns = [
     # built-in login/password reset
+    path("", core_views.home, name="home"),
     path("accounts/logout/", core_views.custom_logout, name="logout"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),

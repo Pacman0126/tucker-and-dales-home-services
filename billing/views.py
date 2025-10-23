@@ -8,6 +8,7 @@ import json
 from decimal import Decimal
 import stripe
 
+from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -19,7 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 from customers.models import RegisteredCustomer
 from scheduling.models import Employee, TimeSlot, ServiceCategory
-from billing.utils import _get_or_create_cart, get_service_address, lock_service_address
+from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address
 from .models import Payment
 from .constants import SERVICE_PRICES, SALES_TAX_RATE
 from .forms import CheckoutForm
@@ -81,14 +82,19 @@ def checkout_summary(request):
             billing_address_str = rc.full_billing_address
             request.session["billing_address"] = billing_address_str
             request.session.modified = True
+
     except RegisteredCustomer.DoesNotExist:
         messages.info(request, "Please complete your profile before checkout.")
+        request.session["next_after_profile"] = "billing:checkout_summary"
+        request.session.modified = True
         return redirect("customers:complete_profile")
 
     # --- 4️⃣ Require address info before proceeding ---
     if not service_address or not billing_address_str:
         messages.info(
             request, "Please complete your address details before checkout.")
+        request.session["next_after_profile"] = "billing:checkout_summary"
+        request.session.modified = True
         return redirect("customers:complete_profile")
 
     # --- 5️⃣ Handle checkout form submission ---
@@ -333,17 +339,29 @@ def stripe_webhook(request):
 # =========================================================
 #  CART VIEWS
 # =========================================================
-
-
 @require_POST
 def cart_add(request):
     """
     Adds a booking item to the cart.
-    Stores PRE-TAX unit_price; Cart handles tax in totals.
+    Clears cart if address in session differs from existing cart.
     """
-    from billing.constants import SERVICE_PRICES, SALES_TAX_RATE
+    from billing.constants import SERVICE_PRICES
 
     cart = _get_or_create_cart(request)
+
+    # 🔒 Ensure the session's address is locked to this cart
+    service_address = request.session.get("service_address")
+    cart_address = cart.address_key or ""
+
+    if normalize_address(service_address) != normalize_address(cart_address):
+        cart.clear()
+        cart.address_key = service_address.strip() or None
+        cart.save(update_fields=["address_key", "updated_at"])
+        messages.warning(
+            request,
+            "Your previous cart was cleared because you selected a different service address. "
+            "Each session is tied to one address only."
+        )
 
     employee_id = request.POST.get("employee_id")
     service_id = request.POST.get("service_category_id")
@@ -353,11 +371,15 @@ def cart_add(request):
     if not all([employee_id, service_id, slot_id, date_str]):
         return JsonResponse({"ok": False, "error": "Missing parameters."}, status=400)
 
+    # ⏰ Parse date
+    from datetime import datetime as dt
     try:
         date_obj = dt.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         return JsonResponse({"ok": False, "error": "Bad date format."}, status=400)
 
+    # 🔍 Lookup related models
+    from scheduling.models import Employee, ServiceCategory, TimeSlot
     try:
         employee = Employee.objects.get(pk=employee_id)
         service = ServiceCategory.objects.get(pk=service_id)
@@ -365,12 +387,23 @@ def cart_add(request):
     except (Employee.DoesNotExist, ServiceCategory.DoesNotExist, TimeSlot.DoesNotExist):
         return JsonResponse({"ok": False, "error": "Invalid reference."}, status=404)
 
-    # --- Pricing (PRE-TAX) ---
+    # 💲 Compute pre-tax price (2h per slot)
+    from decimal import Decimal
     base_rate = Decimal(str(SERVICE_PRICES.get(service.name, 25.00)))
-    hours = Decimal("2")  # each slot = 2h block
+    hours = Decimal("2")
     unit_price_pre_tax = (base_rate * hours).quantize(Decimal("0.01"))
 
-    # Create/update the item (store PRE-TAX price)
+    # --- Prevent mixing addresses within one session ---
+    current_service_addr = request.session.get("service_address", "")
+    if cart.address_key and normalize_address(cart.address_key) != normalize_address(current_service_addr):
+        cart.items.all().delete()
+        cart.address_key = current_service_addr
+        cart.save(update_fields=["address_key"])
+        print(
+            f"⚠️ Cart cleared due to new service address: {current_service_addr}")
+
+    # 🧾 Add or update the cart item
+    from billing.models import CartItem
     item, created = CartItem.objects.get_or_create(
         cart=cart,
         employee=employee,
@@ -383,13 +416,11 @@ def cart_add(request):
         item.unit_price = unit_price_pre_tax
         item.save(update_fields=["unit_price"])
 
-    # Session persistence for guests
-    if not request.user.is_authenticated:
-        request.session.modified = True
-
+    # 🔄 Render updated cart partial
+    from django.template.loader import render_to_string
     html = render_to_string("scheduling/_cart.html",
                             {"cart": cart}, request=request)
-    summary_text = f"({cart.items.count()}) - (${cart.total:.2f})"
+    summary_text = f"({cart.items.count()}) – (${cart.total:.2f})"
 
     return JsonResponse({
         "ok": True,
@@ -437,27 +468,3 @@ def cart_detail(request):
     cart = _get_or_create_cart(request)
     get_token(request)  # ensure CSRF cookie
     return render(request, "scheduling/cart_detail.html", {"cart": cart})
-
-
-def logout_and_clear_cart(request):
-    """
-    Logs the user out and clears any associated cart.
-    Works for both authenticated and session-based carts.
-    """
-    try:
-        # delete authenticated user's cart(s)
-        if request.user.is_authenticated:
-            Cart.objects.filter(user=request.user).delete()
-        else:
-            # clear session cart if anonymous
-            if request.session.session_key:
-                Cart.objects.filter(
-                    session_key=request.session.session_key).delete()
-                request.session.flush()
-    except Exception as e:
-        print(f" Cart cleanup failed on logout: {e}")
-
-    logout(request)
-    messages.info(
-        request, "You have been logged out and your booking cart has been cleared.")
-    return redirect("home")

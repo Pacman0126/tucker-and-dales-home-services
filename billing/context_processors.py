@@ -1,13 +1,21 @@
 from decimal import Decimal
 from billing.models import Cart
+from billing.utils import _get_or_create_cart
 
 
 def cart_summary(request):
-    cart = request.session.get("cart", {})
-    count = sum(item.get("qty", 1) for item in cart.values())
-    total = sum(item.get("price", 0) * item.get("qty", 1)
-                for item in cart.values())
-    return {"CART_COUNT": count, "CART_TOTAL": total}
+    """
+    Provides cart summary (count and total) to all templates,
+    ensuring navbar badge and totals persist across pages.
+    """
+    try:
+        cart = _get_or_create_cart(request)
+        return {
+            "cart_item_count": cart.item_count,
+            "cart_total": f"{cart.total:.2f}",
+        }
+    except Exception:
+        return {"cart_item_count": 0, "cart_total": "0.00"}
 
 
 def cart_context(request):

@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
 
-from billing.utils import _get_or_create_cart, get_service_address, lock_service_address
+from billing.utils import _get_or_create_cart, get_service_address, lock_service_address, unlock_service_address
 
 from billing.constants import SERVICE_PRICES, SALES_TAX_RATE
 
@@ -41,6 +41,22 @@ from .availability import get_available_employees
 # ============================================================
 
 
+@require_POST
+def unlock_address(request):
+    """
+    Clears current address lock and resets cart so a new
+    address can be entered for new bookings.
+    """
+    unlock_service_address(request)
+    cart = _get_or_create_cart(request)
+    cart.clear()
+    messages.info(
+        request,
+        "🆕 Starting a new booking session. Address unlocked and cart cleared.",
+    )
+    return redirect("scheduling:search_by_date")
+
+
 def search_by_date(request):
     """
     Handles searching available employees for a given date and service address.
@@ -49,7 +65,8 @@ def search_by_date(request):
     """
 
     # --- 1️⃣ Retrieve locked service address (if already chosen) ---
-    locked_address = get_service_address(request)
+    address_locked = request.session.get("address_locked", False)
+    locked_address = request.session.get("service_address", "")
 
     # --- 2️⃣ Initialize form, prefilling locked or stored billing address ---
     form = SearchByDateForm(request.GET or None, user=request.user)
@@ -120,6 +137,7 @@ def search_by_date(request):
         "cart": cart,
         "navbar_mode": "booking",
         "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
+        "address_locked": address_locked,
         "locked_address": locked_address,
     }
 
@@ -137,7 +155,8 @@ def search_by_time_slot(request):
     """
 
     # --- 1️⃣ Get locked service address (if exists) ---
-    locked_address = get_service_address(request)
+    address_locked = request.session.get("address_locked", False)
+    locked_address = request.session.get("service_address", "")
 
     # --- 2️⃣ Initialize form, prefilling locked or stored billing address ---
     form = SearchByTimeSlotForm(request.GET or None, user=request.user)
@@ -222,6 +241,7 @@ def search_by_time_slot(request):
         "time_slots": TimeSlot.objects.all(),
         "navbar_mode": "booking",
         "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
+        "address_locked": address_locked,
         "locked_address": locked_address,
     }
 

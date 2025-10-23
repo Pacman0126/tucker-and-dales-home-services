@@ -134,6 +134,31 @@ def customer_delete(request, pk):
         "customers/customer_confirm_delete.html",
         {"customer": customer},
     )
+# ----------------------------------------------------------------
+# 🧩 Helper: Safe login wrapper to set backend if missing
+# ----------------------------------------------------------------
+
+
+def _safe_login(request, user):
+    """
+    Logs the user in safely, clears stale session flags,
+    and merges any pre-login (anonymous) cart with the user account.
+    """
+    old_session_key = request.session.session_key
+    login(request, user)
+
+    # 🧹 Clear any mismatch flags
+    for key in ("force_profile_update", "entered_username"):
+        request.session.pop(key, None)
+    request.session.modified = True
+
+    # 🛒 Merge any anonymous cart tied to the old session
+    try:
+        from billing.utils import merge_session_cart
+        if old_session_key:
+            merge_session_cart(old_session_key, user)
+    except Exception as e:
+        print(f"⚠️ Cart merge failed after login: {e}")
 
 
 # ============================================================
@@ -168,6 +193,7 @@ def register(request):
                     )
                     _safe_login(request, user)
                     request.session["entered_username"] = username
+                    request.session["next_after_profile"] = "billing:checkout_summary"
                     return redirect("customers:complete_profile")
 
                 _safe_login(request, user)
@@ -193,6 +219,7 @@ def register(request):
                         )
                         login(request, authenticated_user)
                         request.session["entered_username"] = username
+                        request.session["next_after_profile"] = "billing:checkout_summary"
                         return redirect("customers:complete_profile")
 
                     # ✅ Normal email-based login
@@ -235,6 +262,7 @@ def register(request):
                 "Registration successful — please complete your profile."
             )
             _safe_login(request, user)
+            request.session["next_after_profile"] = "billing:checkout_summary"
             return redirect("customers:complete_profile")
 
         # Invalid form
@@ -244,17 +272,6 @@ def register(request):
     # GET
     form = LoginOrRegisterForm()
     return render(request, "customers/register.html", {"form": form})
-
-
-# ----------------------------------------------------------------
-# 🧩 Helper: Safe login wrapper to set backend if missing
-# ----------------------------------------------------------------
-def _safe_login(request, user):
-    """Logs in user safely and clears stale session data."""
-    login(request, user)
-    for key in ("force_profile_update", "entered_username"):
-        request.session.pop(key, None)
-    request.session.modified = True
 
 
 def _post_login_address_check(request, user):
@@ -302,38 +319,34 @@ def _post_login_address_check(request, user):
 @login_required
 def complete_profile(request):
     """
-    Lets users verify or update their stored profile, username, and billing address.
-    Shows both entered (session) and stored usernames for clarity.
-    After successful save, user is redirected home.
+    Lets users verify or update their stored profile and billing address.
+    - Shows both entered and stored username (if mismatch detected)
+    - Allows any field to be freely updated
+    - Displays explicit field errors instead of silent loops
+    - Clears mismatch session flags after save
     """
-    from django import forms
-    from customers.models import RegisteredCustomer
 
     user = request.user
+    entered_username = request.session.get("entered_username", "")
 
-    # 🔹 Ensure session key retrieval persists if available
-    entered_username = request.session.get("entered_username")
-
+    # ✅ Inline form for RegisteredCustomer with relaxed validation
     class InlineProfileForm(forms.ModelForm):
-        entered_username = forms.CharField(
+        username = forms.CharField(
             required=False,
-            max_length=150,
-            widget=forms.TextInput(
-                attrs={"class": "form-control", "readonly": "readonly"}),
-            label="Entered Username (from login)"
+            label="Stored Username (you can update this)",
+            widget=forms.TextInput(attrs={"class": "form-control"})
         )
-        stored_username = forms.CharField(
-            required=True,
-            max_length=150,
-            widget=forms.TextInput(attrs={"class": "form-control"}),
-            label="Stored Username (you can update this)"
+        entered_username_display = forms.CharField(
+            required=False,
+            label="Entered Username (from login)",
+            widget=forms.TextInput(
+                attrs={"class": "form-control", "readonly": "readonly"}
+            )
         )
 
         class Meta:
             model = RegisteredCustomer
             fields = [
-                "entered_username",
-                "stored_username",
                 "first_name",
                 "last_name",
                 "email",
@@ -354,50 +367,60 @@ def complete_profile(request):
                 "billing_zipcode": forms.TextInput(attrs={"class": "form-control"}),
             }
 
-        def __init__(self, *args, **kwargs):
-            self.user = kwargs.pop("user", None)
-            self.entered_username_value = kwargs.pop("entered_username", None)
-            super().__init__(*args, **kwargs)
+        def clean_email(self):
+            """Allow free updates — only validate email format."""
+            email = self.cleaned_data.get("email", "").strip().lower()
+            return email
 
-            # Prefill stored + entered username correctly
-            if self.user:
-                self.fields["stored_username"].initial = self.user.username
-            if self.entered_username_value:
-                self.fields["entered_username"].initial = self.entered_username_value
-
-        def save(self, commit=True):
-            instance = super().save(commit=False)
-            if self.user:
-                new_username = self.cleaned_data.get(
-                    "stored_username", self.user.username)
-                self.user.username = new_username
-                self.user.email = self.cleaned_data.get(
-                    "email", self.user.email)
-                self.user.save(update_fields=["username", "email"])
-            if commit:
-                instance.save()
-            return instance
-
+    # ✅ Get or create associated customer record
     rc, _ = RegisteredCustomer.objects.get_or_create(user=user)
 
+    # ✅ Prepopulate both username fields
+    initial = {
+        "username": user.username,
+        "entered_username_display": entered_username,
+    }
+
     if request.method == "POST":
-        form = InlineProfileForm(
-            request.POST,
-            instance=rc,
-            user=user,
-            entered_username=entered_username
-        )
+        form = InlineProfileForm(request.POST, instance=rc, initial=initial)
         if form.is_valid():
-            form.save()
-            # clean up session keys after successful save
+            # --- Save profile changes ---
+            rc = form.save(commit=False)
+            rc.save()
+
+            # --- Update user core fields if changed ---
+            new_username = form.cleaned_data.get("username", "").strip()
+            if new_username and new_username != user.username:
+                user.username = new_username
+
+            new_email = form.cleaned_data.get("email", "").strip().lower()
+            if new_email and new_email != user.email.lower():
+                user.email = new_email
+
+            user.first_name = rc.first_name
+            user.last_name = rc.last_name
+            user.save()
+
+            # --- Clear mismatch session flags ---
             request.session.pop("entered_username", None)
             request.session.pop("force_profile_update", None)
-            messages.success(
-                request, "Your profile and username were successfully updated.")
-            return redirect("home")
-        messages.error(request, "Please correct the errors below.")
+
+            # --- Smart redirect based on context ---
+            next_url = request.session.pop("next_after_profile", None)
+
+            messages.success(request, "✅ Profile updated successfully!")
+
+            if next_url:
+                return redirect(next_url)
+            elif "checkout" in request.META.get("HTTP_REFERER", ""):
+                return redirect("billing:checkout_summary")
+            else:
+                return redirect("home")
+
+        else:
+            messages.error(
+                request, "Please correct the highlighted errors below.")
     else:
-        form = InlineProfileForm(
-            instance=rc, user=user, entered_username=entered_username)
+        form = InlineProfileForm(instance=rc, initial=initial)
 
     return render(request, "customers/complete_profile.html", {"form": form})
