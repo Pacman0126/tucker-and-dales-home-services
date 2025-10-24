@@ -1,45 +1,52 @@
-def get_available_employees(customer_address, date, time_slot, service_category):
-    """
-    Returns employees in a given category who can take this job slot.
-    Rules:
-    - If already booked in this slot → skip.
-    - If no jobs yet that day → check travel time from home.
-    - If has adjacent jobs → check travel feasibility (<= 30 min).
-    """
-    available = []
-    employees = Employee.objects.filter(service_category=service_category)
+from django.contrib import messages
 
-    for emp in employees:
-        # Already booked in this slot? skip
-        if emp.jobassignment_set.filter(
-            booking__date=date, booking__time_slot=time_slot
-        ).exists():
-            continue
 
-        # Fetch today's jobs for this employee
-        todays_jobs = (
-            emp.jobassignment_set.filter(booking__date=date)
-            .select_related("booking__time_slot")
-            .order_by("booking__time_slot__id")
+def get_locked_address(request):
+    """
+    Retrieve the locked service address from session (if any).
+    Returns: (address_string, is_locked_boolean)
+    """
+    locked_address = request.session.get("service_address", "")
+    return locked_address.strip(), bool(locked_address)
+
+
+def lock_service_address(request, address):
+    """
+    Lock a service address for the current booking session.
+    Ensures consistency across multiple searches and cart operations.
+    """
+    if not address:
+        return
+
+    request.session["service_address"] = address.strip()
+    request.session["address_locked"] = True
+    request.session.modified = True
+    print(f"🔒 Session locked to service address: {address}")
+
+
+def clear_locked_address(request, with_message=True):
+    """
+    Clears the locked address (used when clicking 'Book for New Address').
+    Also clears related cart and session flags.
+    """
+    from billing.models import Cart
+
+    old_address = request.session.pop("service_address", None)
+    request.session.pop("address_locked", None)
+
+    # Optionally clear cart if tied to previous address
+    if old_address:
+        try:
+            Cart.objects.filter(
+                session_key=request.session.session_key).delete()
+            print(f"🧹 Cleared cart for previous address: {old_address}")
+        except Exception as e:
+            print(f"⚠️ Failed to clear old cart: {e}")
+
+    request.session.modified = True
+
+    if with_message:
+        messages.info(
+            request,
+            "Your previous cart was cleared — you can now book under a new address."
         )
-
-        if not todays_jobs.exists():
-            # No jobs yet → use home address
-            drive_time = calculate_drive_time(
-                emp.home_address, customer_address)
-            if drive_time <= 30:
-                available.append(emp)
-            continue
-
-        feasible = True
-        for job in todays_jobs:
-            drive_time = calculate_drive_time(
-                job.jobsite_address, customer_address)
-            if drive_time > 30:
-                feasible = False
-                break
-
-        if feasible:
-            available.append(emp)
-
-    return available

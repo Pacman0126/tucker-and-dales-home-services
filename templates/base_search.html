@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block secondary_nav %}
-<!-- 🧭 Secondary Navbar (collapsible with loading overlay) -->
 <nav id="secondaryNavbar"
   class="navbar secondary-navbar fixed-top shadow-sm"
   style="top:56px; z-index:1039;">
@@ -28,14 +27,9 @@
       class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-lg-0"
       role="search"
     >
+
       {% if request.resolver_match.url_name == "search_by_date" %}
-        <input
-          type="date"
-          name="date"
-          value="{{ request.GET.date|default:'' }}"
-          class="form-control form-control-sm"
-          required
-        >
+        <input type="date" name="date" value="{{ request.GET.date|default:'' }}" class="form-control form-control-sm" required>
       {% elif request.resolver_match.url_name == "search_by_time_slot" %}
         <select name="time_slot" class="form-select form-select-sm" required>
           <option value="">Select time slot</option>
@@ -47,21 +41,36 @@
         </select>
       {% endif %}
 
-      <input
-        type="text"
-        name="customer_address"
-        placeholder="Enter your address"
-        class="form-control form-control-sm"
-        value="{{ request.GET.customer_address|default:'' }}"
-        required
-      >
+      <!-- 🏠 Address input OR AJAX "Book for New Address" -->
+      <div id="addressContainer">
+        {% if not address_locked %}
+          <input
+            type="text"
+            name="customer_address"
+            placeholder="Enter your address"
+            class="form-control form-control-sm"
+            value="{{ request.GET.customer_address|default:'' }}"
+            required
+          >
+        {% else %}
+          <!-- Hidden field preserves locked address during search -->
+          <input type="hidden" name="customer_address" value="{{ locked_address }}">
+          <button
+            type="button"
+            id="unlockAddressBtn"
+            class="btn btn-warning btn-sm fw-semibold ms-2"
+            data-url="{% url 'scheduling:unlock_address' %}">
+            <i class="bi bi-geo-alt"></i> Book for New Address
+          </button>
+        {% endif %}
+      </div>
 
       <button type="submit" id="searchBtn" class="btn btn-warning btn-sm fw-semibold">
         <i class="bi bi-search"></i> Search
       </button>
     </form>
 
-    <!-- 🆕 New Search Button (shown when collapsed) -->
+    <!-- 🆕 New Search Button -->
     <button id="newSearchBtn" class="btn btn-outline-primary btn-sm fw-semibold">
       <i class="bi bi-arrow-repeat me-1"></i> New Search
     </button>
@@ -79,80 +88,7 @@
   </div>
 </div>
 
-{% comment %} <style>
-/* ----------------------------- */
-/* 🧱 Base layout + sticky rules */
-/* ----------------------------- */
-body {
-  padding-top: 112px; /* Space for both navbars */
-}
-
-#secondaryNavbar {
-  transition: all 0.35s ease;
-  overflow: hidden;
-}
-
-/* ----------------------------- */
-/* 🎚️ Collapsed State Styles */
-/* ----------------------------- */
-#secondaryNavbar.collapsed {
-  justify-content: center !important;
-  opacity: 0.95;
-  height: 60px; /* compressed height */
-}
-
-#secondaryNavbar.collapsed form,
-#secondaryNavbar.collapsed .btn-group {
-  display: none !important;
-}
-
-#secondaryNavbar.collapsed #newSearchBtn {
-  display: inline-block;
-}
-
-/* hidden by default, shown when collapsed */
-#newSearchBtn {
-  display: none;
-}
-
-/* ----------------------------- */
-/* 🌀 Overlay Transition */
-/* ----------------------------- */
-#loadingOverlay {
-  transition: opacity 0.3s ease;
-}
-
-#loadingOverlay.d-none {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ----------------------------- */
-/* 📱 Responsive Adjustments */
-/* ----------------------------- */
-@media (max-width: 768px) {
-  .navbar .btn-group {
-    overflow-x: auto;
-    white-space: nowrap;
-    width: 100%;
-  }
-  .navbar .btn-group a {
-    flex: 0 0 auto;
-  }
-  form[role="search"] {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-  }
-  form[role="search"] input,
-  form[role="search"] select,
-  form[role="search"] button {
-    width: 100%;
-  }
-}
-</style> {% endcomment %}
-
-<!-- ⚙️ Navbar Behavior Script -->
+<!-- ⚙️ Navbar & Unlock Behavior Script -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const navbar = document.getElementById("secondaryNavbar");
@@ -160,76 +96,144 @@ document.addEventListener("DOMContentLoaded", () => {
   const newSearchBtn = document.getElementById("newSearchBtn");
   const overlay = document.getElementById("loadingOverlay");
   const searchBtn = document.getElementById("searchBtn");
+  const unlockBtn = document.getElementById("unlockAddressBtn");
 
+  // Detect existing query (collapse navbar after first search)
   const hasQuery = window.location.search.length > 0;
   if (hasQuery) navbar.classList.add("collapsed");
 
-  // --- Submit handler ---
+  // =========================================================
+  // 🔍 Search submission with overlay + spinner
+  // =========================================================
   form.addEventListener("submit", () => {
     overlay.classList.remove("d-none");
     navbar.classList.add("collapsed");
-    // disable search button
-    searchBtn.disabled = true;
+
     const originalText = searchBtn.innerHTML;
+    searchBtn.disabled = true;
     searchBtn.innerHTML =
       '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Searching...';
-    // fallback restore
+
+    // failsafe restore (4 seconds)
     setTimeout(() => {
       searchBtn.disabled = false;
       searchBtn.innerHTML = originalText;
     }, 4000);
   });
 
-  // --- New Search handler ---
+  // =========================================================
+  // 🔄 New Search — keep locked address hidden, clear other inputs
+  // =========================================================
   newSearchBtn.addEventListener("click", () => {
-    // expand navbar with slide-down animation
     navbar.classList.remove("collapsed");
 
-    // clear previous input values
     form.querySelectorAll("input, select").forEach(el => {
-      if (el.tagName === "SELECT") el.selectedIndex = 0;
-      else el.value = "";
+      if (el.tagName === "SELECT") {
+        el.selectedIndex = 0;
+      } else if (el.type !== "hidden" && el.name !== "customer_address") {
+        el.value = ""; // preserve hidden address if locked
+      }
     });
 
-    // hide overlay and re-enable search button
     overlay.classList.add("d-none");
     searchBtn.disabled = false;
 
     // smooth scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    // focus first visible field after expand
+    // focus first visible field after animation
     setTimeout(() => {
-      const first = form.querySelector("input, select");
+      const first = form.querySelector("input:not([type=hidden]), select");
       first?.focus();
-    }, 350);
+    }, 300);
   });
+
+  // =========================================================
+  // 🧭 Unlock Address (AJAX reset + cart clear)
+  // =========================================================
+  if (unlockBtn) {
+    unlockBtn.addEventListener("click", async () => {
+      const url = unlockBtn.dataset.url;
+      unlockBtn.disabled = true;
+      const originalHTML = unlockBtn.innerHTML;
+      unlockBtn.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Resetting...';
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+
+        if (response.ok) {
+          // Replace hidden input with visible address field
+          document.getElementById("addressContainer").innerHTML = `
+            <input
+              type="text"
+              name="customer_address"
+              placeholder="Enter your address"
+              class="form-control form-control-sm"
+              required
+            >`;
+
+          // reset visible cart indicators
+          const summary = document.getElementById("booking-summary");
+          if (summary) summary.innerText = "(0) – ($0.00)";
+          const badge = document.getElementById("cart-count");
+          if (badge) badge.innerText = "0";
+
+          alert("✅ Cart cleared — you can now book for a new address.");
+        } else {
+          alert("⚠️ Could not reset session. Please refresh the page.");
+        }
+      } catch (err) {
+        console.error("Error unlocking address:", err);
+        alert("⚠️ Network error while unlocking address.");
+      } finally {
+        unlockBtn.disabled = false;
+        unlockBtn.innerHTML = originalHTML;
+      }
+    });
+  }
+
+  // =========================================================
+  // 🍪 Helper: CSRF token retrieval
+  // =========================================================
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 });
 </script>
 
-
 {% endblock %}
-
 
 {% block extra_js %}
 {{ block.super }}
-
 <!-- 🌍 Google Maps Async Loader -->
 <script>
-  // Ensure global flags exist
   window.gmapsReady = false;
   window._gmapsLoaded = false;
-
-  // Called by the Google Maps script when loaded
   function initMap() {
-    if (window._gmapsLoaded) return; // prevent duplicate triggers
+    if (window._gmapsLoaded) return;
     window._gmapsLoaded = true;
     window.gmapsReady = true;
     document.dispatchEvent(new Event("gmaps:ready"));
     console.log("✅ Google Maps initialized globally");
   }
-
-  // Listen for map load failure (optional safety)
   window.addEventListener("error", (e) => {
     if (e.target.tagName === "SCRIPT" && e.target.src.includes("maps.googleapis.com")) {
       console.error("❌ Google Maps failed to load:", e);
@@ -238,13 +242,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 </script>
-
-<!-- 🚀 Asynchronous Maps API load (modern pattern) -->
 <script
   src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_BROWSER_KEY }}&callback=initMap&loading=async"
-  async
-  defer
-></script>
-
+  async defer>
+</script>
 {% endblock %}
-

@@ -82,10 +82,11 @@ def checkout_summary(request):
             billing_address_str = rc.full_billing_address
             request.session["billing_address"] = billing_address_str
             request.session.modified = True
-
     except RegisteredCustomer.DoesNotExist:
+        # 🚦 Redirect to profile completion, remember checkout destination
         messages.info(request, "Please complete your profile before checkout.")
         request.session["next_after_profile"] = "billing:checkout_summary"
+        request.session["checkout_pending"] = True
         request.session.modified = True
         return redirect("customers:complete_profile")
 
@@ -95,6 +96,7 @@ def checkout_summary(request):
             request, "Please complete your address details before checkout.")
         request.session["next_after_profile"] = "billing:checkout_summary"
         request.session.modified = True
+        request.session["checkout_pending"] = True
         return redirect("customers:complete_profile")
 
     # --- 5️⃣ Handle checkout form submission ---

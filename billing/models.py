@@ -156,6 +156,12 @@ class Cart(models.Model):
             models.Index(fields=["address_key"]),
         ]
         ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "session_key", "address_key"],
+                name="unique_user_session_address_cart"
+            )
+        ]
 
     def __str__(self):
         owner = self.user or self.session_key or "anonymous"

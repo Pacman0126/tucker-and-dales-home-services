@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
-
+from django.urls import reverse
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -141,18 +141,18 @@ def customer_delete(request, pk):
 
 def _safe_login(request, user):
     """
-    Logs the user in safely, clears stale session flags,
+    Logs in user safely, clears stale session flags,
     and merges any pre-login (anonymous) cart with the user account.
     """
     old_session_key = request.session.session_key
     login(request, user)
 
-    # 🧹 Clear any mismatch flags
+    # Clear mismatch flags
     for key in ("force_profile_update", "entered_username"):
         request.session.pop(key, None)
     request.session.modified = True
 
-    # 🛒 Merge any anonymous cart tied to the old session
+    # ✅ Merge any anonymous cart tied to the old session
     try:
         from billing.utils import merge_session_cart
         if old_session_key:
@@ -194,6 +194,7 @@ def register(request):
                     _safe_login(request, user)
                     request.session["entered_username"] = username
                     request.session["next_after_profile"] = "billing:checkout_summary"
+                    request.session["checkout_pending"] = True
                     return redirect("customers:complete_profile")
 
                 _safe_login(request, user)
@@ -220,6 +221,7 @@ def register(request):
                         login(request, authenticated_user)
                         request.session["entered_username"] = username
                         request.session["next_after_profile"] = "billing:checkout_summary"
+                        request.session["checkout_pending"] = True
                         return redirect("customers:complete_profile")
 
                     # ✅ Normal email-based login
@@ -262,7 +264,9 @@ def register(request):
                 "Registration successful — please complete your profile."
             )
             _safe_login(request, user)
-            request.session["next_after_profile"] = "billing:checkout_summary"
+            request.session["next_after_profile"] = reverse(
+                "billing:checkout_summary")
+            request.session["checkout_pending"] = True
             return redirect("customers:complete_profile")
 
         # Invalid form
@@ -290,6 +294,7 @@ def _post_login_address_check(request, user):
                 "Your profile is missing billing address details. "
                 "Please complete your profile before checkout."
             )
+            request.session["checkout_pending"] = True
             return redirect("customers:complete_profile")
 
         # ✅ Store billing + default service address in session
@@ -303,6 +308,12 @@ def _post_login_address_check(request, user):
             f"Welcome back {user.first_name or user.username}! "
             "Your billing address has been verified."
         )
+
+        # ✅ Redirect back to checkout if that’s what triggered login
+        if request.session.get("checkout_pending"):
+            request.session.pop("checkout_pending", None)
+            return redirect("billing:checkout_summary")
+
         return redirect("home")
 
     except RegisteredCustomer.DoesNotExist:
@@ -310,20 +321,21 @@ def _post_login_address_check(request, user):
             request,
             "No customer profile found. Please complete your profile before checkout."
         )
+        request.session["checkout_pending"] = True
         return redirect("customers:complete_profile")
 
 
 # ============================================================
 # 🔹 CUSTOMER PROFILE COMPLETION
 # ============================================================
-@login_required
+@login_required()  # ✅ explicit call form avoids Pyright overload warning
 def complete_profile(request):
     """
     Lets users verify or update their stored profile and billing address.
     - Shows both entered and stored username (if mismatch detected)
     - Allows any field to be freely updated
     - Displays explicit field errors instead of silent loops
-    - Clears mismatch session flags after save
+    - Redirects back to checkout if triggered by checkout flow
     """
 
     user = request.user
@@ -357,14 +369,17 @@ def complete_profile(request):
                 "billing_zipcode",
             ]
             widgets = {
-                "first_name": forms.TextInput(attrs={"class": "form-control"}),
-                "last_name": forms.TextInput(attrs={"class": "form-control"}),
-                "email": forms.EmailInput(attrs={"class": "form-control"}),
-                "phone": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_street_address": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_city": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_state": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_zipcode": forms.TextInput(attrs={"class": "form-control"}),
+                field: forms.TextInput(attrs={"class": "form-control"})
+                for field in [
+                    "first_name",
+                    "last_name",
+                    "billing_street_address",
+                    "billing_city",
+                    "billing_state",
+                    "billing_zipcode",
+                    "phone",
+                    "email",
+                ]
             }
 
         def clean_email(self):
@@ -372,7 +387,7 @@ def complete_profile(request):
             email = self.cleaned_data.get("email", "").strip().lower()
             return email
 
-    # ✅ Get or create associated customer record
+    # ✅ Ensure associated RegisteredCustomer record exists
     rc, _ = RegisteredCustomer.objects.get_or_create(user=user)
 
     # ✅ Prepopulate both username fields
@@ -384,11 +399,10 @@ def complete_profile(request):
     if request.method == "POST":
         form = InlineProfileForm(request.POST, instance=rc, initial=initial)
         if form.is_valid():
-            # --- Save profile changes ---
             rc = form.save(commit=False)
             rc.save()
 
-            # --- Update user core fields if changed ---
+            # --- Sync user model ---
             new_username = form.cleaned_data.get("username", "").strip()
             if new_username and new_username != user.username:
                 user.username = new_username
@@ -401,22 +415,23 @@ def complete_profile(request):
             user.last_name = rc.last_name
             user.save()
 
-            # --- Clear mismatch session flags ---
-            request.session.pop("entered_username", None)
-            request.session.pop("force_profile_update", None)
+            # --- Clear transient session keys ---
+            for key in ("entered_username", "force_profile_update"):
+                request.session.pop(key, None)
 
-            # --- Smart redirect based on context ---
+            # ✅ If part of checkout flow, go directly to checkout summary
             next_url = request.session.pop("next_after_profile", None)
+            if not next_url:
+                if request.session.get("checkout_pending"):
+                    request.session.pop("checkout_pending", None)
+                    next_url = reverse("billing:checkout_summary")
+                elif "checkout" in request.META.get("HTTP_REFERER", ""):
+                    next_url = reverse("billing:checkout_summary")
+                else:
+                    next_url = reverse("home")
 
             messages.success(request, "✅ Profile updated successfully!")
-
-            if next_url:
-                return redirect(next_url)
-            elif "checkout" in request.META.get("HTTP_REFERER", ""):
-                return redirect("billing:checkout_summary")
-            else:
-                return redirect("home")
-
+            return redirect(next_url)
         else:
             messages.error(
                 request, "Please correct the highlighted errors below.")

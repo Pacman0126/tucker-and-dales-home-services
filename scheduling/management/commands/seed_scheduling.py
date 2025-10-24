@@ -102,7 +102,7 @@ class Command(BaseCommand):
                             cust = random.choice(registered_customers)
                             customer_name = f"{cust.first_name} {cust.last_name}"
                             customer_address = (
-                                f"{cust.street_address}, {cust.city}, {cust.state} {cust.zipcode}"
+                                f"{cust.billing_street_address}, {cust.billing_city}, {cust.billing_state} {cust.billing_zipcode}"
                             )
                         else:
                             customer_name = fake.name()

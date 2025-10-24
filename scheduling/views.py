@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
 
-from billing.utils import _get_or_create_cart, get_service_address, lock_service_address, unlock_service_address
+from billing.utils import _get_or_create_cart
 
 from billing.constants import SERVICE_PRICES, SALES_TAX_RATE
 
@@ -33,6 +33,11 @@ from .models import TimeSlot, ServiceCategory
 
 from .availability import get_available_employees
 
+from scheduling.forms import SearchByTimeSlotForm, SearchByDateForm
+from scheduling.models import TimeSlot, ServiceCategory
+# from scheduling.utils import get_available_employees
+from billing.utils import _get_or_create_cart
+from scheduling.utils import get_locked_address, lock_service_address
 # =========================================================
 #  SEARCH VIEWS
 # =========================================================
@@ -41,62 +46,72 @@ from .availability import get_available_employees
 # ============================================================
 
 
-@require_POST
 def unlock_address(request):
     """
-    Clears current address lock and resets cart so a new
-    address can be entered for new bookings.
+    Clears the current cart and unlocks the service address for both
+    anonymous and authenticated users.
+    Returns JSON if called via AJAX; fallback redirect otherwise.
     """
-    unlock_service_address(request)
-    cart = _get_or_create_cart(request)
-    cart.clear()
-    messages.info(
-        request,
-        "🆕 Starting a new booking session. Address unlocked and cart cleared.",
-    )
-    return redirect("scheduling:search_by_date")
+    if request.method == "POST":
+        request.session.pop("service_address", None)
+        request.session["address_locked"] = False
+
+        # Clear related carts
+        try:
+            if request.user.is_authenticated:
+                Cart.objects.filter(user=request.user).delete()
+            elif request.session.session_key:
+                Cart.objects.filter(
+                    session_key=request.session.session_key).delete()
+        except Exception as e:
+            print(f"⚠️ Cart cleanup failed during address unlock: {e}")
+
+        request.session.modified = True
+
+        # AJAX response
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"ok": True, "message": "Cart cleared and address unlocked."})
+
+        # Fallback redirect
+        messages.info(
+            request, "✅ Cart cleared — you can now book for a new address.")
+        return redirect("scheduling:search_by_date")
+
+    return JsonResponse({"ok": False, "error": "Invalid request method."}, status=405)
 
 
 def search_by_date(request):
     """
     Handles searching available employees for a given date and service address.
-    The first valid address submitted is locked to the session to maintain
-    consistency for that booking (supports landlord/multi-property scenario).
+    - Address lock persists across search modes.
+    - Falls back to locked session address if field omitted.
     """
 
-    # --- 1️⃣ Retrieve locked service address (if already chosen) ---
-    address_locked = request.session.get("address_locked", False)
-    locked_address = request.session.get("service_address", "")
-
-    # --- 2️⃣ Initialize form, prefilling locked or stored billing address ---
-    form = SearchByDateForm(request.GET or None, user=request.user)
-
-    if locked_address and not form.data.get("customer_address"):
-        form.initial["customer_address"] = locked_address
-
-    elif request.user.is_authenticated and not locked_address:
-        # prefill from RegisteredCustomer billing profile
-        rc = getattr(request.user, "registered_customer_profile", None)
-        if rc and rc.has_valid_billing_address():
-            form.initial["customer_address"] = rc.full_billing_address
+    # --- 1️⃣ Get session lock info ---
+    locked_address, address_locked = get_locked_address(request)
+    form = SearchByDateForm(request.GET or None,
+                            user=request.user, locked_address=locked_address)
 
     results = None
 
-    # --- 3️⃣ If form is valid, process search ---
+    # --- 3️⃣ If valid, perform search ---
     if form.is_valid():
         date = form.cleaned_data["date"]
-        customer_address = form.cleaned_data["customer_address"].strip()
+        customer_address = (
+            form.cleaned_data.get("customer_address", "") or locked_address
+        ).strip()
 
-        # --- Lock service address for session if not already locked ---
-        if not locked_address:
+        # --- Lock address if not already locked ---
+        if not locked_address and customer_address:
             lock_service_address(request, customer_address)
             locked_address = customer_address
+            address_locked = True
             messages.info(
                 request,
                 f"Service address '{locked_address}' locked for this session."
             )
 
-        # --- Enforce the locked address: ignore attempts to change it ---
+        # --- Enforce lock ---
         if locked_address and customer_address.lower() != locked_address.lower():
             messages.warning(
                 request,
@@ -105,7 +120,7 @@ def search_by_date(request):
             )
             customer_address = locked_address
 
-        # --- Build availability grid (timeslot × category) ---
+        # --- Build grid of available employees (slots × category) ---
         slots = TimeSlot.objects.all().order_by("id")
         categories = ServiceCategory.objects.all()
 
@@ -122,15 +137,14 @@ def search_by_date(request):
             for slot in slots
         }
 
-        print(f"✅ DEBUG: SearchByDate → Date={date}, Locked={locked_address}, "
-              f"Results={len(results)} slots")
+        print(
+            f"✅ DEBUG: SearchByDate → Date={date}, Address={locked_address}, Results={len(results)} slots")
 
     else:
         print(f"❌ DEBUG: Invalid SearchByDateForm → {form.errors}")
 
-    # --- 4️⃣ Render template with current cart + form + results ---
+    # --- 4️⃣ Render context ---
     cart = _get_or_create_cart(request)
-
     context = {
         "form": form,
         "results": results,
@@ -144,48 +158,39 @@ def search_by_date(request):
     return render(request, "scheduling/search_by_date.html", context)
 
 
-# ============================================================
-# 🔹 Search by Time Slot
-# ============================================================
 def search_by_time_slot(request):
     """
     Allows searching by time slot across the next 28 days.
-    Respects and enforces locked service address for the session.
-    Prefills from RegisteredCustomer billing address when available.
+    - Respects and enforces locked service address.
+    - Automatically falls back to locked session address if field is missing.
     """
 
-    # --- 1️⃣ Get locked service address (if exists) ---
-    address_locked = request.session.get("address_locked", False)
-    locked_address = request.session.get("service_address", "")
+    # --- 1️⃣ Retrieve locked service address (if any) ---
+    locked_address, address_locked = get_locked_address(request)
+    form = SearchByTimeSlotForm(
+        request.GET or None, user=request.user, locked_address=locked_address)
 
-    # --- 2️⃣ Initialize form, prefilling locked or stored billing address ---
-    form = SearchByTimeSlotForm(request.GET or None, user=request.user)
-
-    if locked_address and not form.data.get("customer_address"):
-        form.initial["customer_address"] = locked_address
-
-    elif request.user.is_authenticated and not locked_address:
-        rc = getattr(request.user, "registered_customer_profile", None)
-        if rc and rc.has_valid_billing_address():
-            form.initial["customer_address"] = rc.full_billing_address
-
+    print(f"🔍 DEBUG FORM DATA: {form.data}")
     results = None
 
-    # --- 3️⃣ If valid form, process search ---
+    # --- 3️⃣ Process search if valid ---
     if form.is_valid():
         slot = form.cleaned_data["time_slot"]
-        customer_address = form.cleaned_data["customer_address"].strip()
+        customer_address = (
+            form.cleaned_data.get("customer_address", "") or locked_address
+        ).strip()
 
         # --- Lock service address if not already locked ---
-        if not locked_address:
+        if not locked_address and customer_address:
             lock_service_address(request, customer_address)
             locked_address = customer_address
+            address_locked = True
             messages.info(
                 request,
                 f"Service address '{locked_address}' locked for this session."
             )
 
-        # --- Enforce lock: ignore attempts to change address mid-session ---
+        # --- Enforce locked address ---
         if locked_address and customer_address.lower() != locked_address.lower():
             messages.warning(
                 request,
@@ -194,22 +199,14 @@ def search_by_time_slot(request):
             )
             customer_address = locked_address
 
-        # --- Build availability grid (for next 28 days × service categories) ---
+        # --- Build 28-day × category grid ---
         today = datetime.date.today()
         days = [today + datetime.timedelta(days=i) for i in range(28)]
         categories = ServiceCategory.objects.all()
 
-        results = {}
-        for day in days:
-            results[day] = {}
-            for category in categories:
-                employees = get_available_employees(
-                    customer_address=customer_address,
-                    date=day,
-                    time_slot=slot,
-                    service_category=category,
-                )
-                results[day][category.name] = [
+        results = {
+            day: {
+                category.name: [
                     {
                         "id": emp.id,
                         "name": emp.name,
@@ -220,20 +217,26 @@ def search_by_time_slot(request):
                         "time_slot_id": slot.id,
                         "date": day.strftime("%Y-%m-%d"),
                     }
-                    for emp in employees
+                    for emp in get_available_employees(
+                        customer_address=customer_address,
+                        date=day,
+                        time_slot=slot,
+                        service_category=category,
+                    )
                 ]
+                for category in categories
+            }
+            for day in days
+        }
 
         print(
-            f"✅ DEBUG: SearchByTimeSlot → Slot={slot}, Locked={locked_address}, "
-            f"Days={len(results)}"
-        )
+            f"✅ DEBUG: SearchByTimeSlot → Slot={slot}, Address={locked_address}, Days={len(results)}")
 
     else:
         print(f"❌ DEBUG: Invalid SearchByTimeSlotForm → {form.errors}")
 
-    # --- 4️⃣ Render page ---
+    # --- 4️⃣ Render template ---
     cart = _get_or_create_cart(request)
-
     context = {
         "form": form,
         "results": results,
@@ -246,7 +249,6 @@ def search_by_time_slot(request):
     }
 
     return render(request, "scheduling/search_by_time_slot.html", context)
-
 
 # # =========================================================
 # # 🛒 CART UTILITIES
