@@ -3,7 +3,8 @@ __all__ = ["_get_or_create_cart",
 from decimal import Decimal
 from typing import Optional
 from django.contrib import messages
-from billing.models import Cart
+from django.utils.timezone import now
+from billing.models import Cart, CartItem
 
 
 # def merge_session_cart(session_key: str, user):
@@ -42,92 +43,201 @@ def _clear_cart_for_session(request):
 # ============================================================
 # 🏠 SERVICE ADDRESS SESSION MANAGEMENT
 # ============================================================
+def get_service_address(request) -> str:
+    """
+    Return the currently locked service address for this session.
+    (Never mutate here.)
+    """
+    return normalize_address(request.session.get("service_address"))
 
-def get_service_address(request):
-    """Retrieve the locked service address for this session."""
-    return request.session.get("service_address")
 
-
-def lock_service_address(request, address: str):
-    if not address:
+def lock_service_address(request, address: str) -> None:
+    """
+    Lock the service address for this booking session and flip the lock flag.
+    """
+    addr = normalize_address(address)
+    if not addr:
         return
-    request.session["service_address"] = address.strip()
+    request.session["service_address"] = addr
+    request.session["address_locked"] = True
     request.session.modified = True
-    print(f"🔒 Service address locked for session: {address}")
 
 
-def unlock_service_address(request):
-    """Unlock and clear address + related cart session keys."""
-    for key in ("service_address", "address_locked", "cart_id"):
-        request.session.pop(key, None)
-    request.session.modified = True
-    print("🔓 Service address unlocked for new booking")
+def unlock_service_address(request) -> None:
+    """
+    Clear the service address and lock flag.
+    (Used by 'Book for New Address'.)
+    """
+    request.session.pop("service_address", None)
+    request.session.pop("address_locked", None)
+    request.session.pop("cart_id", None)
+    request.session.modified = Tru
 
 
-def normalize_address(addr: str | None) -> str:
-    return (addr or "").strip().lower()
+def normalize_address(address: Optional[str]) -> str:
+    return (address or "").strip()
 
 # ============================================================
 # 🛒 CART UTILITIES
 # ============================================================
 
 
-def _get_or_create_cart(request):
+def _get_or_create_cart(request) -> Cart:
     """
-    One cart per (user OR session_key) + address_key.
-    NEVER treat a blank address as a “new address”.
+    Legacy helper (kept because several views import it).
+    Prefer `get_active_cart_for_request`, but this remains compatible.
+
+    Strategy:
+    - If session carries a cart_id -> return that cart (and ensure ownership).
+    - Else, if user is authenticated -> return latest cart with the session's
+      service address_key (if set) or the most recent cart; create if none.
+    - Else (anonymous) -> return/create a session cart keyed by session_key + address_key.
+    """
+    return get_active_cart_for_request(request, create_if_missing=True)
+
+
+# ============================================================
+# 🔧 Safe external getter (used by login / merge workflows)
+# ============================================================
+def get_or_create_cart(request_or_user):
+    """
+    Public wrapper that can safely be imported from other apps.
+    Works with either a request or a user instance.
+    """
+    from billing.models import Cart
+
+    if hasattr(request_or_user, "user"):  # got a request
+        request = request_or_user
+        user = getattr(request, "user", None)
+        session_key = request.session.session_key
+    else:  # got a user
+        request = None
+        user = request_or_user
+        session_key = None
+
+    if user and user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=user)
+    else:
+        cart, _ = Cart.objects.get_or_create(session_key=session_key)
+
+    return cart
+
+
+# ============================================================
+# 🔧 Safe external getter (used by login / merge workflows)
+# ============================================================
+
+
+def get_active_cart_for_request(request, *, create_if_missing: bool = True) -> Optional[Cart]:
+    """
+    Single source of truth for selecting the active cart.
+    1) Honor session["cart_id"] if present.
+    2) Otherwise, use (user, address_key) if authenticated.
+    3) Otherwise, use (session_key, address_key) for guests.
+
+    This never silently switches address_key. The address is the session’s boss.
     """
     address_key = normalize_address(request.session.get("service_address"))
+    cart_id = request.session.get("cart_id")
+
+    # 1) If we have a pinned cart_id, use it.
+    if cart_id:
+        try:
+            cart = Cart.objects.select_related().get(pk=cart_id)
+            # Guard: if this cart belongs to another user, take ownership on login
+            if request.user.is_authenticated and cart.user_id != request.user.id:
+                cart.user = request.user
+                cart.session_key = request.session.session_key
+                cart.save(update_fields=["user", "session_key", "updated_at"])
+            return cart
+        except Cart.DoesNotExist:
+            # stale id, drop it and continue
+            request.session.pop("cart_id", None)
+            request.session.modified = True
+
+    # Ensure a session_key exists for anonymous carts
     if not request.session.session_key:
         request.session.create()
 
+    # 2) Authenticated user → prefer a cart with this address_key
     if request.user.is_authenticated:
-        cart, created = Cart.objects.get_or_create(
-            user=request.user,
-            address_key=address_key or None,   # store None if blank
-        )
-    else:
-        cart, created = Cart.objects.get_or_create(
-            session_key=request.session.session_key,
-            address_key=address_key or None,   # store None if blank
-        )
+        qs = Cart.objects.filter(user=request.user)
+        if address_key:
+            cart = qs.filter(address_key=address_key).order_by(
+                "-updated_at").first()
+            if cart:
+                request.session["cart_id"] = cart.pk
+                request.session.modified = True
+                return cart
+        cart = qs.order_by("-updated_at").first()
+        if cart:
+            # If the cart has no address yet and the session does, apply it.
+            if address_key and normalize_address(cart.address_key) != address_key:
+                cart.address_key = address_key
+                cart.save(update_fields=["address_key", "updated_at"])
+            request.session["cart_id"] = cart.pk
+            request.session.modified = True
+            return cart
+        if not create_if_missing:
+            return None
+        # Create a new user cart pinned to session address (if any)
+        cart = Cart.objects.create(
+            user=request.user, address_key=address_key or "")
+        request.session["cart_id"] = cart.pk
+        request.session.modified = True
+        return cart
 
-    # Remember active cart id for navbar badge, etc.
-    request.session["cart_id"] = cart.id
+    # 3) Anonymous user → use session cart
+    if not create_if_missing:
+        return None
+    cart, _ = Cart.objects.get_or_create(
+        session_key=request.session.session_key,
+        address_key=address_key or "",
+        defaults={"created_at": now()},
+    )
+    request.session["cart_id"] = cart.pk
     request.session.modified = True
     return cart
 
 
-def merge_session_cart(old_session_key: str, user):
+def merge_session_cart(old_session_key: str, user) -> Optional[Cart]:
     """
-    Merge an anonymous session cart (pre-login) into the logged-in user's active cart.
-    Keeps the newest address_key if both exist.
+    Merge all carts that were created for the old_session_key into the user’s active cart.
+    We prefer to keep the address_key from the current session (if present).
     """
-    from billing.models import Cart, CartItem
-
     if not old_session_key or not user:
         return None
 
-    try:
-        session_carts = Cart.objects.filter(session_key=old_session_key)
-        user_carts = Cart.objects.filter(user=user)
-        if not session_carts.exists():
-            return None
+    # Collect all session carts
+    session_carts = Cart.objects.filter(
+        session_key=old_session_key).order_by("updated_at")
+    if not session_carts.exists():
+        return None
 
-        # Get or create main cart for user
-        main_cart = user_carts.order_by(
+    # Choose / prepare the destination cart for this user
+    # If the session already has a service_address, we’ll pin to that
+    target_address = normalize_address(user._request.session.get(
+        "service_address") if hasattr(user, "_request") else None)
+    if target_address:
+        main = Cart.objects.filter(
+            user=user, address_key=target_address).order_by("-updated_at").first()
+        if not main:
+            main = Cart.objects.create(user=user, address_key=target_address)
+    else:
+        main = Cart.objects.filter(user=user).order_by(
             "-updated_at").first() or Cart.objects.create(user=user)
 
-        for sc in session_carts:
-            for item in sc.items.all():
-                item.cart = main_cart
-                item.save()
-            sc.delete()
+    moved = 0
+    for sc in session_carts:
+        for item in sc.items.all():
+            item.cart = main
+            item.save(update_fields=["cart"])
+            moved += 1
+        sc.delete()
 
-        return main_cart
-    except Exception as e:
-        print(f"⚠️ merge_session_cart error: {e}")
-        return None
+    # Pin merged cart to session
+    # NOTE: we cannot access request here directly; caller should set cart_id.
+    return main
 
 
 # def _get_or_create_cart(request):

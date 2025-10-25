@@ -1,16 +1,15 @@
-import logging
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-
+from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.db import transaction
 from django.contrib.auth.forms import UserCreationForm
-
+import logging
 
 from django.contrib.auth.models import User
 
@@ -20,6 +19,7 @@ from django import forms
 from .models import RegisteredCustomer
 from .forms import LoginOrRegisterForm
 
+from billing.utils import merge_session_cart, get_or_create_cart
 
 logger = logging.getLogger(__name__)
 
@@ -141,24 +141,47 @@ def customer_delete(request, pk):
 
 def _safe_login(request, user):
     """
-    Logs in user safely, clears stale session flags,
-    and merges any pre-login (anonymous) cart with the user account.
+    Logs in the user and preserves the in-progress booking context.
+    - Does NOT overwrite service_address.
+    - Merges any anonymous cart into the user cart.
+    - Pins the merged cart id into the session.
     """
     old_session_key = request.session.session_key
+    # temp attach request so utils can read session address during merge
+    user._request = request  # transient
+
     login(request, user)
 
-    # Clear mismatch flags
+    # clear transient flags
     for key in ("force_profile_update", "entered_username"):
         request.session.pop(key, None)
-    request.session.modified = True
 
-    # ✅ Merge any anonymous cart tied to the old session
+    # Merge any anonymous carts from old_session_key
     try:
         from billing.utils import merge_session_cart
+        merged = None
         if old_session_key:
-            merge_session_cart(old_session_key, user)
+            merged = merge_session_cart(old_session_key, user)
+        # Pin merged (or latest) cart to the session
+        if merged:
+            request.session["cart_id"] = merged.pk
+        else:
+            # Fallback: pick the latest user cart if exists
+            from billing.models import Cart
+            c = Cart.objects.filter(user=user).order_by("-updated_at").first()
+            if c:
+                request.session["cart_id"] = c.pk
+        request.session.modified = True
+        # logging (optional)
+        if request.session.get("cart_id"):
+            print(
+                f"🛒 Merged/linked cart id {request.session['cart_id']} for user '{user.username}'")
     except Exception as e:
-        print(f"⚠️ Cart merge failed after login: {e}")
+        print(f"⚠️ Cart merge/link failed: {e}")
+
+    # cleanup
+    if hasattr(user, "_request"):
+        delattr(user, "_request")
 
 
 # ============================================================
@@ -280,68 +303,52 @@ def register(request):
 
 def _post_login_address_check(request, user):
     """
-    Ensures the user’s billing address is valid.
-    - Missing → redirect to complete_profile
-    - Valid → preload into session and redirect home
+    Ensure user has a valid billing address; preload billing address to session.
+    Do NOT overwrite service_address if user started a booking as a guest.
     """
     try:
         rc = RegisteredCustomer.objects.get(user=user)
 
-        # ✅ Ensure valid billing info
         if not rc.has_valid_billing_address():
             messages.warning(
                 request,
-                "Your profile is missing billing address details. "
-                "Please complete your profile before checkout."
+                "Your profile is missing billing address details. Please complete your profile before checkout."
             )
+            # signal continuation back to checkout
+            request.session["next_after_profile"] = "billing:checkout"
             request.session["checkout_pending"] = True
+            request.session.modified = True
             return redirect("customers:complete_profile")
 
-        # ✅ Store billing + default service address in session
-        billing_full = rc.full_billing_address
-        request.session["billing_address"] = billing_full
-        request.session.setdefault("service_address", billing_full)
+        # Save billing (for forms) and only set service address if none yet
+        request.session["billing_address"] = rc.full_billing_address
+        if not request.session.get("service_address"):
+            request.session["service_address"] = rc.full_billing_address
         request.session.modified = True
 
-        messages.success(
-            request,
-            f"Welcome back {user.first_name or user.username}! "
-            "Your billing address has been verified."
-        )
-
-        # ✅ Redirect back to checkout if that’s what triggered login
-        if request.session.get("checkout_pending"):
-            request.session.pop("checkout_pending", None)
-            return redirect("billing:checkout_summary")
-
         return redirect("home")
-
     except RegisteredCustomer.DoesNotExist:
         messages.warning(
-            request,
-            "No customer profile found. Please complete your profile before checkout."
-        )
+            request, "No customer profile found. Please complete your profile before checkout.")
+        request.session["next_after_profile"] = "billing:checkout"
         request.session["checkout_pending"] = True
+        request.session.modified = True
         return redirect("customers:complete_profile")
 
 
 # ============================================================
 # 🔹 CUSTOMER PROFILE COMPLETION
 # ============================================================
-@login_required()  # ✅ explicit call form avoids Pyright overload warning
+@login_required()
 def complete_profile(request):
     """
     Lets users verify or update their stored profile and billing address.
-    - Shows both entered and stored username (if mismatch detected)
-    - Allows any field to be freely updated
-    - Displays explicit field errors instead of silent loops
-    - Redirects back to checkout if triggered by checkout flow
+    Redirects correctly back to /billing/checkout if triggered by checkout flow.
     """
 
     user = request.user
     entered_username = request.session.get("entered_username", "")
 
-    # ✅ Inline form for RegisteredCustomer with relaxed validation
     class InlineProfileForm(forms.ModelForm):
         username = forms.CharField(
             required=False,
@@ -359,38 +366,25 @@ def complete_profile(request):
         class Meta:
             model = RegisteredCustomer
             fields = [
-                "first_name",
-                "last_name",
-                "email",
-                "phone",
-                "billing_street_address",
-                "billing_city",
-                "billing_state",
-                "billing_zipcode",
+                "first_name", "last_name", "email", "phone",
+                "billing_street_address", "billing_city",
+                "billing_state", "billing_zipcode",
             ]
             widgets = {
-                field: forms.TextInput(attrs={"class": "form-control"})
-                for field in [
-                    "first_name",
-                    "last_name",
-                    "billing_street_address",
-                    "billing_city",
-                    "billing_state",
-                    "billing_zipcode",
-                    "phone",
-                    "email",
+                f: forms.TextInput(attrs={"class": "form-control"})
+                for f in [
+                    "first_name", "last_name", "billing_street_address",
+                    "billing_city", "billing_state", "billing_zipcode",
+                    "phone", "email",
                 ]
             }
 
         def clean_email(self):
-            """Allow free updates — only validate email format."""
-            email = self.cleaned_data.get("email", "").strip().lower()
-            return email
+            return self.cleaned_data.get("email", "").strip().lower()
 
-    # ✅ Ensure associated RegisteredCustomer record exists
+    # Ensure RegisteredCustomer exists
     rc, _ = RegisteredCustomer.objects.get_or_create(user=user)
 
-    # ✅ Prepopulate both username fields
     initial = {
         "username": user.username,
         "entered_username_display": entered_username,
@@ -402,7 +396,7 @@ def complete_profile(request):
             rc = form.save(commit=False)
             rc.save()
 
-            # --- Sync user model ---
+            # --- Sync Django User model ---
             new_username = form.cleaned_data.get("username", "").strip()
             if new_username and new_username != user.username:
                 user.username = new_username
@@ -415,26 +409,32 @@ def complete_profile(request):
             user.last_name = rc.last_name
             user.save()
 
-            # --- Clear transient session keys ---
+            # Clear transient flags
             for key in ("entered_username", "force_profile_update"):
                 request.session.pop(key, None)
 
-            # ✅ If part of checkout flow, go directly to checkout summary
+            # 🔧 Determine next step
             next_url = request.session.pop("next_after_profile", None)
+            if not next_url and request.GET.get("next"):
+                next_url = request.GET.get("next")
+
             if not next_url:
                 if request.session.get("checkout_pending"):
                     request.session.pop("checkout_pending", None)
-                    next_url = reverse("billing:checkout_summary")
+                    next_url = reverse("billing:checkout")
                 elif "checkout" in request.META.get("HTTP_REFERER", ""):
-                    next_url = reverse("billing:checkout_summary")
+                    next_url = reverse("billing:checkout")
                 else:
                     next_url = reverse("home")
 
+            # 🧩 Safety: ensure redirect always goes to real checkout route
+            if "checkout/summary" in next_url or not next_url.endswith("/checkout/"):
+                next_url = reverse("billing:checkout")
+
             messages.success(request, "✅ Profile updated successfully!")
             return redirect(next_url)
-        else:
-            messages.error(
-                request, "Please correct the highlighted errors below.")
+
+        messages.error(request, "Please correct the highlighted errors below.")
     else:
         form = InlineProfileForm(instance=rc, initial=initial)
 

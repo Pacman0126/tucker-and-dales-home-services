@@ -8,6 +8,7 @@ import json
 from decimal import Decimal
 import stripe
 
+from django.utils import timezone
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib import messages
@@ -20,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
 from customers.models import RegisteredCustomer
 from scheduling.models import Employee, TimeSlot, ServiceCategory
-from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address
+from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
 from .models import Payment
 from .constants import SERVICE_PRICES, SALES_TAX_RATE
 from .forms import CheckoutForm
@@ -38,15 +39,22 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 @login_required
 def checkout(request):
     """
-    Renders the primary checkout page where the user confirms and pays.
-    This is the entry point triggered by the navbar burger icon.
+    Render the checkout page using the *active* cart pinned in the session (cart_id).
+    Never silently switches the cart/address_key.
     """
+    cart = get_active_cart_for_request(request, create_if_missing=False)
+
+    if not cart or not cart.items.exists():
+        messages.info(request, "Your cart is empty.")
+        return redirect("scheduling:search_by_date")
+
     context = {
-        "selected_services": [],
-        "hours": 0,
-        "subtotal": Decimal("0.00"),
-        "tax": Decimal("0.00"),
-        "total": Decimal("0.00"),
+        "cart": cart,
+        "selected_services": cart.items.all(),
+        "hours": 0,  # if you compute hours elsewhere, keep that logic
+        "subtotal": cart.subtotal,
+        "tax": cart.tax,
+        "total": cart.total,
     }
     return render(request, "billing/checkout.html", context)
 
@@ -58,24 +66,25 @@ def checkout(request):
 def checkout_summary(request):
     """
     Displays the cart summary before payment.
-    Auto-fills service and billing addresses from session or RegisteredCustomer.
-    Ensures the service address is locked for this session.
-    Updates billing info back to RegisteredCustomer on submit.
+    Uses the active cart pinned in the session (cart_id),
+    ensuring address and billing details are consistent.
     """
+    from billing.utils import get_active_cart_for_request, get_service_address
+    from customers.models import RegisteredCustomer
+    from .forms import CheckoutForm
 
-    # --- 1️⃣ Retrieve or create active cart ---
-    cart = _get_or_create_cart(request)
-    if not cart.items.exists():
+    # --- 1️⃣ Retrieve the active cart (do NOT auto-create) ---
+    cart = get_active_cart_for_request(request, create_if_missing=False)
+    if not cart or not cart.items.exists():
         messages.warning(request, "Your cart is empty.")
         return redirect("scheduling:search_by_date")
 
     # --- 2️⃣ Retrieve service address from session ---
     service_address = get_service_address(request)
 
-    # --- 3️⃣ Retrieve user billing address from profile ---
+    # --- 3️⃣ Retrieve or preload user billing address ---
     billing_address_str = request.session.get("billing_address", "")
     rc = None
-
     try:
         rc = RegisteredCustomer.objects.get(user=request.user)
         if not billing_address_str and rc.has_valid_billing_address():
@@ -83,9 +92,9 @@ def checkout_summary(request):
             request.session["billing_address"] = billing_address_str
             request.session.modified = True
     except RegisteredCustomer.DoesNotExist:
-        # 🚦 Redirect to profile completion, remember checkout destination
+        # 🚦 redirect to complete profile if missing
         messages.info(request, "Please complete your profile before checkout.")
-        request.session["next_after_profile"] = "billing:checkout_summary"
+        request.session["next_after_profile"] = "billing:checkout"
         request.session["checkout_pending"] = True
         request.session.modified = True
         return redirect("customers:complete_profile")
@@ -93,13 +102,14 @@ def checkout_summary(request):
     # --- 4️⃣ Require address info before proceeding ---
     if not service_address or not billing_address_str:
         messages.info(
-            request, "Please complete your address details before checkout.")
-        request.session["next_after_profile"] = "billing:checkout_summary"
-        request.session.modified = True
+            request, "Please complete your address details before checkout."
+        )
+        request.session["next_after_profile"] = "billing:checkout"
         request.session["checkout_pending"] = True
+        request.session.modified = True
         return redirect("customers:complete_profile")
 
-    # --- 5️⃣ Handle checkout form submission ---
+    # --- 5️⃣ Handle POST submission ---
     if request.method == "POST":
         form = CheckoutForm(request.POST, user=request.user)
         if form.is_valid():
@@ -127,7 +137,6 @@ def checkout_summary(request):
             # ✅ Store billing data for Stripe session
             request.session["billing_data"] = billing_data
             request.session.modified = True
-
             return redirect("billing:create_checkout_session")
         else:
             messages.error(
@@ -145,8 +154,8 @@ def checkout_summary(request):
         "service_address": service_address,
         "billing_address": billing_address_str,
     }
-
     return render(request, "billing/checkout.html", context)
+
 
 # ----------------------------------------------------------------------
 # 💳 Stripe Checkout Session
@@ -230,29 +239,70 @@ def create_checkout_session(request):
 @login_required
 def payment_success(request):
     """
-    Renders success confirmation after Stripe payment
-    and clears the user's active cart.
+    Stripe payment success handler.
+    - Clears and deletes the completed cart.
+    - Resets address + session for a new booking.
+    - Creates a brand new empty cart while preserving login.
     """
-    from billing.models import Cart
+    cleared_count = 0
+    old_cart_id = request.session.get("cart_id")
 
-    # Clear cart items for this user
-    cart = Cart.objects.filter(
-        user=request.user).order_by("-updated_at").first()
-    if cart:
-        cart.items.all().delete()
+    try:
+        # Locate the user's most recent cart
+        cart = (
+            Cart.objects.filter(user=request.user)
+            .order_by("-updated_at")
+            .first()
+        )
+
+        if cart:
+            cleared_count = cart.items.count()
+            cart.items.all().delete()
+            print(
+                f"🧹 Cleared {cleared_count} items from cart {cart.id} for {request.user.username}")
+            # Delete the old cart object entirely
+            cart.delete()
+            print(f"🗑️ Deleted old cart ID {old_cart_id}")
+
+    except Exception as e:
+        print(f"⚠️ Error while clearing cart after payment: {e}")
+
+    # --- Reset session state for new booking ---
+    for key in ("cart_id", "service_address", "address_locked"):
+        request.session.pop(key, None)
+    request.session.modified = True
+
+    # --- Create a brand new empty cart for next booking ---
+    try:
+        from billing.utils import _get_or_create_cart
+        new_cart = _get_or_create_cart(request)
+        print(
+            f"🛒 Created fresh cart ID {new_cart.id} after payment for user {request.user.username}")
+    except Exception as e:
+        print(f"⚠️ Could not create new cart after payment: {e}")
 
     messages.success(
-        request, "✅ Payment successful! Your cart has been cleared.")
-    return render(request, "billing/success.html")
+        request,
+        f"✅ Payment successful! {cleared_count} item(s) booked. "
+        "Your cart has been reset for your next booking session.",
+    )
+
+    return render(
+        request,
+        "billing/success.html",
+        {"cleared_count": cleared_count,
+            "new_cart_id": request.session.get("cart_id")},
+    )
 
 
 def payment_cancel(request):
+    """Renders Stripe payment cancellation page."""
     return render(request, "billing/cancel.html")
-
-
 # ----------------------------------------------------------------------
 # 🧾 Payment History (user)
 # ----------------------------------------------------------------------
+
+
 @login_required
 def payment_history(request):
     payments = Payment.objects.filter(
