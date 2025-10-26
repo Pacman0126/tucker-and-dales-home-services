@@ -123,11 +123,6 @@ def get_or_create_cart(request_or_user):
     return cart
 
 
-# ============================================================
-# 🔧 Safe external getter (used by login / merge workflows)
-# ============================================================
-
-
 def get_active_cart_for_request(request, *, create_if_missing: bool = True) -> Optional[Cart]:
     """
     Single source of truth for selecting the active cart.
@@ -238,35 +233,3 @@ def merge_session_cart(old_session_key: str, user) -> Optional[Cart]:
     # Pin merged cart to session
     # NOTE: we cannot access request here directly; caller should set cart_id.
     return main
-
-
-# def _get_or_create_cart(request):
-#     """
-#     Retrieve or create a persistent cart for the current user/session.
-#     Each session has at most one active cart tied to its locked service address.
-#     """
-#     # --- Ensure session exists ---
-#     if not request.session.session_key:
-#         request.session.create()
-
-#     session_key = request.session.session_key
-#     address_key = (request.session.get("service_address") or "").strip()
-
-#     # --- Pick correct identifier (user vs session) ---
-#     filters = {"address_key": address_key}
-#     if request.user.is_authenticated:
-#         filters["user"] = request.user
-#     else:
-#         filters["session_key"] = session_key
-
-#     # --- Try existing cart first ---
-#     cart = Cart.objects.filter(**filters).order_by("-updated_at").first()
-
-#     # --- If not found, create new ---
-#     if not cart:
-#         cart = Cart.objects.create(**filters)
-
-#     # --- Persist cart id in session for quick access ---
-#     request.session["cart_id"] = cart.id
-#     request.session.modified = True
-#     return cart

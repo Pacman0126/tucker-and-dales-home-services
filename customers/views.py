@@ -194,6 +194,7 @@ def register(request):
       - Email+password → login (redirect to profile update if username mismatch)
       - Username exists but bad password → error
       - Otherwise → create new user + profile
+      - ✅ Preserves ?next= param for post-login redirect
     """
     if request.method == "POST":
         form = LoginOrRegisterForm(request.POST)
@@ -202,6 +203,9 @@ def register(request):
             username = form.cleaned_data["username"].strip()
             email = form.cleaned_data["email"].strip().lower()
             password1 = form.cleaned_data["password1"]
+
+            # ✅ Capture intended next destination before any return
+            next_url = request.GET.get("next") or request.POST.get("next")
 
             # ======================================================
             # CASE 1 — Username + password match → login
@@ -216,11 +220,15 @@ def register(request):
                     )
                     _safe_login(request, user)
                     request.session["entered_username"] = username
-                    request.session["next_after_profile"] = "billing:checkout_summary"
+                    request.session["next_after_profile"] = next_url or "billing:checkout"
                     request.session["checkout_pending"] = True
                     return redirect("customers:complete_profile")
 
                 _safe_login(request, user)
+
+                # ✅ Redirect to intended page if provided
+                if next_url:
+                    return redirect(next_url)
                 return _post_login_address_check(request, user)
 
             # ======================================================
@@ -241,14 +249,16 @@ def register(request):
                             f"but you entered '{username}'. "
                             "Please verify or update your username."
                         )
-                        login(request, authenticated_user)
+                        _safe_login(request, authenticated_user)
                         request.session["entered_username"] = username
-                        request.session["next_after_profile"] = "billing:checkout_summary"
+                        request.session["next_after_profile"] = next_url or "billing:checkout"
                         request.session["checkout_pending"] = True
                         return redirect("customers:complete_profile")
 
                     # ✅ Normal email-based login
                     _safe_login(request, authenticated_user)
+                    if next_url:
+                        return redirect(next_url)
                     return _post_login_address_check(request, authenticated_user)
 
                 messages.error(request, "Incorrect password for this email.")
@@ -287,8 +297,8 @@ def register(request):
                 "Registration successful — please complete your profile."
             )
             _safe_login(request, user)
-            request.session["next_after_profile"] = reverse(
-                "billing:checkout_summary")
+            request.session["next_after_profile"] = next_url or reverse(
+                "billing:checkout")
             request.session["checkout_pending"] = True
             return redirect("customers:complete_profile")
 
@@ -296,9 +306,13 @@ def register(request):
         messages.error(request, "Please correct the errors below.")
         return render(request, "customers/register.html", {"form": form})
 
-    # GET
+    # ======================================================
+    # GET — normal render, preserve ?next in hidden field
+    # ======================================================
     form = LoginOrRegisterForm()
-    return render(request, "customers/register.html", {"form": form})
+    next_url = request.GET.get("next", "")
+    context = {"form": form, "next": next_url}
+    return render(request, "customers/register.html", context)
 
 
 def _post_login_address_check(request, user):
