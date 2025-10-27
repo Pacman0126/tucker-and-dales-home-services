@@ -9,10 +9,14 @@ urlpatterns = [
     path("checkout/summary/", views.checkout_summary, name="checkout_summary"),
     path("create-checkout-session/", views.create_checkout_session,
          name="create_checkout_session"),
-    path("success/", views.payment_success, name="success"),
-    path("cancel/", views.payment_cancel, name="cancel"),
-    path("history/", views.payment_history, name="payment_history"),
-
+    path("success/", views.payment_success, name="payment_success"),
+    path("cancel/", views.payment_cancel, name="payment_cancel"),
+    path("payment/history/", views.payment_history, name="payment_history"),
+    #     path("payment/receipt/<int:pk>/",
+    #          views.payment_receipt_pdf, name="payment_receipt_pdf"),
+    # path("download-receipt/", views.download_receipt, name="download_receipt"),
+    path("receipt/pdf/<int:pk>/", views.download_receipt_pdf,
+         name="download_receipt_pdf"),
     # 🛒 Cart
     path("cart/add/", views.cart_add, name="cart_add"),
     path("cart/remove/", views.cart_remove, name="cart_remove"),

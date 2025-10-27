@@ -1,8 +1,90 @@
 {% extends "base.html" %}
+{% block title %}Payment Successful{% endblock %}
+
 {% block content %}
-<div class="container py-5 text-center">
-  <h2 class="text-success mb-3">✅ Payment Successful!</h2>
-  <p>Your booking has been confirmed. You’ll receive an email receipt from Stripe.</p>
-  <a href="/" class="btn btn-outline-primary mt-3">Return to Home</a>
+<div class="container mt-5 pt-4">
+  <div class="card shadow-sm border-success">
+    <div class="card-body text-center py-5">
+
+      <!-- ✅ Header -->
+      <h2 class="text-success fw-bold mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i> Payment Successful!
+      </h2>
+      <p class="text-muted mb-4">
+        Your payment was processed successfully and your receipt has been saved in your payment history.
+      </p>
+
+      <!-- ✅ Transaction Summary -->
+      {% if last_payment %}
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered w-auto mx-auto align-middle">
+          <tbody>
+            <tr>
+              <th scope="row" class="text-end">Transaction ID</th>
+              <td>{{ last_payment.stripe_payment_id|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-end">Service Address</th>
+              <td>{{ last_payment.service_address|default:"N/A" }}</td>
+            </tr>
+           <tr>
+              <th scope="row" class="text-end">Subtotal</th>
+              <td>${{ subtotal|floatformat:2|default_if_none:"0.00" }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-end">Tax</th>
+              <td>${{ tax|floatformat:2|default_if_none:"0.00" }}</td>
+            </tr>
+            <tr class="table-success">
+              <th scope="row" class="text-end fw-bold">Total Paid</th>
+              <td class="fw-bold">
+                ${{ total|floatformat:2|default_if_none:"0.00" }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      <!-- ✅ Action Buttons -->
+      <div class="d-flex justify-content-center flex-wrap gap-3">
+        {% if last_payment %}
+        <a
+          href="{% url 'billing:download_receipt_pdf' last_payment.id %}"
+          class="btn btn-outline-primary"
+        >
+          <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+          Download Receipt (PDF)
+        </a>
+
+        <!-- 🖨️ Print Button -->
+        <button
+          type="button"
+          class="btn btn-outline-dark"
+          onclick="window.print();"
+        >
+          <i class="bi bi-printer-fill me-2"></i>
+          Print Receipt
+        </button>
+        {% endif %}
+
+        <a
+          href="{% url 'billing:payment_history' %}"
+          class="btn btn-outline-secondary"
+        >
+          <i class="bi bi-clock-history me-2"></i>
+          View Payment History
+        </a>
+
+        <a href="{% url 'home' %}" class="btn btn-success">
+          <i class="bi bi-house-door-fill me-2"></i>
+          Back to Home
+        </a>
+      </div>
+
+    </div>
+  </div>
 </div>
 {% endblock %}
+
+

@@ -101,7 +101,7 @@
         ({{ cart_item_count|default:0 }}) – (${{ cart_total|default:"0.00" }})
       </span>
 
-      <!-- Burger dropdown -->
+      <!-- 🍔 Burger dropdown -->
       <div class="dropdown">
         <button
           class="btn btn-outline-light btn-sm"
@@ -112,41 +112,61 @@
         >
           <i class="bi bi-list fs-5"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarBurgerDropdown">
+        <ul class="dropdown-menu dropdown-menu-dark shadow-sm" aria-labelledby="navbarBurgerDropdown">
+
           {% if user.is_authenticated %}
-            <li>
-              <a class="dropdown-item" href="{% url 'billing:payment_history' %}">
-                <i class="bi bi-receipt"></i> My Payments
-              </a>
-            </li>
+          <li class="dropdown-header text-secondary small fw-semibold px-3">
+            {{ user.username }}
+          </li>
+          <li>
+            <a class="dropdown-item" href="{% url 'customers:complete_profile' %}">
+              <i class="bi bi-person-lines-fill me-1"></i> My Profile
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{% url 'billing:payment_history' %}">
+              <i class="bi bi-credit-card-2-front me-1 text-success"></i> View Payment History
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+              <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          {% else %}
+          <li>
+            <a class="dropdown-item" href="{% url 'login' %}">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Login / Register
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
           {% endif %}
 
-          <!-- Always visible checkout (handles redirect logic internally) -->
+          <!-- Always visible checkout -->
           <li>
-            <a class="dropdown-item" href="{% url 'billing:checkout' %}">
-              <i class="bi bi-cart-check"></i> Go to Checkout
+            <a class="dropdown-item fw-semibold" href="{% url 'billing:checkout' %}">
+              <i class="bi bi-cart-check me-1"></i> Go to Checkout
             </a>
           </li>
 
-          <li><hr class="dropdown-divider"></li>
           <li>
             <a class="dropdown-item" href="{% url 'home' %}">
-              <i class="bi bi-house"></i> Return Home
+              <i class="bi bi-house me-1"></i> Return Home
             </a>
           </li>
+
         </ul>
       </div>
     </div>
 
     <!-- Right group: Home + Cart -->
     <div class="d-flex align-items-center gap-2">
-
-      <!-- Neutral Home pill -->
       <a href="{% url 'home' %}" class="btn btn-outline-light btn-sm">
         <i class="bi bi-house-fill"></i> Home
       </a>
 
-      <!-- Cart icon with badge -->
+      <!-- 🛒 Cart icon with badge -->
       <button
         id="cart-icon"
         class="btn btn-warning btn-sm rounded-circle position-relative"

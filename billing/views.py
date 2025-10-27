@@ -8,24 +8,33 @@ import json
 from decimal import Decimal
 import stripe
 
+from django.core.mail import send_mail
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils import timezone
+from django.utils.timezone import now
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.db.models import Sum
+from django.http import FileResponse
+from django.urls import reverse
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from customers.models import RegisteredCustomer
 from scheduling.models import Employee, TimeSlot, ServiceCategory
 from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
 from .models import Payment
 from .constants import SERVICE_PRICES, SALES_TAX_RATE
 from .forms import CheckoutForm
-from .models import Cart, CartItem, CartManager
+from .models import Cart, CartItem, CartManager, PaymentHistory
 # ----------------------------------------------------------------------
 # ⚙️ Stripe Setup
 # ----------------------------------------------------------------------
@@ -160,76 +169,69 @@ def checkout_summary(request):
 # ----------------------------------------------------------------------
 # 💳 Stripe Checkout Session
 # ----------------------------------------------------------------------
-
-
 @login_required
 def create_checkout_session(request):
-    """
-    Creates a Stripe Checkout Session from the current user's cart.
-    """
-    from billing.models import Cart
+    from decimal import Decimal
+    import stripe
+    from django.urls import reverse
+    from django.conf import settings
+    from .models import Cart
 
-    cart = Cart.objects.filter(
-        user=request.user).order_by("-updated_at").first()
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    cart = _get_or_create_cart(request)
     if not cart or not cart.items.exists():
-        messages.info(request, "Your cart is empty.")
-        return redirect("scheduling:search_by_date")
+        messages.warning(request, "Your cart is empty.")
+        return redirect("billing:checkout")
 
+    # Totals (authoritative for our metadata display on success)
     subtotal = cart.subtotal
-    tax = (subtotal * Decimal(str(SALES_TAX_RATE))).quantize(Decimal("0.01"))
-    total = (subtotal + tax).quantize(Decimal("0.01"))
+    tax = cart.tax
+    total = cart.total
+    service_address = request.session.get("service_address", "")
+
+    # Build absolute URLs for Stripe redirect
+    success_url = (
+        request.build_absolute_uri(reverse("billing:payment_success"))
+        + "?session_id={CHECKOUT_SESSION_ID}"
+    )
+    cancel_url = request.build_absolute_uri(reverse("billing:payment_cancel"))
 
     try:
-        line_items = [
-            {
+        # Minimal line item to charge the full total:
+        # (You can switch back to per-item line_items if you prefer.)
+        checkout_session = stripe.checkout.Session.create(
+            mode="payment",
+            payment_method_types=["card"],
+            line_items=[{
                 "price_data": {
                     "currency": "usd",
-                    "product_data": {"name": "Selected Services"},
-                    "unit_amount": int(subtotal * 100),
+                    "product_data": {"name": "Home services booking"},
+                    "unit_amount": int(total * Decimal("100")),
                 },
                 "quantity": 1,
-            }
-        ]
-        if tax > 0:
-            line_items.append(
-                {
-                    "price_data": {
-                        "currency": "usd",
-                        "product_data": {"name": "Sales Tax"},
-                        "unit_amount": int(tax * 100),
-                    },
-                    "quantity": 1,
-                }
-            )
-
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=line_items,
-            mode="payment",
-            success_url=request.build_absolute_uri("/billing/success/"),
-            cancel_url=request.build_absolute_uri("/billing/cancel/"),
-            customer_email=request.user.email,
+            }],
+            success_url=success_url,
+            cancel_url=cancel_url,
             metadata={
-                "user_id": request.user.id,
-                "subtotal": str(subtotal),
-                "tax": str(tax),
-                "total": str(total),
+                "subtotal": f"{subtotal:.2f}",
+                "tax": f"{tax:.2f}",
+                "total": f"{total:.2f}",
+                "service_address": service_address,
+                "cart_id": str(cart.pk),
+                "user_id": str(request.user.id),
             },
         )
-
-        Payment.objects.create(
-            user=request.user,
-            amount=int(total * 100),  # cents
-            currency="usd",
-            status=Payment.Status.PROCESSING,
-            stripe_checkout_session_id=checkout_session.id,
-            description="Cart checkout",
-        )
+        # Optional: store the session id on the cart for traceability
+        request.session["last_checkout_session_id"] = checkout_session.id
+        request.session.modified = True
 
         return redirect(checkout_session.url, code=303)
 
     except Exception as e:
-        messages.error(request, f"Stripe error: {e}")
+        # Avoid printing emojis (Windows console encoding)
+        print("Stripe create session error:", e)
+        messages.error(request, f"Could not start checkout: {e}")
         return redirect("billing:checkout")
 
 
@@ -239,65 +241,137 @@ def create_checkout_session(request):
 @login_required
 def payment_success(request):
     """
-    Stripe payment success handler.
-    - Clears and deletes the completed cart.
-    - Resets address + session for a new booking.
-    - Creates a brand new empty cart while preserving login.
+    Debug version — adds checkpoint prints to isolate missing subtotal/tax.
     """
-    cleared_count = 0
-    old_cart_id = request.session.get("cart_id")
+    from decimal import Decimal
+    from django.utils.timezone import now
+    import stripe
+
+    session_id = request.GET.get("session_id")
+    if not session_id:
+        print("⚠️ Missing session_id → redirecting to checkout")
+        messages.warning(request, "Missing Stripe session id.")
+        return redirect("billing:checkout")
+
+    print(f"\n🟩 [payment_success] Stripe session_id = {session_id}")
 
     try:
-        # Locate the user's most recent cart
-        cart = (
-            Cart.objects.filter(user=request.user)
-            .order_by("-updated_at")
-            .first()
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=["payment_intent", "payment_intent.charges"],
         )
-
-        if cart:
-            cleared_count = cart.items.count()
-            cart.items.all().delete()
-            print(
-                f"🧹 Cleared {cleared_count} items from cart {cart.id} for {request.user.username}")
-            # Delete the old cart object entirely
-            cart.delete()
-            print(f"🗑️ Deleted old cart ID {old_cart_id}")
-
+        print("🟢 Retrieved Stripe session successfully.")
     except Exception as e:
-        print(f"⚠️ Error while clearing cart after payment: {e}")
+        print(f"❌ Stripe session retrieve failed: {e}")
+        messages.error(request, f"Could not load Stripe session: {e}")
+        return redirect("billing:checkout")
 
-    # --- Reset session state for new booking ---
+    # --- Stripe raw totals ---
+    amount_total = Decimal(session.get("amount_total") or 0) / Decimal("100")
+    currency = (session.get("currency") or "usd").lower()
+    print(
+        f"💵 Stripe totals → amount_total={amount_total}, currency={currency}")
+
+    # --- Metadata ---
+    md = session.get("metadata") or {}
+    print(f"📦 Metadata received: {md}")
+
+    def to_decimal(val, fallback="0.00"):
+        try:
+            return Decimal(str(val or fallback))
+        except Exception:
+            return Decimal(fallback)
+
+    meta_subtotal = to_decimal(md.get("subtotal"))
+    meta_tax = to_decimal(md.get("tax"))
+    meta_total = to_decimal(md.get("total"))
+    service_address = (
+        md.get("service_address")
+        or request.session.get("service_address")
+        or ""
+    )
+
+    # --- Fallback checks ---
+    if meta_total == 0 and amount_total > 0:
+        meta_total = amount_total
+    if meta_subtotal == 0 and meta_total > 0:
+        meta_subtotal = (meta_total - meta_tax).quantize(Decimal("0.01"))
+
+    print(
+        f"🧾 Parsed values → subtotal={meta_subtotal}, tax={meta_tax}, total={meta_total}, service_address='{service_address}'"
+    )
+
+    from .models import Cart, PaymentHistory
+    cart = Cart.objects.filter(
+        user=request.user).order_by("-updated_at").first()
+
+    payment_intent_id = getattr(session.payment_intent, "id", None)
+    stripe_payment_id = payment_intent_id or session.id
+
+    # Save / get payment
+    ph, created = PaymentHistory.objects.get_or_create(
+        user=request.user,
+        stripe_payment_id=stripe_payment_id,
+        defaults={
+            "cart": cart,
+            "amount": meta_total or amount_total,
+            "currency": currency,
+            "service_address": service_address,
+            "created_at": now(),
+            "raw_data": {
+                "stripe_session_id": session.id,
+                "payment_intent_id": payment_intent_id,
+                "subtotal": f"{meta_subtotal:.2f}",
+                "tax": f"{meta_tax:.2f}",
+                "total": f"{meta_total:.2f}",
+                "service_address": service_address,
+                "currency": currency.upper(),
+            },
+        },
+    )
+
+    if created:
+        print(f"✅ Created new PaymentHistory id={ph.id}")
+    else:
+        print(f"♻️ Using existing PaymentHistory id={ph.id}")
+
+    # Clear cart
+    if cart and cart.items.exists():
+        cleared = cart.items.count()
+        cart.items.all().delete()
+        print(f"🧹 Cleared {cleared} items from cart.")
+
+    # Reset session
     for key in ("cart_id", "service_address", "address_locked"):
         request.session.pop(key, None)
     request.session.modified = True
 
-    # --- Create a brand new empty cart for next booking ---
-    try:
-        from billing.utils import _get_or_create_cart
-        new_cart = _get_or_create_cart(request)
-        print(
-            f"🛒 Created fresh cart ID {new_cart.id} after payment for user {request.user.username}")
-    except Exception as e:
-        print(f"⚠️ Could not create new cart after payment: {e}")
+    raw = ph.raw_data or {}
+    print(f"🧠 raw_data stored in PaymentHistory: {raw}")
 
-    messages.success(
-        request,
-        f"✅ Payment successful! {cleared_count} item(s) booked. "
-        "Your cart has been reset for your next booking session.",
-    )
+    # Values going into context
+    context = {
+        "transaction_id": ph.stripe_payment_id,
+        "subtotal": Decimal(str(raw.get("subtotal", meta_subtotal))),
+        "tax": Decimal(str(raw.get("tax", meta_tax))),
+        "total": ph.amount,
+        "service_address": ph.service_address,
+        "currency": ph.currency.upper(),
+        "last_payment": ph,
+    }
 
-    return render(
-        request,
-        "billing/success.html",
-        {"cleared_count": cleared_count,
-            "new_cart_id": request.session.get("cart_id")},
-    )
+    print("📤 Final context sent to template:", context, "\n")
+
+    return render(request, "billing/success.html", context)
 
 
+@login_required
 def payment_cancel(request):
-    """Renders Stripe payment cancellation page."""
-    return render(request, "billing/cancel.html")
+    """Handles user cancellation from Stripe checkout."""
+    messages.info(
+        request, "Your payment was cancelled — no charges were made.")
+    return redirect("billing:checkout")
+
 # ----------------------------------------------------------------------
 # 🧾 Payment History (user)
 # ----------------------------------------------------------------------
@@ -305,19 +379,147 @@ def payment_cancel(request):
 
 @login_required
 def payment_history(request):
-    payments = Payment.objects.filter(
-        user=request.user).order_by("-created_at")
-    total_spent = payments.aggregate(Sum("amount"))["amount__sum"] or 0
-
-    return render(request, "billing/payment_history.html", {
-        "payments": payments,
-        "total_spent": total_spent / 100,
-    })
+    """Displays all payments for the logged-in user."""
+    payments = PaymentHistory.objects.filter(
+        user=request.user).select_related("cart")
+    return render(request, "billing/payment_history.html", {"payments": payments})
 
 
 # ----------------------------------------------------------------------
 # 🧾 All Payments (admin)
 # ----------------------------------------------------------------------
+@login_required
+def download_receipt_pdf(request, pk):
+    """
+    Generates a polished, branded PDF receipt for a given PaymentHistory record.
+    """
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import simpleSplit
+    import os
+
+    payment = get_object_or_404(PaymentHistory, pk=pk, user=request.user)
+
+    # ------------------------------------------
+    # PDF Response Setup
+    # ------------------------------------------
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="receipt_{payment.id}.pdf"'
+
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+    y = height - inch
+
+    # ------------------------------------------
+    # HEADER with logo or fallback title
+    # ------------------------------------------
+    logo_path = os.path.join(settings.BASE_DIR, "static", "images", "logo.png")
+    if os.path.exists(logo_path):
+        logo_w, logo_h = 1.3 * inch, 1.3 * inch
+        p.drawImage(
+            logo_path,
+            (width - logo_w) / 2,
+            y - logo_h,
+            width=logo_w,
+            height=logo_h,
+            mask="auto",
+        )
+        y -= logo_h + 0.2 * inch
+    else:
+        p.setFont("Helvetica-Bold", 18)
+        p.drawCentredString(width / 2, y, "Tucker & Dale’s Home Services")
+        y -= 0.35 * inch
+
+    p.setFont("Helvetica-Bold", 16)
+    p.drawCentredString(width / 2, y, "Payment Receipt")
+    y -= 0.4 * inch
+
+    p.setStrokeColor(colors.lightgrey)
+    p.line(inch, y, width - inch, y)
+    y -= 0.35 * inch
+
+    # ------------------------------------------
+    # BASIC INFO SECTION
+    # ------------------------------------------
+    info_fields = [
+        ("Customer", payment.user.get_full_name() or payment.user.username),
+        ("Transaction ID", payment.stripe_payment_id or "N/A"),
+        ("Amount Paid", f"${payment.amount:.2f} {payment.currency.upper()}"),
+        ("Service Address", payment.service_address or "N/A"),
+        ("Date", payment.created_at.strftime("%Y-%m-%d %H:%M:%S")),
+    ]
+
+    p.setFont("Helvetica", 12)
+    for label, value in info_fields:
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(inch, y, f"{label}:")
+        p.setFont("Helvetica", 12)
+        # Wrap long values automatically
+        wrapped = simpleSplit(str(value), "Helvetica", 12, width - 2.8 * inch)
+        for line in wrapped:
+            p.drawString(inch + 1.8 * inch, y, line)
+            y -= 0.25 * inch
+        y -= 0.05 * inch
+
+    y -= 0.2 * inch
+    p.line(inch, y, width - inch, y)
+    y -= 0.3 * inch
+
+    # ------------------------------------------
+    # PAYMENT DETAILS SECTION
+    # ------------------------------------------
+    p.setFont("Helvetica-Bold", 13)
+    p.drawString(inch, y, "Payment Details:")
+    y -= 0.3 * inch
+
+    raw = payment.raw_data if isinstance(payment.raw_data, dict) else {}
+    subtotal = raw.get("subtotal", "N/A")
+    tax = raw.get("tax", "N/A")
+    total = raw.get("total", f"{payment.amount:.2f}")
+    session_id = raw.get("stripe_session_id", "N/A")
+    payment_intent = raw.get("payment_intent_id", "N/A")
+
+    details = [
+        ("Subtotal", f"${subtotal}"),
+        ("Tax", f"${tax}"),
+        ("Total", f"${total}"),
+        ("Stripe Session ID", session_id),
+        ("Payment Intent ID", payment_intent),
+    ]
+
+    p.setFont("Helvetica", 11)
+    for label, value in details:
+        p.setFont("Helvetica-Bold", 11)
+        p.drawString(inch, y, f"{label}:")
+        p.setFont("Helvetica", 11)
+        wrapped = simpleSplit(str(value), "Helvetica", 11, width - 2.8 * inch)
+        for line in wrapped:
+            p.drawString(inch + 1.8 * inch, y, line)
+            y -= 0.22 * inch
+        y -= 0.05 * inch
+
+    # ------------------------------------------
+    # FOOTER
+    # ------------------------------------------
+    y -= 0.3 * inch
+    p.setStrokeColor(colors.lightgrey)
+    p.line(inch, y, width - inch, y)
+    y -= 0.3 * inch
+
+    p.setFont("Helvetica-Oblique", 10)
+    p.setFillColor(colors.grey)
+    p.drawCentredString(width / 2, y, "Thank you for your payment!")
+    p.drawCentredString(width / 2, y - 0.2 * inch,
+                        "Tucker & Dale’s Home Services © 2025")
+    p.setFillColor(colors.black)
+
+    p.showPage()
+    p.save()
+    return response
+
+
 @user_passes_test(lambda u: u.is_superuser)
 def all_payments_admin(request):
     payments = Payment.objects.select_related("user").order_by("-created_at")
@@ -347,41 +549,53 @@ def refund_payment(request, pk):
 # 🌐 Stripe Webhook Listener
 # ----------------------------------------------------------------------
 @csrf_exempt
+@require_POST
 def stripe_webhook(request):
     """
-    Receives events from Stripe (payment succeeded, refund, failure, etc.)
+    Handles Stripe 'payment_intent.succeeded' events.
+    Records payment details in PaymentHistory for user reference.
     """
+    import stripe
+    from billing.models import PaymentHistory, Cart
+    from django.contrib.auth.models import User
+
     payload = request.body
-    sig_header = request.headers.get("Stripe-Signature")
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
     endpoint_secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", None)
 
     try:
-        if endpoint_secret:
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, endpoint_secret)
-        else:
-            event = stripe.Event.construct_from(
-                json.loads(payload), stripe.api_key)
-    except Exception:
-        return HttpResponse(status=400)
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret)
+    except (ValueError, stripe.error.SignatureVerificationError):
+        return HttpResponseBadRequest("Invalid payload or signature")
 
-    event_type = event["type"]
-    data = event["data"]["object"]
+    if event["type"] == "payment_intent.succeeded":
+        intent = event["data"]["object"]
+        payment_id = intent.get("id")
+        amount = Decimal(intent.get("amount_received", 0)) / 100
+        metadata = intent.get("metadata", {})
 
-    if event_type == "payment_intent.succeeded":
-        Payment.objects.filter(
-            stripe_payment_intent_id=data["id"]).update(status="succeeded")
+        user_id = metadata.get("user_id")
+        cart_id = metadata.get("cart_id")
 
-    elif event_type == "charge.refunded":
-        Payment.objects.filter(
-            stripe_payment_intent_id=data.get("payment_intent")
-        ).update(status="refunded")
+        # Retrieve user and cart if available
+        user = User.objects.filter(id=user_id).first()
+        cart = Cart.objects.filter(id=cart_id).first() if cart_id else None
 
-    elif event_type == "payment_intent.payment_failed":
-        Payment.objects.filter(
-            stripe_payment_intent_id=data["id"]).update(status="canceled")
+        if user:
+            PaymentHistory.objects.create(
+                user=user,
+                cart=cart,
+                stripe_payment_id=payment_id,
+                amount=amount,
+                service_address=metadata.get("service_address", ""),
+                raw_data=intent,
+            )
+            print(
+                f"💾 Saved payment record for {user.username} (${amount:.2f})")
 
     return HttpResponse(status=200)
+
 
 # =========================================================
 # 🛒 CART UTILITIES
@@ -472,7 +686,7 @@ def cart_add(request):
     from django.template.loader import render_to_string
     html = render_to_string("scheduling/_cart.html",
                             {"cart": cart}, request=request)
-    summary_text = f"({cart.items.count()}) – (${cart.total:.2f})"
+    summary_text = f"({cart.items.count()}) - (${cart.total:.2f})"
 
     return JsonResponse({
         "ok": True,

@@ -1,47 +1,38 @@
 {% extends "base.html" %}
-{% block title %}My Payments | Tucker & Dale{% endblock %}
-
 {% block content %}
-<div class="container py-4">
-  <h3 class="mb-4 text-center">My Payment History</h3>
+<div class="container mt-4">
+  <h3 class="mb-3">Payment History</h3>
 
   {% if payments %}
-  <div class="table-responsive shadow-sm rounded">
     <table class="table table-striped align-middle">
-      <thead class="table-success">
+      <thead>
         <tr>
           <th>Date</th>
           <th>Amount</th>
-          <th>Status</th>
-          <th>Description</th>
+          <th>Service Address</th>
+          <th>Transaction ID</th>
           <th>Receipt</th>
         </tr>
       </thead>
       <tbody>
         {% for p in payments %}
         <tr>
-          <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
-          <td>${{ p.amount|floatformat:-2|divisibleby:100 }}</td>
-          <td><span class="badge bg-{{ p.status == 'succeeded'|yesno:'success,secondary' }}">{{ p.status }}</span></td>
-          <td>{{ p.description|default:"—" }}</td>
+          <td>{{ p.created_at|date:"Y-m-d H:i" }}</td>
+          <td>${{ p.amount }}</td>
+          <td>{{ p.service_address|default:"—" }}</td>
+          <td><small>{{ p.stripe_payment_id }}</small></td>
           <td>
-            {% if p.receipt_url %}
-              <a href="{{ p.receipt_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
-            {% else %}
-              <span class="text-muted small">N/A</span>
-            {% endif %}
+            <a href="{% url 'billing:payment_receipt_pdf' p.id %}"
+               class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-file-earmark-pdf"></i> Download PDF
+            </a>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-  </div>
-
-  <div class="mt-3 text-end">
-    <strong>Total spent:</strong> ${{ total_spent|floatformat:2 }}
-  </div>
   {% else %}
-    <p class="text-center text-muted mt-5">No payments yet.</p>
+    <div class="alert alert-info">No payment records found.</div>
   {% endif %}
 </div>
 {% endblock %}

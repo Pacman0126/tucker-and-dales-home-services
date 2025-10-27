@@ -255,3 +255,33 @@ class CartItem(models.Model):
     @property
     def subtotal(self) -> Decimal:
         return (self.unit_price * self.quantity).quantize(Decimal("0.01"))
+
+
+class PaymentHistory(models.Model):
+    """
+    Stores confirmed Stripe payments for reference and PDF receipts.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="payment_history",
+    )
+    cart = models.ForeignKey(
+        "billing.Cart",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payment_history",
+    )
+    stripe_payment_id = models.CharField(max_length=100, db_index=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default="usd")
+    service_address = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(default=now)
+    raw_data = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} — ${self.amount:.2f} ({self.created_at:%Y-%m-%d})"
