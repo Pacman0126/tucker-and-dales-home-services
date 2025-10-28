@@ -259,29 +259,47 @@ class CartItem(models.Model):
 
 class PaymentHistory(models.Model):
     """
-    Stores confirmed Stripe payments for reference and PDF receipts.
+    Tracks all payment-related activity:
+    - Initial payments
+    - Refunds
+    - Adjustments
     """
+
+    STATUS_CHOICES = [
+        ("Paid", "Paid"),
+        ("Cancelled", "Cancelled"),
+        ("Refunded", "Refunded"),
+        ("Adjustment", "Adjustment"),
+    ]
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="payment_history",
     )
-    cart = models.ForeignKey(
-        "billing.Cart",
+
+    booking = models.ForeignKey(
+        "scheduling.Booking",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="payment_history",
+        related_name="payment_history",  # ✅ reverse accessor now consistent
     )
-    stripe_payment_id = models.CharField(max_length=100, db_index=True)
+
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=10, default="usd")
-    service_address = models.CharField(max_length=255, blank=True)
+    currency = models.CharField(max_length=10, default="USD")
+    service_address = models.TextField(blank=True)
+    stripe_payment_id = models.CharField(max_length=255, blank=True, null=True)
+
     created_at = models.DateTimeField(default=now)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="Paid")
+    payment_type = models.CharField(max_length=50, blank=True)
+    notes = models.TextField(blank=True)
     raw_data = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.user.username} — ${self.amount:.2f} ({self.created_at:%Y-%m-%d})"
+        return f"{self.user.username} — ${self.amount:.2f} ({self.status})"

@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from .models import Payment
+from .models import Payment, PaymentHistory
 
 # Register your models here.
 
@@ -35,3 +35,41 @@ class PaymentAdmin(admin.ModelAdmin):
         if fail:
             self.message_user(
                 request, f"⚠️ {fail} refund(s) could not be processed.", level=messages.WARNING)
+
+
+@admin.register(PaymentHistory)
+class PaymentHistoryAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "booking",
+        "amount",
+        "currency",
+        "status",
+        "payment_type",
+        "created_at",
+    )
+    list_filter = ("status", "payment_type", "created_at")
+    search_fields = ("user__username", "stripe_payment_id", "service_address")
+    date_hierarchy = "created_at"
+    readonly_fields = ("created_at",)
+
+    fieldsets = (
+        ("Transaction Info", {
+            "fields": (
+                "user",
+                "booking",
+                "amount",
+                "currency",
+                "status",
+                "payment_type",
+                "notes",
+            )
+        }),
+        ("Stripe / Metadata", {
+            "fields": ("stripe_payment_id", "raw_data"),
+        }),
+        ("Timestamps", {
+            "fields": ("created_at",),
+        }),
+    )

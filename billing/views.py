@@ -22,6 +22,7 @@ from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.db import transaction
 from django.db.models import Sum
 from django.http import FileResponse
 from django.urls import reverse
@@ -29,7 +30,7 @@ from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from customers.models import RegisteredCustomer
-from scheduling.models import Employee, TimeSlot, ServiceCategory
+from scheduling.models import Employee, TimeSlot, ServiceCategory, Booking
 from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
 from .models import Payment
 from .constants import SERVICE_PRICES, SALES_TAX_RATE
@@ -381,7 +382,8 @@ def payment_cancel(request):
 def payment_history(request):
     """Displays all payments for the logged-in user."""
     payments = PaymentHistory.objects.filter(
-        user=request.user).select_related("cart")
+        user=request.user).select_related("user", "booking").order_by("-created_at")
+
     return render(request, "billing/payment_history.html", {"payments": payments})
 
 
@@ -684,7 +686,7 @@ def cart_add(request):
 
     # 🔄 Render updated cart partial
     from django.template.loader import render_to_string
-    html = render_to_string("scheduling/_cart.html",
+    html = render_to_string("billing/_cart.html",
                             {"cart": cart}, request=request)
     summary_text = f"({cart.items.count()}) - (${cart.total:.2f})"
 
@@ -707,22 +709,240 @@ def cart_remove(request):
     except CartItem.DoesNotExist:
         return JsonResponse({"ok": False, "error": "Not found."}, status=404)
     item.delete()
-    html = render_to_string("scheduling/_cart.html",
+    html = render_to_string("billing/_cart.html",
                             {"cart": cart}, request=request)
     return JsonResponse({"ok": True,
-                         "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
+                         "html": render_to_string("billing/_cart.html", {"cart": cart}, request=request),
                          "total": str(cart.total),
                          "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"})
+
+
+@login_required
+@require_POST
+def remove_selected_from_cart(request):
+    """
+    Removes selected cart items and any linked scheduling records.
+    Triggered by 'Remove Selected' button in _cart.html.
+    """
+    selected_ids = request.POST.getlist("selected_items")
+
+    if not selected_ids:
+        return JsonResponse({"ok": False, "error": "No items selected."})
+
+    cart = Cart.objects.filter(user=request.user).first()
+    if not cart:
+        return JsonResponse({"ok": False, "error": "Cart not found."})
+
+    items = CartItem.objects.filter(id__in=selected_ids, cart=cart)
+    if not items.exists():
+        return JsonResponse({"ok": False, "error": "No matching items found."})
+
+    # --- Remove associated bookings if they exist ---
+    removed_count = 0
+    for item in items:
+        Booking.objects.filter(cart_item=item).delete()
+        removed_count += 1
+    items.delete()
+
+    # --- Recalculate totals and rebuild cart HTML ---
+    cart.refresh_from_db()
+
+    html = render_to_string("billing/_cart.html",
+                            {"cart": cart}, request=request)
+    summary_text = f"{cart.items.count} item{'s' if cart.items.count != 1 else ''} in cart"
+
+    messages.success(request, f"Removed {removed_count} service(s) from cart.")
+    return JsonResponse({"ok": True, "html": html, "summary_text": summary_text})
+
+
+@login_required
+@require_POST
+def cancel_selected_services(request):
+    """
+    Cancels selected paid services.
+    - 50% refund if within 72h window
+    - Full refund if ≥72h before scheduled time
+    - Records refund in PaymentHistory + links back to Booking
+    - Updates booking.status and total_amount accordingly
+    """
+    from decimal import Decimal
+    import stripe
+    from django.utils.timezone import now
+    from django.db import transaction
+    from billing.models import PaymentHistory
+    from scheduling.models import Booking
+
+    payment_ids = request.POST.getlist("selected_payments")
+    if not payment_ids:
+        return JsonResponse({"ok": False, "error": "No services selected."})
+
+    payments = PaymentHistory.objects.filter(
+        id__in=payment_ids, user=request.user
+    ).prefetch_related("bookings")
+
+    if not payments.exists():
+        return JsonResponse({"ok": False, "error": "No valid payment records found."})
+
+    results = []
+
+    for pay in payments:
+        booking = pay.bookings.first()  # use new M2M relation
+        hours_until = booking.hours_until if booking else 9999
+        penalty = hours_until < 72
+        refund_amt = pay.amount * \
+            (Decimal("0.5") if penalty else Decimal("1.0"))
+        note = "50% penalty (within 72h)" if penalty else "Full refund"
+
+        refund_obj = None
+        try:
+            intent_id = pay.raw_data.get("payment_intent_id")
+            if intent_id:
+                # Stripe sandbox refund (optional)
+                refund_obj = stripe.Refund.create(
+                    payment_intent=intent_id,
+                    amount=int(refund_amt * 100)
+                )
+        except stripe.error.StripeError as e:
+            note += f" (Stripe error: {e})"
+
+        # --- transactional update ---
+        with transaction.atomic():
+            refund_entry = PaymentHistory.objects.create(
+                user=request.user,
+                amount=-refund_amt,
+                currency=pay.currency,
+                service_address=pay.service_address,
+                created_at=now(),
+                status="Refunded",
+                payment_type="REFUND",
+                notes=f"Cancelled booking — {note}",
+                raw_data={
+                    "original_payment_id": pay.id,
+                    "stripe_refund_id": getattr(refund_obj, "id", None),
+                    "penalty_applied": penalty,
+                },
+            )
+
+            # link refund to same booking
+            if booking:
+                booking.payments.add(refund_entry)
+                booking.status = "Cancelled"
+                booking.total_amount = booking.total_amount - refund_amt
+                booking.save(update_fields=[
+                             "status", "total_amount", "updated_at"])
+
+            # mark old record
+            pay.status = "Cancelled"
+            pay.save(update_fields=["status", "updated_at"])
+
+        results.append({
+            "payment_id": pay.id,
+            "refund_amount": float(refund_amt),
+            "penalty": penalty,
+            "refund_id": getattr(refund_obj, "id", None)
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "summary": f"{len(results)} service(s) cancelled successfully.",
+        "results": results,
+    })
+
+
+@login_required
+@require_POST
+def add_service_adjustment(request):
+    """
+    Adds or removes a service adjustment for an existing booking.
+    - Positive = additional charge
+    - Negative = refund
+    - Always recorded in PaymentHistory and linked to the booking
+    - Works in Stripe sandbox mode (no live account needed)
+    """
+    from decimal import Decimal
+    import stripe
+    from django.utils.timezone import now
+    from django.db import transaction
+    from billing.models import PaymentHistory
+    from scheduling.models import Booking
+
+    booking_id = request.POST.get("booking_id")
+    delta_amount = Decimal(request.POST.get("delta_amount") or "0.00")
+    note = (request.POST.get("note") or "Service adjustment").strip()
+
+    if not booking_id:
+        return JsonResponse({"ok": False, "error": "No booking selected."})
+
+    booking = Booking.objects.filter(id=booking_id, user=request.user).first()
+    if not booking:
+        return JsonResponse({"ok": False, "error": "Booking not found."})
+    if delta_amount == 0:
+        return JsonResponse({"ok": False, "error": "Adjustment amount cannot be zero."})
+
+    stripe_charge = None
+    stripe_refund = None
+    stripe_error = None
+
+    try:
+        if delta_amount > 0:
+            # Simulated additional charge
+            payment_intent = stripe.PaymentIntent.create(
+                amount=int(delta_amount * 100),
+                currency="usd",
+                automatic_payment_methods={"enabled": True},
+                metadata={"booking_id": booking.id, "type": "ADJUSTMENT"},
+            )
+            stripe_charge = payment_intent.id
+        else:
+            # Simulated refund (sandbox)
+            last_payment = booking.payments.filter(amount__gt=0).first()
+            if last_payment and last_payment.raw_data.get("payment_intent_id"):
+                stripe_refund = stripe.Refund.create(
+                    payment_intent=last_payment.raw_data.get(
+                        "payment_intent_id"),
+                    amount=int(abs(delta_amount) * 100),
+                )
+    except stripe.error.StripeError as e:
+        stripe_error = str(e)
+
+    # --- Record adjustment ---
+    with transaction.atomic():
+        adj_entry = PaymentHistory.objects.create(
+            user=request.user,
+            amount=delta_amount,
+            currency="USD",
+            service_address=booking.service_address,
+            created_at=now(),
+            status="Paid" if delta_amount > 0 else "Refunded",
+            payment_type="ADJUSTMENT",
+            notes=f"{note} — {'Billed' if delta_amount > 0 else 'Refunded'} via adjustment.",
+            raw_data={
+                "stripe_payment_intent": stripe_charge,
+                "stripe_refund_id": getattr(stripe_refund, "id", None),
+                "stripe_error": stripe_error,
+                "delta_amount": f"{delta_amount:.2f}",
+            },
+        )
+        booking.payments.add(adj_entry)
+        booking.total_amount += delta_amount
+        booking.save(update_fields=["total_amount", "updated_at"])
+
+    summary = (
+        f"Service {'added' if delta_amount > 0 else 'removed'} successfully. "
+        f"{'Charge simulated' if delta_amount > 0 else 'Refund simulated'} in sandbox mode."
+    )
+
+    return JsonResponse({"ok": True, "summary": summary, "delta": float(delta_amount)})
 
 
 @require_POST
 def cart_clear(request):
     cart = _get_or_create_cart(request)
     cart.items.all().delete()
-    html = render_to_string("scheduling/_cart.html",
+    html = render_to_string("billing/_cart.html",
                             {"cart": cart}, request=request)
     return JsonResponse({"ok": True,
-                         "html": render_to_string("scheduling/_cart.html", {"cart": cart}, request=request),
+                         "html": render_to_string("billing/_cart.html", {"cart": cart}, request=request),
                          "count": 0,
                          "total": "0.00",
                          "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"

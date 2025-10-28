@@ -5,6 +5,8 @@ app_name = "billing"
 
 urlpatterns = [
     # 💳 Checkout & Payments
+    path("adjustment/add/", views.add_service_adjustment,
+         name="add_service_adjustment"),
     path("checkout/", views.checkout, name="checkout"),
     path("checkout/summary/", views.checkout_summary, name="checkout_summary"),
     path("create-checkout-session/", views.create_checkout_session,
@@ -12,6 +14,8 @@ urlpatterns = [
     path("success/", views.payment_success, name="payment_success"),
     path("cancel/", views.payment_cancel, name="payment_cancel"),
     path("payment/history/", views.payment_history, name="payment_history"),
+    path("payment/cancel-selected/", views.cancel_selected_services,
+         name="cancel_selected_services"),
     #     path("payment/receipt/<int:pk>/",
     #          views.payment_receipt_pdf, name="payment_receipt_pdf"),
     # path("download-receipt/", views.download_receipt, name="download_receipt"),
@@ -20,6 +24,8 @@ urlpatterns = [
     # 🛒 Cart
     path("cart/add/", views.cart_add, name="cart_add"),
     path("cart/remove/", views.cart_remove, name="cart_remove"),
+    path("cart/remove-selected/", views.remove_selected_from_cart,
+         name="remove_selected_from_cart"),
     path("cart/clear/", views.cart_clear, name="cart_clear"),
     path("cart/detail/", views.cart_detail, name="cart_detail"),
 

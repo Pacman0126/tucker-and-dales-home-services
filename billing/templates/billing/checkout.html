@@ -1,63 +1,132 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Checkout | Tucker & Dale's Home Services{% endblock %}
+{% block title %}Checkout | Tucker & Dale’s{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-  <h2 class="mb-4">Checkout Summary</h2>
-    {% if billing_address %}
-      <strong>Billing Address:</strong>
-      {{ billing_address.street }}, {{ billing_address.city }},
-      {{ billing_address.state }} {{ billing_address.zip }}
-    {% else %}
-      <strong>Billing Address:</strong> Not set. <a href="{% url 'customers:complete_profile' %}">Add now</a>
-    {% endif %}
+  <div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-semibold">🧾 Checkout Summary</h5>
+      <span class="badge bg-dark">{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
+    </div>
 
-  {% if cart and cart.items.exists %}
-  <div class="table-responsive">
-    <table class="table table-bordered align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Service</th>
-          <th>Date</th>
-          <th>Time Slot</th>
-          <th>Employee</th>
-          <th class="text-end">Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in cart.items.all %}
-        <tr>
-          <td>{{ item.service_category.name }}</td>
-          <td>{{ item.date }}</td>
-          <td>{{ item.time_slot.label }}</td>
-          <td>{{ item.employee.name }}</td>
-          <td class="text-end">${{ item.unit_price|floatformat:2 }}</td>
-        </tr>
-        {% endfor %}
-        <tr>
-          <td colspan="4" class="text-end">Subtotal</td>
-          <td class="text-end">${{ subtotal|floatformat:2 }}</td>
-        </tr>
-        <tr>
-          <td colspan="4" class="text-end">Sales Tax ({{ tax_rate|floatformat:2 }}%)</td>
-          <td class="text-end">${{ tax|floatformat:2 }}</td>
-        </tr>
-        <tr class="table-success">
-          <td colspan="4" class="text-end fw-bold">Total</td>
-          <td class="text-end"><strong>${{ total|floatformat:2 }}</strong></td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="card-body">
+      {% if cart and cart.items.exists %}
+      <form id="cart-update-form" method="post">
+        {% csrf_token %}
+        <div class="table-responsive">
+          <table class="table align-middle table-hover">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll"></th>
+                <th>Service</th>
+                <th>Date & Time</th>
+                <th>Employee</th>
+                <th>Unit Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in cart.items.all %}
+              <tr>
+                <td><input type="checkbox" name="selected_items" value="{{ item.id }}"></td>
+                <td>{{ item.service_category.name }}</td>
+                <td>{{ item.date }} — {{ item.time_slot.label }}</td>
+                <td>{{ item.employee.name|default:"TBD" }}</td>
+                <td>${{ item.unit_price|floatformat:2 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="border-top pt-3 mt-2">
+          <div class="d-flex justify-content-between">
+            <span>Subtotal:</span>
+            <strong>${{ cart.subtotal|floatformat:2 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Tax:</span>
+            <strong>${{ cart.tax|floatformat:2 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between border-top pt-2 mt-2">
+            <span class="fw-bold">Total:</span>
+            <strong class="fs-5 text-success">${{ cart.total|floatformat:2 }}</strong>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="selectAll">
+            <label for="selectAll" class="form-check-label small">Select All</label>
+          </div>
+
+          <div class="d-flex gap-2 ms-auto">
+            <button type="button" class="btn btn-outline-danger" id="remove-selected">
+              <i class="bi bi-trash"></i> Remove Selected
+            </button>
+
+            <a href="{% url 'scheduling:search_by_time_slot' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left-circle"></i> Back to Search
+            </a>
+
+            <button type="button" class="btn btn-success" id="proceed-checkout">
+              <i class="bi bi-credit-card"></i> Proceed to Payment
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {% else %}
+      <div class="alert alert-info text-center mb-0">
+        Your cart is empty.
+        <div class="mt-3">
+          <a href="{% url 'scheduling:search_timeslot' %}" class="btn btn-outline-success">
+            <i class="bi bi-search"></i> Go to Search
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
   </div>
-
-  <form method="post" action="{% url 'billing:create_checkout_session' %}" class="text-center mt-4">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-primary btn-lg">Proceed to Secure Payment</button>
-  </form>
-  {% else %}
-  <p class="text-center text-muted">Your cart is empty.</p>
-  {% endif %}
 </div>
+
+<script>
+(function(){
+  const csrftoken=document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1]||"";
+
+  // ✅ Select All
+  document.addEventListener("change", e=>{
+    if(e.target.id==="selectAll"){
+      document.querySelectorAll('input[name="selected_items"]').forEach(cb=>cb.checked=e.target.checked);
+    }
+  });
+
+  // ✅ Remove selected items
+  document.getElementById("remove-selected")?.addEventListener("click", async ()=>{
+    const selected=[...document.querySelectorAll('input[name="selected_items"]:checked')].map(cb=>cb.value);
+    if(!selected.length){ alert("Select at least one item to remove."); return; }
+
+    if(!confirm("Remove selected items from cart?")) return;
+
+    for(const id of selected){
+      await fetch("{% url 'billing:cart_remove' %}",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/x-www-form-urlencoded;charset=UTF-8",
+          "X-CSRFToken":csrftoken
+        },
+        body:new URLSearchParams({ item_id:id })
+      });
+    }
+    location.reload();
+  });
+
+  // ✅ Proceed to checkout Stripe flow
+  document.getElementById("proceed-checkout")?.addEventListener("click",()=>{
+    window.location.href="{% url 'billing:create_checkout_session' %}";
+  });
+})();
+</script>
 {% endblock %}
