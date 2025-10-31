@@ -32,13 +32,23 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     # Local apps
     "core",
     "customers",
     "scheduling",
     "billing",
     "widget_tweaks",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
+
 ]
+
+SITE_ID = int(os.getenv("SITE_ID", "1"))
 
 # --- Middleware ---
 MIDDLEWARE = [
@@ -48,9 +58,16 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+MIDDLEWARE.insert(
+    MIDDLEWARE.index(
+        "django.contrib.auth.middleware.AuthenticationMiddleware") + 1,
+    "allauth.account.middleware.AccountMiddleware",
+)
 
 ROOT_URLCONF = "tucker_and_dales_home_services.urls"
 
@@ -83,6 +100,8 @@ DATABASES = {
 AUTHENTICATION_BACKENDS = [
     "core.backends.EmailOrUsernameModelBackend",  # custom backend
     "django.contrib.auth.backends.ModelBackend",  # keep default
+    "allauth.account.auth_backends.AuthenticationBackend",  # allauth
+
 ]
 
 
@@ -175,3 +194,50 @@ else:
     # Local development
     os.environ.setdefault("DISABLE_COLLECTSTATIC", "1")
     print("🧩 Local dev mode: collectstatic disabled for speed.")
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+# # Use email as primary login
+# ACCOUNT_AUTHENTICATION_METHOD = "email"
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # "none", "optional", or "mandatory"
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # if your user model has no username
+
+# # Redirect URLs
+# LOGIN_REDIRECT_URL = "/"        # after login
+# ACCOUNT_LOGOUT_REDIRECT_URL = "/"  # after logout
+
+# # Signup / login flow tweaks
+# ACCOUNT_SESSION_REMEMBER = True
+# ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
+# ACCOUNT_UNIQUE_EMAIL = True
+# ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+# ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # seconds
+
+# # Optional: auto-login after signup
+# ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"
+# Allauth behavior
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"   # "optional" or "none" if you prefer
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_PRESERVE_USERNAME_CASING = False
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Tucker & Dale’s] "
+
+# Email backend — pick by ENV (console for local, SMTP for prod)
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend"  # default for local dev
+)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@example.com")
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
+# SMTP (only used if EMAIL_BACKEND is SMTP)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "1") == "1"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")

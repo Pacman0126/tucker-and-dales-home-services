@@ -1,13 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Live Invoice | Tucker & Dale’s{% endblock %}
+
 {% block content %}
 <div class="container py-4">
   <h4 class="fw-semibold mb-4">🏠 Live Invoice for {{ address }}</h4>
 
+  <!-- ========================== -->
+  <!-- 🟩 ORIGINAL SERVICES -->
+  <!-- ========================== -->
+  {% if bookings_original %}
+  <h5 class="fw-semibold text-success mb-2">Original Services</h5>
   <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <table class="table table-sm align-middle">
-        <thead>
+    <div class="card-body p-0">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
           <tr>
             <th></th>
             <th>Date</th>
@@ -19,13 +25,8 @@
           </tr>
         </thead>
         <tbody>
-          {% for b in bookings %}
-          <tr class="
-              {% if b.status == 'Locked' %}table-light
-              {% elif b.status == 'Late Cancel' %}table-warning
-              {% elif b.status == 'Cancellable' %}table-success
-              {% endif %}
-          ">
+          {% for b in bookings_original %}
+          <tr class="{% if b.status == 'Locked' %}table-light{% elif b.status == 'Late Cancel' %}table-warning{% elif b.status == 'Cancellable' %}table-success{% endif %}">
             <td>
               {% if b.status in 'Cancellable, Late Cancel' %}
                 <input type="checkbox" name="cancel_booking" value="{{ b.id }}" data-refund="{{ b.refund_pct }}">
@@ -53,8 +54,77 @@
       </table>
     </div>
   </div>
+  {% endif %}
 
-  <!-- Totals -->
+  <!-- ========================== -->
+  <!-- 🟦 ADDED SERVICES -->
+  <!-- ========================== -->
+  {% if bookings_added %}
+  <h5 class="fw-semibold text-info mb-2">Added Services</h5>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body p-0">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Service</th>
+            <th>Time Slot</th>
+            <th>Status</th>
+            <th class="text-end">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bookings_added %}
+          <tr class="table-light">
+            <td>{{ b.date|date:"M j, Y" }}</td>
+            <td>{{ b.service }}</td>
+            <td>{{ b.time_slot }}</td>
+            <td><span class="badge bg-info text-dark">{{ b.status }}</span></td>
+            <td class="text-end">${{ b.price|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ========================== -->
+  <!-- 🟥 CANCELLATIONS / REFUNDS -->
+  <!-- ========================== -->
+  {% if bookings_cancelled %}
+  <h5 class="fw-semibold text-danger mb-2">Cancellations / Refunds</h5>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body p-0">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Service</th>
+            <th>Time Slot</th>
+            <th>Status</th>
+            <th class="text-end">Refund</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bookings_cancelled %}
+          <tr class="table-warning">
+            <td>{{ b.date|date:"M j, Y" }}</td>
+            <td>{{ b.service }}</td>
+            <td>{{ b.time_slot }}</td>
+            <td><span class="badge bg-danger">Cancelled</span></td>
+            <td class="text-end">-${{ b.price|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ========================== -->
+  <!-- 💵 TOTALS -->
+  <!-- ========================== -->
   <div class="card shadow-sm mb-4">
     <div class="card-body">
       <p><strong>Total Paid:</strong> ${{ paid_total|floatformat:2 }}</p>
@@ -66,8 +136,10 @@
     </div>
   </div>
 
-  <!-- Buttons -->
-  <div class="d-flex justify-content-between">
+  <!-- ========================== -->
+  <!-- ⚙️ ACTION BUTTONS -->
+  <!-- ========================== -->
+  <div class="d-flex justify-content-between flex-wrap gap-2">
     <a href="{% url 'billing:payment_history' %}" class="btn btn-outline-secondary">
       <i class="bi bi-arrow-left-circle"></i> Back to History
     </a>
@@ -83,15 +155,15 @@
 </div>
 
 <script>
-document.getElementById("cancelSelected")?.addEventListener("click", async ()=>{
+document.getElementById("cancelSelected")?.addEventListener("click", async () => {
   const selected = [...document.querySelectorAll("input[name='cancel_booking']:checked")];
-  if(!selected.length){ alert("Select at least one booking."); return; }
+  if (!selected.length) { alert("Select at least one booking."); return; }
 
   const summary = selected.map(cb => `#${cb.value} (${cb.dataset.refund}% refund)`).join('\n');
-  if(!confirm("Cancel the following bookings?\n" + summary)) return;
+  if (!confirm("Cancel the following bookings?\n" + summary)) return;
 
   const payload = new URLSearchParams();
-  selected.forEach(cb=>{
+  selected.forEach(cb => {
     payload.append("selected_bookings", cb.value);
     payload.append(`refund_pct_${cb.value}`, cb.dataset.refund);
   });
@@ -100,7 +172,7 @@ document.getElementById("cancelSelected")?.addEventListener("click", async ()=>{
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-      "X-CSRFToken": document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1]||""
+      "X-CSRFToken": document.cookie.split('; ').find(r => r.startsWith('csrftoken='))?.split('=')[1] || ""
     },
     body: payload
   });
@@ -110,4 +182,3 @@ document.getElementById("cancelSelected")?.addEventListener("click", async ()=>{
 });
 </script>
 {% endblock %}
-

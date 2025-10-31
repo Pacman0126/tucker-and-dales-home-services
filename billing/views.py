@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 import datetime
-from datetime import datetime as dt, timedelta
+# from datetime import datetime as dt, timedelta
 import json
 from decimal import Decimal
 import stripe
@@ -347,7 +347,7 @@ def _refresh_booking_statuses_for_user(user):
 def download_receipt_pdf(request, pk):
     """Generate a detailed PDF receipt with grouped adjustments."""
     root = get_object_or_404(
-        PaymentHistory, id=payment_id, user=request.user, parent__isnull=True
+        PaymentHistory, id=pk, user=request.user, parent__isnull=True
     )
     chain = root.compute_sections()
 
@@ -829,57 +829,73 @@ def live_invoice_view_address(request, address):
     """
     Interactive 'live invoice' view showing all service items, refund eligibility,
     and running totals for a specific property address.
+    Divides items into Original bookings, Cancellations (refunds), and Added services.
     """
     from urllib.parse import unquote
+    from datetime import datetime
+    from django.utils import timezone
     from scheduling.models import Booking
     from billing.utils import get_refund_policy
+
     address = unquote(address)
 
-    Booking.objects.filter(
-        user=request.user,
-        service_address__iexact=address
-    )
-
-    # ✅ Fetch bookings for this address and user
+    # ✅ Fetch all bookings for this address and user
     bookings = Booking.objects.filter(
         user=request.user,
         service_address__iexact=address
     ).order_by("date", "time_slot__label")
 
-    payments = (
-        PaymentHistory.objects.filter(
-            user=request.user,
-            service_address__iexact=address
-        ).order_by("created_at")
-    )
+    # ✅ Fetch all related payments
+    payments = PaymentHistory.objects.filter(
+        user=request.user,
+        service_address__iexact=address
+    ).order_by("created_at")
 
+    # ✅ Sectionize bookings
+    bookings_original = bookings.filter(status="Booked")
+    bookings_cancelled = bookings.filter(status="Cancelled")
+    # Heuristic for "added" (later-created bookings that aren’t cancellations)
+    latest_payment = payments.last()
+    if latest_payment:
+        bookings_added = bookings.filter(
+            created_at__gt=latest_payment.created_at, status="Booked")
+    else:
+        bookings_added = Booking.objects.none()
+
+    # ✅ Compute refund eligibility and completion status
     today = timezone.now().date()
-    booking_items = []
 
-    for b in bookings:
+    def annotate_booking(b):
         status, refund_pct = get_refund_policy(
             datetime.combine(b.date, datetime.min.time(),
                              tzinfo=timezone.get_current_timezone())
         )
-        booking_items.append({
+        return {
             "id": b.id,
             "date": b.date,
             "service": str(b.service_category),
             "time_slot": getattr(b.time_slot, "label", ""),
-            "price": float(getattr(b, "price", 0)),
+            "price": float(getattr(b, "unit_price", 0)),
             "status": status,
             "refund_pct": refund_pct,
             "is_completed": status == "Locked",
-        })
-        # delete me
+        }
 
+    bookings_original = [annotate_booking(b) for b in bookings_original]
+    bookings_cancelled = [annotate_booking(b) for b in bookings_cancelled]
+    bookings_added = [annotate_booking(b) for b in bookings_added]
+
+    # ✅ Totals
     paid_total = sum(p.amount for p in payments if p.amount > 0)
     refund_total = abs(sum(p.amount for p in payments if p.amount < 0))
     net_total = paid_total - refund_total
 
+    # ✅ Render structured context
     return render(request, "billing/live_invoice.html", {
         "address": address,
-        "bookings": booking_items,
+        "bookings_original": bookings_original,
+        "bookings_cancelled": bookings_cancelled,
+        "bookings_added": bookings_added,
         "payments": payments,
         "paid_total": paid_total,
         "refund_total": refund_total,
@@ -909,7 +925,7 @@ def cancel_selected_services(request):
             booking = Booking.objects.get(id=bid, customer__user=request.user)
             price = Decimal(getattr(booking, "price", 0))
             status, pct = get_refund_policy(
-                datetime.combine(booking.date, datetime.min.time()))
+                datetime.datetime.combine(booking.date, datetime.datetime.min.time()))
             if pct > 0:
                 refund_amt = (price * Decimal(pct) / Decimal(100)
                               ).quantize(Decimal("0.01"))
@@ -1096,15 +1112,14 @@ def cart_detail(request):
 
 
 # billing/views.py
-
 @login_required
 def payment_success(request):
     """
     Handle successful Stripe payment:
     - Creates a PaymentHistory record
-    - Saves all CartItems as Bookings
+    - Persists all CartItems as Bookings
     - Clears the cart
-    - Displays success confirmation page
+    - Displays the success confirmation page
     """
     try:
         cart_id = request.session.get("cart_id")
@@ -1114,9 +1129,12 @@ def payment_success(request):
             messages.error(request, "Your cart is empty or expired.")
             return redirect("billing:checkout")
 
-        # ✅ Infer service address from first item
-        first_item = cart.items.first()
-        service_address = getattr(first_item, "service_address", "Unknown")
+        # ✅ Derive service address safely
+        service_address = (
+            getattr(cart, "address_key", None)
+            or request.session.get("customer_address")
+            or "Unknown"
+        ).strip()
 
         # ✅ Create payment record
         payment_record = PaymentHistory.objects.create(
@@ -1128,7 +1146,7 @@ def payment_success(request):
             notes="Stripe Checkout Payment",
         )
 
-        # ✅ Persist bookings
+        # ✅ Create corresponding Bookings
         created_bookings = []
         for item in cart.items.all():
             booking = Booking.objects.create(
@@ -1143,36 +1161,32 @@ def payment_success(request):
             )
             created_bookings.append(booking)
 
-        # ✅ Link bookings <-> PaymentHistory
-        # if created_bookings:
-        #     payment_record.linked_bookings.add(*created_bookings)
-        #     for b in created_bookings:
-        #         b.payment_records.add(payment_record)
-        #     payment_record.save(update_fields=["updated_at"])
-
-        # ✅ Link bookings <-> PaymentHistory (one-directional only)
+        # ✅ Link PaymentHistory ↔ Bookings (one-directional)
         if created_bookings:
             payment_record.linked_bookings.add(*created_bookings)
             payment_record.save(update_fields=["created_at"])
 
-        # ✅ Clear the cart
+        # ✅ Clear the cart entirely
         cart.items.all().delete()
         cart.delete()
         request.session.pop("cart_id", None)
 
-        # # ✅ Optional: send confirmation email
+        # ✅ Optional email confirmation (disabled for now)
         # try:
         #     send_payment_receipt_email(request.user, payment_record)
         # except Exception as e:
         #     print(f"⚠️ Email send failed: {e}")
 
-        # ✅ Show success page instead of redirecting back to cart
+        # ✅ Success message + confirmation page
         messages.success(
-            request, "Payment successful! Your booking has been confirmed.")
-        return render(request, "billing/success.html", {
-            "payment_record": payment_record,
-            "bookings": created_bookings,
-        })
+            request,
+            f"Payment successful! Your booking for {service_address} has been confirmed.",
+        )
+        return render(
+            request,
+            "billing/success.html",
+            {"payment_record": payment_record, "bookings": created_bookings},
+        )
 
     except Exception as e:
         print(f"❌ Payment success error: {e}")
@@ -1187,42 +1201,58 @@ def payment_history(request):
     One card per service address showing all payment activity
     (paid, refunded, adjusted) for the current user.
     """
-    _refresh_booking_statuses_for_user(request.user)
     from django.db.models import Sum, Q
 
-    # Get all addresses this user has payment records for
+    # ✅ Update booking statuses for this user (helper)
+    _refresh_booking_statuses_for_user(request.user)
+
+    # ✅ All addresses linked to this user's payments
     addresses = (
-        PaymentHistory.objects.filter(user=request.user)
+        PaymentHistory.objects
+        .filter(user=request.user)
         .exclude(service_address__isnull=True)
-        .exclude(service_address__exact="")
         .values_list("service_address", flat=True)
         .distinct()
     )
 
-    # Build a summarized list per address
-    properties = []
+    cards = []
     for addr in addresses:
-        entries = (
+        # Root = initial payment (no parent)
+        root = (
             PaymentHistory.objects
-            .filter(user=request.user, service_address=addr)
-            .order_by("created_at")
+            .filter(user=request.user, service_address=addr, parent__isnull=True)
+            .order_by("-created_at")
+            .first()
         )
+        if not root:
+            continue
 
-        # Compute totals
-        total_in = entries.filter(amount__gt=0).aggregate(
-            total=Sum("amount"))["total"] or 0
-        total_out = abs(entries.filter(amount__lt=0).aggregate(
-            total=Sum("amount"))["total"] or 0)
-        net = total_in - total_out
+        # Compute section totals safely
+        if hasattr(root, "compute_sections"):
+            original_total, add_total, cancel_total, net_total = root.compute_sections()
+        else:
+            # fallback aggregation if compute_sections missing
+            all_tx = PaymentHistory.objects.filter(
+                user=request.user, service_address=addr)
+            original_total = all_tx.filter(parent__isnull=True).aggregate(
+                Sum("amount"))["amount__sum"] or 0
+            add_total = all_tx.filter(amount__gt=0, parent__isnull=False).aggregate(
+                Sum("amount"))["amount__sum"] or 0
+            cancel_total = abs(all_tx.filter(amount__lt=0).aggregate(
+                Sum("amount"))["amount__sum"] or 0)
+            net_total = original_total + add_total - cancel_total
 
-        properties.append({
+        cards.append({
             "address": addr,
-            "entries": entries,
-            "total_in": total_in,
-            "total_out": total_out,
-            "net": net,
+            "root": root,
+            "original_total": original_total,
+            "add_total": add_total,
+            "cancel_total": cancel_total,
+            "net_total": net_total,
+            "added": root.adjustments.filter(amount__gt=0),
+            "cancelled": root.adjustments.filter(amount__lt=0),
         })
 
     return render(request, "billing/payment_history.html", {
-        "properties": properties,
+        "cards": cards,
     })
