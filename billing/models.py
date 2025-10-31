@@ -8,6 +8,8 @@ from django.conf import settings
 from django.db import models
 import stripe
 
+
+from scheduling.models import Booking
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
@@ -213,6 +215,14 @@ class CartItem(models.Model):
     One service assignment the customer intends to book.
     Uniqueness prevents duplicate same-slot/employee entries in the same cart.
     """
+
+    # 🏠 Service address (critical for live invoice + history tracking)
+    service_address = models.CharField(
+        max_length=255,
+        help_text="Full street address where this service is performed.",
+        default="Unknown"
+    )
+
     cart = models.ForeignKey(
         "billing.Cart",
         on_delete=models.CASCADE,
@@ -258,13 +268,6 @@ class CartItem(models.Model):
 
 
 class PaymentHistory(models.Model):
-    """
-    Tracks all payment-related activity:
-    - Initial payments
-    - Refunds
-    - Adjustments
-    """
-
     STATUS_CHOICES = [
         ("Paid", "Paid"),
         ("Cancelled", "Cancelled"),
@@ -272,26 +275,33 @@ class PaymentHistory(models.Model):
         ("Adjustment", "Adjustment"),
     ]
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="payment_history",
+    linked_bookings = models.ManyToManyField(
+        "scheduling.Booking",
+        related_name="linked_payment_records",
+        blank=True,
     )
 
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
     booking = models.ForeignKey(
         "scheduling.Booking",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="payment_history",  # ✅ reverse accessor now consistent
+        related_name="primary_payment_record",
     )
-
+    parent = models.ForeignKey(  # ✅ for invoice chain logic
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="adjustments",
+    )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default="USD")
     service_address = models.TextField(blank=True)
     stripe_payment_id = models.CharField(max_length=255, blank=True, null=True)
-
-    created_at = models.DateTimeField(default=now)
+    created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="Paid")
     payment_type = models.CharField(max_length=50, blank=True)
@@ -303,3 +313,53 @@ class PaymentHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — ${self.amount:.2f} ({self.status})"
+
+    # ============================================================
+    # 💰 Helper: compute all totals for this chain
+    # ============================================================
+
+    def compute_sections(self):
+        """
+        Computes subtotal breakdown for this payment chain:
+        - original_total: amount of this root payment
+        - add_total: sum of all positive adjustments (extra services)
+        - cancel_total: sum of all negative adjustments (refunds/penalties)
+        - net_total: combined total after all adjustments
+        """
+        root = self if self.parent is None else self.parent
+        adjustments = getattr(root, "adjustments", None)
+
+        if not adjustments:
+            return (root.amount, Decimal("0.00"), Decimal("0.00"), root.amount)
+
+        add_total = Decimal("0.00")
+        cancel_total = Decimal("0.00")
+
+        for adj in adjustments.all():
+            if adj.amount >= 0:
+                add_total += adj.amount
+            else:
+                cancel_total += adj.amount  # negative
+
+        original_total = root.amount
+        net_total = (original_total + add_total +
+                     cancel_total).quantize(Decimal("0.01"))
+        return (original_total, add_total, cancel_total, net_total)
+
+    # ============================================================
+    # 🧾 Convenience: human-friendly label
+    # ============================================================
+    @property
+    def summary_label(self):
+        """
+        Returns a readable summary like:
+        'Refund (50%) — $25.00' or 'Added Service — $40.00'
+        """
+        if self.status == "Refunded" and self.amount < 0:
+            pct = abs(self.amount / (self.parent.amount or 1)) * \
+                100 if self.parent else 0
+            return f"Refund ({pct:.0f}%) — ${abs(self.amount):.2f}"
+        elif self.status == "Adjustment" and self.amount > 0:
+            return f"Added Service — ${self.amount:.2f}"
+        else:
+            return f"{self.status} — ${self.amount:.2f}"

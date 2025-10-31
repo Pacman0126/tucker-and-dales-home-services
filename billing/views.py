@@ -2,8 +2,14 @@
 billing/views.py
 Handles checkout, Stripe integration, payment tracking, and admin management.
 """
+from io import BytesIO
+from scheduling.models import Booking
+from billing.models import PaymentHistory
+from django.utils.timezone import now
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 import datetime
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 import json
 from decimal import Decimal
 import stripe
@@ -11,7 +17,7 @@ import stripe
 from django.core.mail import send_mail
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils import timezone
-from django.utils.timezone import now
+from django.utils.timezone import now, localdate
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib import messages
@@ -26,9 +32,16 @@ from django.db import transaction
 from django.db.models import Sum
 from django.http import FileResponse
 from django.urls import reverse
-from io import BytesIO
+
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+)
+from reportlab.lib.enums import TA_RIGHT, TA_LEFT
+
 from customers.models import RegisteredCustomer
 from scheduling.models import Employee, TimeSlot, ServiceCategory, Booking
 from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
@@ -41,6 +54,34 @@ from .models import Cart, CartItem, CartManager, PaymentHistory
 # ----------------------------------------------------------------------
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+
+PENALTY_WINDOW_HOURS = 72
+
+
+# def _refresh_booking_statuses_for_user(user):
+#     """
+#     Mark bookings Completed if in the past (and not already Cancelled).
+#     Leave Booked for future. This runs whenever we render history or on success.
+#     """
+#     today = localdate()
+#     qs = Booking.objects.filter(user=user).exclude(status="Cancelled")
+#     for b in qs:
+#         if b.date < today and b.status != "Completed":
+#             b.status = "Completed"
+#             b.save(update_fields=["status"])
+
+
+def _penalty_applies(booking: Booking) -> bool:
+    """True if within 72h window from now."""
+    # if you have a concrete datetime, use it; else fallback to date-at-midnight logic
+    start_dt = getattr(booking, "datetime_start", None)
+    if start_dt:
+        hours = (start_dt - now()).total_seconds() / 3600.0
+    else:
+        # date based approximation
+        hours = (booking.date - localdate()).days * 24.0
+    return hours < PENALTY_WINDOW_HOURS
+
 # ----------------------------------------------------------------------
 # 🏁 Simple Checkout Page (called by navbar burger)
 # ----------------------------------------------------------------------
@@ -49,23 +90,53 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 @login_required
 def checkout(request):
     """
-    Render the checkout page using the *active* cart pinned in the session (cart_id).
-    Never silently switches the cart/address_key.
+    Displays the user's cart summary and recalculates totals before Stripe checkout.
+    Allows items to be removed (via AJAX or via 'Remove Selected' checkboxes).
     """
-    cart = get_active_cart_for_request(request, create_if_missing=False)
+    from billing.models import Cart, CartItem
+    from decimal import Decimal
+
+    cart = (
+        Cart.objects.filter(user=request.user)
+        .prefetch_related("items__service_category", "items__employee", "items__time_slot")
+        .first()
+    )
 
     if not cart or not cart.items.exists():
-        messages.info(request, "Your cart is empty.")
-        return redirect("scheduling:search_by_date")
+        messages.info(
+            request, "Your cart is empty — please add services before checkout.")
+        return redirect("scheduling:search_by_time_slot")
+
+    # 🧾 Dynamic removal support if JS posted any selected_items
+    if request.method == "POST" and "selected_items" in request.POST:
+        ids_to_remove = request.POST.getlist("selected_items")
+        if ids_to_remove:
+            CartItem.objects.filter(cart=cart, id__in=ids_to_remove).delete()
+            cart.refresh_from_db()
+            messages.success(
+                request, f"Removed {len(ids_to_remove)} item(s) from your cart.")
+            return redirect("billing:checkout")
+
+    # 🧮 Recalculate totals
+    subtotal = Decimal("0.00")
+    for item in cart.items.all():
+        subtotal += item.unit_price or Decimal("0.00")
+
+    TAX_RATE = Decimal(getattr(settings, "SALES_TAX_RATE", 0.0825))
+    subtotal = sum((item.unit_price or Decimal("0.00"))
+                   for item in cart.items.all())
+    TAX_RATE = Decimal(getattr(settings, "SALES_TAX_RATE", 0.0825))
+    tax = (subtotal * TAX_RATE).quantize(Decimal("0.01"))
+    total = (subtotal + tax).quantize(Decimal("0.01"))
 
     context = {
         "cart": cart,
-        "selected_services": cart.items.all(),
-        "hours": 0,  # if you compute hours elsewhere, keep that logic
-        "subtotal": cart.subtotal,
-        "tax": cart.tax,
-        "total": cart.total,
+        "subtotal": subtotal,
+        "tax": tax,
+        "total": total,
+        "SALES_TAX_RATE": TAX_RATE,
     }
+
     return render(request, "billing/checkout.html", context)
 
 
@@ -196,7 +267,7 @@ def create_checkout_session(request):
         request.build_absolute_uri(reverse("billing:payment_success"))
         + "?session_id={CHECKOUT_SESSION_ID}"
     )
-    cancel_url = request.build_absolute_uri(reverse("billing:payment_cancel"))
+    cancel_url = request.build_absolute_uri(reverse("billing:checkout"))
 
     try:
         # Minimal line item to charge the full total:
@@ -239,131 +310,6 @@ def create_checkout_session(request):
 # ----------------------------------------------------------------------
 # ✅ Payment Success / Cancel
 # ----------------------------------------------------------------------
-@login_required
-def payment_success(request):
-    """
-    Debug version — adds checkpoint prints to isolate missing subtotal/tax.
-    """
-    from decimal import Decimal
-    from django.utils.timezone import now
-    import stripe
-
-    session_id = request.GET.get("session_id")
-    if not session_id:
-        print("⚠️ Missing session_id → redirecting to checkout")
-        messages.warning(request, "Missing Stripe session id.")
-        return redirect("billing:checkout")
-
-    print(f"\n🟩 [payment_success] Stripe session_id = {session_id}")
-
-    try:
-        session = stripe.checkout.Session.retrieve(
-            session_id,
-            expand=["payment_intent", "payment_intent.charges"],
-        )
-        print("🟢 Retrieved Stripe session successfully.")
-    except Exception as e:
-        print(f"❌ Stripe session retrieve failed: {e}")
-        messages.error(request, f"Could not load Stripe session: {e}")
-        return redirect("billing:checkout")
-
-    # --- Stripe raw totals ---
-    amount_total = Decimal(session.get("amount_total") or 0) / Decimal("100")
-    currency = (session.get("currency") or "usd").lower()
-    print(
-        f"💵 Stripe totals → amount_total={amount_total}, currency={currency}")
-
-    # --- Metadata ---
-    md = session.get("metadata") or {}
-    print(f"📦 Metadata received: {md}")
-
-    def to_decimal(val, fallback="0.00"):
-        try:
-            return Decimal(str(val or fallback))
-        except Exception:
-            return Decimal(fallback)
-
-    meta_subtotal = to_decimal(md.get("subtotal"))
-    meta_tax = to_decimal(md.get("tax"))
-    meta_total = to_decimal(md.get("total"))
-    service_address = (
-        md.get("service_address")
-        or request.session.get("service_address")
-        or ""
-    )
-
-    # --- Fallback checks ---
-    if meta_total == 0 and amount_total > 0:
-        meta_total = amount_total
-    if meta_subtotal == 0 and meta_total > 0:
-        meta_subtotal = (meta_total - meta_tax).quantize(Decimal("0.01"))
-
-    print(
-        f"🧾 Parsed values → subtotal={meta_subtotal}, tax={meta_tax}, total={meta_total}, service_address='{service_address}'"
-    )
-
-    from .models import Cart, PaymentHistory
-    cart = Cart.objects.filter(
-        user=request.user).order_by("-updated_at").first()
-
-    payment_intent_id = getattr(session.payment_intent, "id", None)
-    stripe_payment_id = payment_intent_id or session.id
-
-    # Save / get payment
-    ph, created = PaymentHistory.objects.get_or_create(
-        user=request.user,
-        stripe_payment_id=stripe_payment_id,
-        defaults={
-            "cart": cart,
-            "amount": meta_total or amount_total,
-            "currency": currency,
-            "service_address": service_address,
-            "created_at": now(),
-            "raw_data": {
-                "stripe_session_id": session.id,
-                "payment_intent_id": payment_intent_id,
-                "subtotal": f"{meta_subtotal:.2f}",
-                "tax": f"{meta_tax:.2f}",
-                "total": f"{meta_total:.2f}",
-                "service_address": service_address,
-                "currency": currency.upper(),
-            },
-        },
-    )
-
-    if created:
-        print(f"✅ Created new PaymentHistory id={ph.id}")
-    else:
-        print(f"♻️ Using existing PaymentHistory id={ph.id}")
-
-    # Clear cart
-    if cart and cart.items.exists():
-        cleared = cart.items.count()
-        cart.items.all().delete()
-        print(f"🧹 Cleared {cleared} items from cart.")
-
-    # Reset session
-    for key in ("cart_id", "service_address", "address_locked"):
-        request.session.pop(key, None)
-    request.session.modified = True
-
-    raw = ph.raw_data or {}
-    print(f"🧠 raw_data stored in PaymentHistory: {raw}")
-
-    # Values going into context
-    context = {
-        "transaction_id": ph.stripe_payment_id,
-        "subtotal": Decimal(str(raw.get("subtotal", meta_subtotal))),
-        "tax": Decimal(str(raw.get("tax", meta_tax))),
-        "total": ph.amount,
-        "service_address": ph.service_address,
-        "currency": ph.currency.upper(),
-        "last_payment": ph,
-    }
-
-    print("📤 Final context sent to template:", context, "\n")
-
-    return render(request, "billing/success.html", context)
 
 
 @login_required
@@ -373,18 +319,25 @@ def payment_cancel(request):
         request, "Your payment was cancelled — no charges were made.")
     return redirect("billing:checkout")
 
+
 # ----------------------------------------------------------------------
 # 🧾 Payment History (user)
 # ----------------------------------------------------------------------
 
 
-@login_required
-def payment_history(request):
-    """Displays all payments for the logged-in user."""
-    payments = PaymentHistory.objects.filter(
-        user=request.user).select_related("user", "booking").order_by("-created_at")
+# Optional helper to refresh booking statuses based on current date
 
-    return render(request, "billing/payment_history.html", {"payments": payments})
+def _refresh_booking_statuses_for_user(user):
+    """Auto-refresh status for user's bookings (Completed / Active)."""
+    today = now().date()
+    bookings = Booking.objects.filter(user=user)
+    for b in bookings:
+        if b.date < today and b.status != "Completed":
+            b.status = "Completed"
+            b.save(update_fields=["status"])
+        elif b.date >= today and b.status == "Completed":
+            b.status = "Booked"
+            b.save(update_fields=["status"])
 
 
 # ----------------------------------------------------------------------
@@ -392,134 +345,203 @@ def payment_history(request):
 # ----------------------------------------------------------------------
 @login_required
 def download_receipt_pdf(request, pk):
+    """Generate a detailed PDF receipt with grouped adjustments."""
+    root = get_object_or_404(
+        PaymentHistory, id=payment_id, user=request.user, parent__isnull=True
+    )
+    chain = root.compute_sections()
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            leftMargin=0.75 * inch,
+                            rightMargin=0.75 * inch,
+                            topMargin=0.75 * inch,
+                            bottomMargin=0.75 * inch)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Header
+    elements.append(Paragraph(
+        "<b>Tucker & Dale’s Home Services</b>", styles["Title"]
+    ))
+    elements.append(Paragraph(
+        f"Receipt generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}",
+        styles["Normal"]
+    ))
+    elements.append(Spacer(1, 0.25 * inch))
+
+    # Customer + service info
+    elements.append(
+        Paragraph(f"<b>Service Address:</b> {root.service_address}", styles["Normal"]))
+    elements.append(Paragraph(
+        f"<b>Transaction ID:</b> {root.stripe_payment_id or 'N/A'}", styles["Normal"]))
+    elements.append(
+        Paragraph(f"<b>Status:</b> {root.status}", styles["Normal"]))
+    elements.append(Spacer(1, 0.25 * inch))
+
+    def make_table(title, rows, color):
+        """Utility to create styled tables for each section."""
+        elements.append(Paragraph(f"<b>{title}</b>", styles["Heading4"]))
+        data = [["Date", "Description", "Amount (USD)"]] + rows
+        tbl = Table(data, colWidths=[1.5 * inch, 3.5 * inch, 1.5 * inch])
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), color),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("ALIGN", (2, 1), (2, -1), "RIGHT"),
+            ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ]))
+        elements.append(tbl)
+        elements.append(Spacer(1, 0.15 * inch))
+
+    # ✅ Original Services
+    make_table(
+        "Original Services",
+        [[root.created_at.strftime("%Y-%m-%d"),
+          root.notes or "Initial Booking Payment",
+          f"${root.amount:.2f}"]],
+        colors.green
+    )
+
+    # ❌ Cancellations
+    cancelled = [a for a in root.adjustments.all() if a.amount < 0]
+    if cancelled:
+        rows = [[a.created_at.strftime("%Y-%m-%d"),
+                 a.notes or "Refund / Penalty",
+                 f"-${abs(a.amount):.2f}"] for a in cancelled]
+        make_table("Cancellations / Refunds", rows, colors.red)
+
+    # ➕ Additions
+    added = [a for a in root.adjustments.all() if a.amount > 0]
+    if added:
+        rows = [[a.created_at.strftime("%Y-%m-%d"),
+                 a.notes or "Additional Service",
+                 f"+${a.amount:.2f}"] for a in added]
+        make_table("Added Services", rows, colors.blue)
+
+    # 🧮 Totals
+    o, a, c, net = root.compute_sections()
+    totals_data = [
+        ["Original Total:", f"${o:.2f}"],
+        ["Added Services:", f"+${a:.2f}"],
+        ["Refunds / Penalties:", f"-${abs(c):.2f}"],
+        ["Final Adjusted Total:", f"${net:.2f}"],
+    ]
+    totals_tbl = Table(totals_data, colWidths=[3.5 * inch, 3.5 * inch])
+    totals_tbl.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),
+    ]))
+    elements.append(Spacer(1, 0.25 * inch))
+    elements.append(totals_tbl)
+
+    doc.build(elements)
+    buffer.seek(0)
+    filename = f"Receipt_{root.service_address.replace(' ', '_')}_{root.created_at.date()}.pdf"
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+
+@login_required
+def download_yearly_summary_pdf(request):
     """
-    Generates a polished, branded PDF receipt for a given PaymentHistory record.
+    Generate a combined summary PDF of all PaymentHistory chains
+    for this user, grouped by service_address.
+    Useful for landlords/property managers tracking multiple sites.
     """
+    from io import BytesIO
     from reportlab.lib.pagesizes import letter
-    from reportlab.lib.units import inch
     from reportlab.lib import colors
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.utils import simpleSplit
-    import os
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet
+    from django.utils import timezone
 
-    payment = get_object_or_404(PaymentHistory, pk=pk, user=request.user)
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            leftMargin=0.75 * inch,
+                            rightMargin=0.75 * inch,
+                            topMargin=0.75 * inch,
+                            bottomMargin=0.75 * inch)
+    styles = getSampleStyleSheet()
+    elements = []
 
-    # ------------------------------------------
-    # PDF Response Setup
-    # ------------------------------------------
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="receipt_{payment.id}.pdf"'
+    # 🧭 Header
+    elements.append(
+        Paragraph("<b>Tucker & Dale’s Home Services</b>", styles["Title"]))
+    elements.append(
+        Paragraph(f"Annual Summary for {request.user.username}", styles["Normal"]))
+    elements.append(Paragraph(
+        f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"]))
+    elements.append(Spacer(1, 0.3 * inch))
 
-    p = canvas.Canvas(response, pagesize=letter)
-    width, height = letter
-    y = height - inch
+    # 🏘️ Group PaymentHistory roots by service_address
+    roots = (
+        PaymentHistory.objects
+        .filter(user=request.user, parent__isnull=True)
+        .select_related("user")
+        .order_by("service_address", "-created_at")
+    )
+    grouped = {}
+    for root in roots:
+        grouped.setdefault(root.service_address, []).append(root)
 
-    # ------------------------------------------
-    # HEADER with logo or fallback title
-    # ------------------------------------------
-    logo_path = os.path.join(settings.BASE_DIR, "static", "images", "logo.png")
-    if os.path.exists(logo_path):
-        logo_w, logo_h = 1.3 * inch, 1.3 * inch
-        p.drawImage(
-            logo_path,
-            (width - logo_w) / 2,
-            y - logo_h,
-            width=logo_w,
-            height=logo_h,
-            mask="auto",
-        )
-        y -= logo_h + 0.2 * inch
-    else:
-        p.setFont("Helvetica-Bold", 18)
-        p.drawCentredString(width / 2, y, "Tucker & Dale’s Home Services")
-        y -= 0.35 * inch
+    grand_total = Decimal("0.00")
 
-    p.setFont("Helvetica-Bold", 16)
-    p.drawCentredString(width / 2, y, "Payment Receipt")
-    y -= 0.4 * inch
+    # 🧾 Iterate properties
+    for addr, chains in grouped.items():
+        elements.append(Paragraph(f"<b>🏠 {addr}</b>", styles["Heading2"]))
+        elements.append(Spacer(1, 0.1 * inch))
 
-    p.setStrokeColor(colors.lightgrey)
-    p.line(inch, y, width - inch, y)
-    y -= 0.35 * inch
+        prop_total = Decimal("0.00")
 
-    # ------------------------------------------
-    # BASIC INFO SECTION
-    # ------------------------------------------
-    info_fields = [
-        ("Customer", payment.user.get_full_name() or payment.user.username),
-        ("Transaction ID", payment.stripe_payment_id or "N/A"),
-        ("Amount Paid", f"${payment.amount:.2f} {payment.currency.upper()}"),
-        ("Service Address", payment.service_address or "N/A"),
-        ("Date", payment.created_at.strftime("%Y-%m-%d %H:%M:%S")),
-    ]
+        for root in chains:
+            o, a, c, net = root.compute_sections()
+            prop_total += net
 
-    p.setFont("Helvetica", 12)
-    for label, value in info_fields:
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(inch, y, f"{label}:")
-        p.setFont("Helvetica", 12)
-        # Wrap long values automatically
-        wrapped = simpleSplit(str(value), "Helvetica", 12, width - 2.8 * inch)
-        for line in wrapped:
-            p.drawString(inch + 1.8 * inch, y, line)
-            y -= 0.25 * inch
-        y -= 0.05 * inch
+            data = [
+                ["Date", "Original", "Added", "Refunded", "Adjusted Total"],
+                [
+                    root.created_at.strftime("%Y-%m-%d"),
+                    f"${o:.2f}",
+                    f"+${a:.2f}" if a > 0 else "$0.00",
+                    f"-${abs(c):.2f}" if c else "$0.00",
+                    f"${net:.2f}",
+                ],
+            ]
+            t = Table(data, colWidths=[
+                      1.3 * inch, 1.3 * inch, 1.3 * inch, 1.3 * inch, 1.3 * inch])
+            t.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ]))
+            elements.append(t)
+            elements.append(Spacer(1, 0.1 * inch))
 
-    y -= 0.2 * inch
-    p.line(inch, y, width - inch, y)
-    y -= 0.3 * inch
+        # Property subtotal
+        elements.append(Paragraph(
+            f"<b>Total for {addr}:</b> ${prop_total:.2f}",
+            styles["Normal"]
+        ))
+        elements.append(Spacer(1, 0.3 * inch))
+        grand_total += prop_total
 
-    # ------------------------------------------
-    # PAYMENT DETAILS SECTION
-    # ------------------------------------------
-    p.setFont("Helvetica-Bold", 13)
-    p.drawString(inch, y, "Payment Details:")
-    y -= 0.3 * inch
+    # 🧮 Grand total
+    elements.append(Spacer(1, 0.5 * inch))
+    elements.append(
+        Paragraph("<b>Grand Total Across All Properties</b>", styles["Heading3"]))
+    elements.append(Paragraph(f"<b>${grand_total:.2f}</b>", styles["Title"]))
+    elements.append(Spacer(1, 0.3 * inch))
 
-    raw = payment.raw_data if isinstance(payment.raw_data, dict) else {}
-    subtotal = raw.get("subtotal", "N/A")
-    tax = raw.get("tax", "N/A")
-    total = raw.get("total", f"{payment.amount:.2f}")
-    session_id = raw.get("stripe_session_id", "N/A")
-    payment_intent = raw.get("payment_intent_id", "N/A")
+    doc.build(elements)
+    buffer.seek(0)
 
-    details = [
-        ("Subtotal", f"${subtotal}"),
-        ("Tax", f"${tax}"),
-        ("Total", f"${total}"),
-        ("Stripe Session ID", session_id),
-        ("Payment Intent ID", payment_intent),
-    ]
-
-    p.setFont("Helvetica", 11)
-    for label, value in details:
-        p.setFont("Helvetica-Bold", 11)
-        p.drawString(inch, y, f"{label}:")
-        p.setFont("Helvetica", 11)
-        wrapped = simpleSplit(str(value), "Helvetica", 11, width - 2.8 * inch)
-        for line in wrapped:
-            p.drawString(inch + 1.8 * inch, y, line)
-            y -= 0.22 * inch
-        y -= 0.05 * inch
-
-    # ------------------------------------------
-    # FOOTER
-    # ------------------------------------------
-    y -= 0.3 * inch
-    p.setStrokeColor(colors.lightgrey)
-    p.line(inch, y, width - inch, y)
-    y -= 0.3 * inch
-
-    p.setFont("Helvetica-Oblique", 10)
-    p.setFillColor(colors.grey)
-    p.drawCentredString(width / 2, y, "Thank you for your payment!")
-    p.drawCentredString(width / 2, y - 0.2 * inch,
-                        "Tucker & Dale’s Home Services © 2025")
-    p.setFillColor(colors.black)
-
-    p.showPage()
-    p.save()
-    return response
+    filename = f"Yearly_Summary_{request.user.username}_{timezone.now().year}.pdf"
+    return FileResponse(buffer, as_attachment=True, filename=filename)
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -756,96 +778,160 @@ def remove_selected_from_cart(request):
 
 
 @login_required
+def live_invoice_view(request, booking_id):
+    """
+    Loads the current live invoice for a given booking_id.
+    Shows the existing services, cancellations, and additions
+    before adjustments are finalized.
+    """
+    from scheduling.models import Booking
+    booking = get_object_or_404(Booking, pk=booking_id)
+
+    # Related payments for this user + service address
+    payments = PaymentHistory.objects.filter(
+        user=request.user,
+        service_address=booking.service_address
+    ).order_by("-created_at")
+
+    # Initialize variables safely
+    chain = None
+    root = None
+
+    if payments.exists():
+        # Try to find the root; fallback to most recent payment
+        root = payments.filter(parent__isnull=True).first() or payments.first()
+
+        # Defensive check before computing
+        if hasattr(root, "compute_sections"):
+            original_total, add_total, cancel_total, net_total = root.compute_sections()
+            chain = {
+                "root": root,
+                "original_total": original_total,
+                "add_total": add_total,
+                "cancel_total": cancel_total,
+                "net_total": net_total,
+                "added": [a for a in root.adjustments.all() if a.amount > 0],
+                "cancelled": [a for a in root.adjustments.all() if a.amount < 0],
+            }
+        else:
+            print(f"⚠️ root object has no compute_sections: {root}")
+    else:
+        print(f"⚠️ No PaymentHistory found for {booking.service_address}")
+
+    return render(request, "billing/live_invoice.html", {
+        "booking": booking,
+        "chain": chain,
+    })
+
+
+@login_required
+def live_invoice_view_address(request, address):
+    """
+    Interactive 'live invoice' view showing all service items, refund eligibility,
+    and running totals for a specific property address.
+    """
+    from urllib.parse import unquote
+    from scheduling.models import Booking
+    from billing.utils import get_refund_policy
+    address = unquote(address)
+
+    Booking.objects.filter(
+        user=request.user,
+        service_address__iexact=address
+    )
+
+    # ✅ Fetch bookings for this address and user
+    bookings = Booking.objects.filter(
+        user=request.user,
+        service_address__iexact=address
+    ).order_by("date", "time_slot__label")
+
+    payments = (
+        PaymentHistory.objects.filter(
+            user=request.user,
+            service_address__iexact=address
+        ).order_by("created_at")
+    )
+
+    today = timezone.now().date()
+    booking_items = []
+
+    for b in bookings:
+        status, refund_pct = get_refund_policy(
+            datetime.combine(b.date, datetime.min.time(),
+                             tzinfo=timezone.get_current_timezone())
+        )
+        booking_items.append({
+            "id": b.id,
+            "date": b.date,
+            "service": str(b.service_category),
+            "time_slot": getattr(b.time_slot, "label", ""),
+            "price": float(getattr(b, "price", 0)),
+            "status": status,
+            "refund_pct": refund_pct,
+            "is_completed": status == "Locked",
+        })
+
+    paid_total = sum(p.amount for p in payments if p.amount > 0)
+    refund_total = abs(sum(p.amount for p in payments if p.amount < 0))
+    net_total = paid_total - refund_total
+
+    return render(request, "billing/live_invoice.html", {
+        "address": address,
+        "bookings": booking_items,
+        "payments": payments,
+        "paid_total": paid_total,
+        "refund_total": refund_total,
+        "net_total": net_total,
+    })
+
+
+@login_required
 @require_POST
 def cancel_selected_services(request):
     """
-    Cancels selected paid services.
-    - 50% refund if within 72h window
-    - Full refund if ≥72h before scheduled time
-    - Records refund in PaymentHistory + links back to Booking
-    - Updates booking.status and total_amount accordingly
+    Process batch cancellation requests with refund percentage per booking.
     """
-    from decimal import Decimal
-    import stripe
-    from django.utils.timezone import now
-    from django.db import transaction
-    from billing.models import PaymentHistory
+    booking_ids = request.POST.getlist("selected_bookings")
+    if not booking_ids:
+        return JsonResponse({"error": "No bookings selected."})
+
     from scheduling.models import Booking
+    from billing.models import PaymentHistory
+    from billing.utils import get_refund_policy
 
-    payment_ids = request.POST.getlist("selected_payments")
-    if not payment_ids:
-        return JsonResponse({"ok": False, "error": "No services selected."})
+    total_refund = Decimal("0.00")
+    notes = []
 
-    payments = PaymentHistory.objects.filter(
-        id__in=payment_ids, user=request.user
-    ).prefetch_related("bookings")
-
-    if not payments.exists():
-        return JsonResponse({"ok": False, "error": "No valid payment records found."})
-
-    results = []
-
-    for pay in payments:
-        booking = pay.bookings.first()  # use new M2M relation
-        hours_until = booking.hours_until if booking else 9999
-        penalty = hours_until < 72
-        refund_amt = pay.amount * \
-            (Decimal("0.5") if penalty else Decimal("1.0"))
-        note = "50% penalty (within 72h)" if penalty else "Full refund"
-
-        refund_obj = None
+    for bid in booking_ids:
         try:
-            intent_id = pay.raw_data.get("payment_intent_id")
-            if intent_id:
-                # Stripe sandbox refund (optional)
-                refund_obj = stripe.Refund.create(
-                    payment_intent=intent_id,
-                    amount=int(refund_amt * 100)
+            booking = Booking.objects.get(id=bid, customer__user=request.user)
+            price = Decimal(getattr(booking, "price", 0))
+            status, pct = get_refund_policy(
+                datetime.combine(booking.date, datetime.min.time()))
+            if pct > 0:
+                refund_amt = (price * Decimal(pct) / Decimal(100)
+                              ).quantize(Decimal("0.01"))
+                total_refund += refund_amt
+                PaymentHistory.objects.create(
+                    user=request.user,
+                    service_address=booking.service_address,
+                    amount=-refund_amt,
+                    notes=f"{status} refund ({pct}%) for {booking.service_category}",
+                    status="Refunded",
                 )
-        except stripe.error.StripeError as e:
-            note += f" (Stripe error: {e})"
-
-        # --- transactional update ---
-        with transaction.atomic():
-            refund_entry = PaymentHistory.objects.create(
-                user=request.user,
-                amount=-refund_amt,
-                currency=pay.currency,
-                service_address=pay.service_address,
-                created_at=now(),
-                status="Refunded",
-                payment_type="REFUND",
-                notes=f"Cancelled booking — {note}",
-                raw_data={
-                    "original_payment_id": pay.id,
-                    "stripe_refund_id": getattr(refund_obj, "id", None),
-                    "penalty_applied": penalty,
-                },
-            )
-
-            # link refund to same booking
-            if booking:
-                booking.payments.add(refund_entry)
-                booking.status = "Cancelled"
-                booking.total_amount = booking.total_amount - refund_amt
-                booking.save(update_fields=[
-                             "status", "total_amount", "updated_at"])
-
-            # mark old record
-            pay.status = "Cancelled"
-            pay.save(update_fields=["status", "updated_at"])
-
-        results.append({
-            "payment_id": pay.id,
-            "refund_amount": float(refund_amt),
-            "penalty": penalty,
-            "refund_id": getattr(refund_obj, "id", None)
-        })
+                notes.append(
+                    f"{booking.service_category} on {booking.date} → {pct}% refund = ${refund_amt}")
+                booking.delete()
+            else:
+                notes.append(
+                    f"{booking.service_category} on {booking.date} → No refund (locked)")
+        except Booking.DoesNotExist:
+            notes.append(f"Booking #{bid} not found.")
 
     return JsonResponse({
         "ok": True,
-        "summary": f"{len(results)} service(s) cancelled successfully.",
-        "results": results,
+        "message": f"Processed {len(booking_ids)} cancellations.\nTotal refund: ${total_refund}\n\n" + "\n".join(notes)
     })
 
 
@@ -935,6 +1021,58 @@ def add_service_adjustment(request):
     return JsonResponse({"ok": True, "summary": summary, "delta": float(delta_amount)})
 
 
+@login_required
+@require_POST
+def submit_adjustment(request):
+    """
+    Handles modal submission for Add / Remove Service.
+    Creates a child PaymentHistory under the selected root,
+    updates totals, and redirects to checkout if payment required.
+    """
+    parent_id = request.POST.get("parent_id")
+    booking_id = request.POST.get("booking_id")
+    delta_amount = request.POST.get("delta_amount")
+    note = request.POST.get("note", "")
+
+    if not (parent_id and booking_id and delta_amount):
+        return JsonResponse({"ok": False, "error": "Missing required fields."})
+
+    try:
+        parent = PaymentHistory.objects.get(pk=parent_id, user=request.user)
+        booking = Booking.objects.get(pk=booking_id, user=request.user)
+        delta = Decimal(delta_amount)
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"Invalid selection: {e}"})
+
+    # Create child adjustment
+    child = PaymentHistory.objects.create(
+        user=request.user,
+        parent=parent,
+        service_address=booking.service_address,
+        amount=delta,
+        currency=parent.currency,
+        status="Adjustment",
+        notes=note,
+    )
+    parent.refresh_from_db()
+
+    # Determine payment direction
+    if delta > 0:
+        message = f"Additional service (${delta}) added. Proceed to checkout."
+        next_step = reverse("billing:checkout")
+    elif delta < 0:
+        message = f"Refund of ${abs(delta)} initiated."
+        next_step = reverse("billing:payment_history")
+    else:
+        message = "No change."
+
+    return JsonResponse({
+        "ok": True,
+        "message": message,
+        "redirect": next_step,
+    })
+
+
 @require_POST
 def cart_clear(request):
     cart = _get_or_create_cart(request)
@@ -953,4 +1091,137 @@ def cart_detail(request):
     """Optional full-page cart view (non-AJAX)."""
     cart = _get_or_create_cart(request)
     get_token(request)  # ensure CSRF cookie
-    return render(request, "scheduling/cart_detail.html", {"cart": cart})
+    return render(request, "billing/_cart.html", {"cart": cart})
+
+
+# billing/views.py
+
+@login_required
+def payment_success(request):
+    """
+    Handle successful Stripe payment:
+    - Creates a PaymentHistory record
+    - Saves all CartItems as Bookings
+    - Clears the cart
+    - Displays success confirmation page
+    """
+    try:
+        cart_id = request.session.get("cart_id")
+        cart = Cart.objects.filter(pk=cart_id, user=request.user).first()
+
+        if not cart or not cart.items.exists():
+            messages.error(request, "Your cart is empty or expired.")
+            return redirect("billing:checkout")
+
+        # ✅ Infer service address from first item
+        first_item = cart.items.first()
+        service_address = getattr(first_item, "service_address", "Unknown")
+
+        # ✅ Create payment record
+        payment_record = PaymentHistory.objects.create(
+            user=request.user,
+            amount=cart.total,
+            currency="usd",
+            status="Paid",
+            service_address=service_address,
+            notes="Stripe Checkout Payment",
+        )
+
+        # ✅ Persist bookings
+        created_bookings = []
+        for item in cart.items.all():
+            booking = Booking.objects.create(
+                user=request.user,
+                service_address=service_address,
+                service_category=item.service_category,
+                date=item.date,
+                time_slot=item.time_slot,
+                unit_price=item.unit_price,
+                total_amount=item.subtotal,
+                status="Booked",
+            )
+            created_bookings.append(booking)
+
+        # ✅ Link bookings <-> PaymentHistory
+        # if created_bookings:
+        #     payment_record.linked_bookings.add(*created_bookings)
+        #     for b in created_bookings:
+        #         b.payment_records.add(payment_record)
+        #     payment_record.save(update_fields=["updated_at"])
+
+        # ✅ Link bookings <-> PaymentHistory (one-directional only)
+        if created_bookings:
+            payment_record.linked_bookings.add(*created_bookings)
+            payment_record.save(update_fields=["created_at"])
+
+        # ✅ Clear the cart
+        cart.items.all().delete()
+        cart.delete()
+        request.session.pop("cart_id", None)
+
+        # # ✅ Optional: send confirmation email
+        # try:
+        #     send_payment_receipt_email(request.user, payment_record)
+        # except Exception as e:
+        #     print(f"⚠️ Email send failed: {e}")
+
+        # ✅ Show success page instead of redirecting back to cart
+        messages.success(
+            request, "Payment successful! Your booking has been confirmed.")
+        return render(request, "billing/success.html", {
+            "payment_record": payment_record,
+            "bookings": created_bookings,
+        })
+
+    except Exception as e:
+        print(f"❌ Payment success error: {e}")
+        messages.error(request, f"Payment processing error: {e}")
+        return redirect("billing:checkout")
+
+
+@login_required
+def payment_history(request):
+    """
+    Property-centric billing dashboard.
+    One card per service address showing all payment activity
+    (paid, refunded, adjusted) for the current user.
+    """
+    _refresh_booking_statuses_for_user(request.user)
+    from django.db.models import Sum, Q
+
+    # Get all addresses this user has payment records for
+    addresses = (
+        PaymentHistory.objects.filter(user=request.user)
+        .exclude(service_address__isnull=True)
+        .exclude(service_address__exact="")
+        .values_list("service_address", flat=True)
+        .distinct()
+    )
+
+    # Build a summarized list per address
+    properties = []
+    for addr in addresses:
+        entries = (
+            PaymentHistory.objects
+            .filter(user=request.user, service_address=addr)
+            .order_by("created_at")
+        )
+
+        # Compute totals
+        total_in = entries.filter(amount__gt=0).aggregate(
+            total=Sum("amount"))["total"] or 0
+        total_out = abs(entries.filter(amount__lt=0).aggregate(
+            total=Sum("amount"))["total"] or 0)
+        net = total_in - total_out
+
+        properties.append({
+            "address": addr,
+            "entries": entries,
+            "total_in": total_in,
+            "total_out": total_out,
+            "net": net,
+        })
+
+    return render(request, "billing/payment_history.html", {
+        "properties": properties,
+    })

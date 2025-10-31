@@ -1,7 +1,8 @@
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, get_backends
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404
 from django.shortcuts import redirect
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
@@ -141,45 +142,54 @@ def customer_delete(request, pk):
 
 def _safe_login(request, user):
     """
-    Logs in the user and preserves the in-progress booking context.
-    - Does NOT overwrite service_address.
-    - Merges any anonymous cart into the user cart.
-    - Pins the merged cart id into the session.
+    Logs in the user safely, merging any session carts.
+    Supports multiple authentication backends.
     """
     old_session_key = request.session.session_key
-    # temp attach request so utils can read session address during merge
-    user._request = request  # transient
+    user._request = request  # transient ref
 
-    login(request, user)
+    # ✅ Ensure backend is set correctly
+    if not hasattr(user, "backend"):
+        backends = get_backends()
+        if backends:
+            user.backend = f"{backends[0].__module__}.{backends[0].__class__.__name__}"
+        else:
+            # Fallback to settings if somehow empty
+            default_backend = getattr(
+                settings,
+                "AUTHENTICATION_BACKENDS",
+                ["django.contrib.auth.backends.ModelBackend"],
+            )[0]
+            user.backend = default_backend
 
-    # clear transient flags
+    # ✅ Perform login
+    login(request, user, backend=user.backend)
+
+    # 🧹 Clean transient session keys
     for key in ("force_profile_update", "entered_username"):
         request.session.pop(key, None)
 
-    # Merge any anonymous carts from old_session_key
+    # 🛒 Merge or link existing cart
     try:
         from billing.utils import merge_session_cart
-        merged = None
-        if old_session_key:
-            merged = merge_session_cart(old_session_key, user)
-        # Pin merged (or latest) cart to the session
+        merged = merge_session_cart(
+            old_session_key, user) if old_session_key else None
         if merged:
             request.session["cart_id"] = merged.pk
         else:
-            # Fallback: pick the latest user cart if exists
             from billing.models import Cart
             c = Cart.objects.filter(user=user).order_by("-updated_at").first()
             if c:
                 request.session["cart_id"] = c.pk
         request.session.modified = True
-        # logging (optional)
+
         if request.session.get("cart_id"):
             print(
-                f"🛒 Merged/linked cart id {request.session['cart_id']} for user '{user.username}'")
+                f"🛒 Linked cart id {request.session['cart_id']} for user '{user.username}'")
     except Exception as e:
         print(f"⚠️ Cart merge/link failed: {e}")
 
-    # cleanup
+    # 🧽 Cleanup
     if hasattr(user, "_request"):
         delattr(user, "_request")
 

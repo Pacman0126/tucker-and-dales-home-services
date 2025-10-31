@@ -7,38 +7,61 @@
   </div>
 
   <div class="card-body">
-
-    {% if cart and cart.items.exists %}
+    {% if cart and cart.item_count %}
       <form id="cart-form" method="post">
         {% csrf_token %}
-        <ul class="list-group mb-3" id="cart-item-list">
-          {% for item in cart.items.all %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-start gap-3">
-                <input type="checkbox" class="form-check-input mt-1" name="selected_items" value="{{ item.id }}">
-                <div>
-                  <div class="fw-semibold">{{ item.service_category.name }}</div>
-                  <div class="small text-muted">
-                    {{ item.date }} — {{ item.time_slot.label }} — {{ item.employee.name }}
-                  </div>
-                </div>
-              </div>
 
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-secondary">
+        <!-- TABLE VIEW -->
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-3">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 40px;">
+                  <input type="checkbox" id="select-all" class="form-check-input">
+                </th>
+                <th style="min-width: 120px;">Date</th>
+                <th>Service</th>
+                <th>Time Slot</th>
+                <th>Employee</th>
+                <th class="text-end" style="min-width: 100px;">Price</th>
+                <th class="text-end" style="width: 80px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="cart-item-list">
+              {% for item in cart.items.all %}
+              <tr>
+                <td>
+                  <input type="checkbox"
+                         class="form-check-input"
+                         name="selected_items"
+                         value="{{ item.id }}">
+                </td>
+                <td class="text-nowrap">{{ item.date }}</td>
+                <td class="fw-semibold">{{ item.service_category.name }}</td>
+                <td>{{ item.time_slot.label }}</td>
+                <td class="text-nowrap">{{ item.employee.name }}</td>
+                <td class="text-end fw-semibold text-success">
                   ${{ item.unit_price|floatformat:2 }}
-                </span>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-danger"
-                  data-action="remove"
-                  data-item-id="{{ item.id }}">
-                  Remove
-                </button>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
+                </td>
+                <td class="text-end">
+                  <button type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          data-action="remove"
+                          data-item-id="{{ item.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  No items in your cart yet.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
         <!-- Totals -->
         <div class="border-top pt-3 mt-2">
@@ -58,11 +81,7 @@
 
         <!-- Action Buttons -->
         <div class="mt-4 d-flex justify-content-between flex-wrap gap-2">
-          <div class="form-check">
-            <input type="checkbox" id="select-all" class="form-check-input">
-            <label for="select-all" class="form-check-label small">Select All</label>
-          </div>
-
+          <div></div>
           <div class="d-flex gap-2 ms-auto">
             <button type="button" class="btn btn-outline-danger" id="cart-remove-selected">
               <i class="bi bi-x-circle"></i> Remove Selected
@@ -76,7 +95,6 @@
           </div>
         </div>
       </form>
-
     {% else %}
       <div class="alert alert-info mb-0 text-center">
         Your cart is empty — drag available employees onto the 🛒 cart icon above.
@@ -104,7 +122,7 @@
   const csrftoken = getCookie('csrftoken');
 
   // -----------------------------
-  // 🧩 Drag Source Setup
+  // 🧩 Drag Source Setup (from search page)
   // -----------------------------
   document.querySelectorAll('.draggable-emp[draggable="true"]').forEach(el => {
     el.addEventListener('dragstart', ev => {
@@ -125,6 +143,7 @@
   // -----------------------------
   const cartIcon = document.getElementById('cart-icon');
   const summaryLabel = document.getElementById('booking-summary');
+
   if (cartIcon) {
     cartIcon.addEventListener('dragover', ev => {
       ev.preventDefault();
@@ -220,7 +239,7 @@
   });
 
   // -----------------------------
-  // 🔁 Select All Checkbox
+  // 🔁 Select All Checkbox (table header)
   // -----------------------------
   document.addEventListener("change", ev => {
     if (ev.target.id === "select-all") {

@@ -155,7 +155,7 @@ class JobAssignment(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.jobsite_address:
-            self.jobsite_address = self.booking.customer_address
+            self.jobsite_address = self.booking.service_address
         super().save(*args, **kwargs)
 
     def __str__(self):

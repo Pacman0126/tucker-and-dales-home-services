@@ -29,32 +29,32 @@ DALLAS_ADDRESSES = [
 
 
 class Command(BaseCommand):
-    help = "Seed scheduling app with service categories, employees, timeslots, and bookings (using only RegisteredCustomers)."
+    help = "Seed scheduling data using RegisteredCustomers (Bookings, Employees, etc.)"
 
     def handle(self, *args, **kwargs):
-        # 🔹 Clear old data
+        # 🧹 Clear old data
         JobAssignment.objects.all().delete()
         Booking.objects.all().delete()
         Employee.objects.all().delete()
         TimeSlot.objects.all().delete()
         ServiceCategory.objects.all().delete()
-
         self.stdout.write(self.style.WARNING("🧹 Old scheduling data cleared."))
 
-        # 🔹 Create service categories
+        # 🔹 Service categories
         categories = ["Garage/Basement", "Lawncare", "House Cleaning"]
         category_objs = {
-            name: ServiceCategory.objects.create(name=name) for name in categories
+            name: ServiceCategory.objects.create(name=name)
+            for name in categories
         }
         self.stdout.write(self.style.SUCCESS("✅ Service categories created."))
 
-        # 🔹 Create time slots
-        slot_labels = ["7:30-9:30", "10:00-12:00", "12:30-2:30", "3:00-5:00"]
+        # 🔹 Time slots
+        slot_labels = ["7:30–9:30", "10:00–12:00", "12:30–2:30", "3:00–5:00"]
         slot_objs = {label: TimeSlot.objects.create(
             label=label) for label in slot_labels}
         self.stdout.write(self.style.SUCCESS("✅ Time slots created."))
 
-        # 🔹 Seed employees (5 per category)
+        # 🔹 Employees
         employees = []
         for category_name, category_obj in category_objs.items():
             for _ in range(5):
@@ -64,23 +64,15 @@ class Command(BaseCommand):
                     service_category=category_obj,
                 )
                 employees.append(emp)
-        self.stdout.write(
-            self.style.SUCCESS(
-                "✅ Employees seeded with Dallas-area home addresses.")
-        )
+        self.stdout.write(self.style.SUCCESS("✅ Employees seeded."))
 
-        # 🔹 Fetch RegisteredCustomers
+        # 🔹 Registered customers
         registered_customers = list(RegisteredCustomer.objects.all())
         use_customers = len(registered_customers) > 0
-
         if not use_customers:
-            self.stdout.write(
-                self.style.WARNING(
-                    "⚠️ No RegisteredCustomers found, falling back to Metroplex addresses."
-                )
-            )
+            self.stdout.write(self.style.WARNING(
+                "⚠️ No RegisteredCustomers found, using fallback addresses."))
 
-        # 🔹 Seed bookings for next 28 days
         today = timezone.now().date()
         total_bookings = 0
 
@@ -88,35 +80,42 @@ class Command(BaseCommand):
             booking_date = today + timedelta(days=day)
 
             for category_name, category_obj in category_objs.items():
-                category_emps = list(
-                    Employee.objects.filter(service_category=category_obj)
-                )
+                category_emps = list(Employee.objects.filter(
+                    service_category=category_obj))
                 random.shuffle(category_emps)
-
-                # Reserve 1 employee to ALWAYS remain free for this category/day
-                reserved_free_emp = category_emps.pop()
+                reserved_free_emp = category_emps.pop()  # keep one free each day
 
                 for slot_label, slot_obj in slot_objs.items():
-                    if random.random() < 0.2:  # 20% chance slot has a booking
+                    if random.random() < 0.2:  # 20% slot utilization
                         if use_customers:
                             cust = random.choice(registered_customers)
-                            customer_name = f"{cust.first_name} {cust.last_name}"
-                            customer_address = (
-                                f"{cust.billing_street_address}, {cust.billing_city}, {cust.billing_state} {cust.billing_zipcode}"
+                            addr_parts = [
+                                cust.billing_street_address,
+                                cust.billing_city,
+                                cust.billing_state,
+                                cust.billing_zipcode,
+                            ]
+                            service_address = ", ".join(
+                                p for p in addr_parts if p) or random.choice(DALLAS_ADDRESSES)
+                            booking = Booking.objects.create(
+                                user=cust.user,
+                                service_address=service_address,
+                                service_category=category_obj,
+                                date=booking_date,
+                                time_slot=slot_obj,
+                                status="active",
                             )
                         else:
-                            customer_name = fake.name()
-                            customer_address = random.choice(DALLAS_ADDRESSES)
+                            service_address = random.choice(DALLAS_ADDRESSES)
+                            booking = Booking.objects.create(
+                                service_address=service_address,
+                                service_category=category_obj,
+                                date=booking_date,
+                                time_slot=slot_obj,
+                                status="active",
+                            )
 
-                        booking = Booking.objects.create(
-                            customer_name=customer_name,
-                            customer_address=customer_address,
-                            service_category=category_obj,
-                            date=booking_date,
-                            time_slot=slot_obj,
-                        )
-
-                        # Assign exactly 1 employee (not the reserved free one)
+                        # Assign an employee (not the reserved one)
                         available_emps = [
                             e for e in category_emps if e != reserved_free_emp]
                         if available_emps:
@@ -124,20 +123,13 @@ class Command(BaseCommand):
                             JobAssignment.objects.create(
                                 employee=emp,
                                 booking=booking,
-                                jobsite_address=booking.customer_address,
+                                jobsite_address=booking.service_address,
                             )
 
                         total_bookings += 1
 
-        if use_customers:
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"✅ Bookings + assignments seeded: {total_bookings} (from {len(registered_customers)} RegisteredCustomers)."
-                )
-            )
-        else:
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"✅ Bookings + assignments seeded: {total_bookings} (fallback Dallas-area addresses)."
-                )
-            )
+        msg = (
+            f"✅ Bookings + assignments seeded: {total_bookings} "
+            f"({'RegisteredCustomers' if use_customers else 'fallback addresses'})"
+        )
+        self.stdout.write(self.style.SUCCESS(msg))

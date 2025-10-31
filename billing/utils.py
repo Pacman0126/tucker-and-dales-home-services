@@ -2,7 +2,9 @@ __all__ = ["_get_or_create_cart",
            "get_service_address", "lock_service_address"]
 from decimal import Decimal
 from typing import Optional
+from datetime import datetime, timedelta
 from django.contrib import messages
+from django.utils import timezone
 from django.utils.timezone import now
 from billing.models import Cart, CartItem
 
@@ -233,3 +235,30 @@ def merge_session_cart(old_session_key: str, user) -> Optional[Cart]:
     # Pin merged cart to session
     # NOTE: we cannot access request here directly; caller should set cart_id.
     return main
+
+
+def get_refund_policy(booking_datetime):
+    """
+    Determine refund eligibility and percentage based on time before service.
+    Returns tuple (status, refund_percent).
+    """
+    if not booking_datetime:
+        return ("Locked", 0)
+
+    now = timezone.now()
+    # assume booking_datetime is a datetime or date
+    if isinstance(booking_datetime, datetime):
+        booking_dt = booking_datetime
+    else:
+        booking_dt = datetime.combine(
+            booking_datetime, datetime.min.time(), tzinfo=timezone.get_current_timezone())
+
+    delta = booking_dt - now
+    hours_until = delta.total_seconds() / 3600
+
+    if hours_until >= 72:
+        return ("Cancellable", 100)
+    elif 0 < hours_until < 72:
+        return ("Late Cancel", 50)
+    else:
+        return ("Locked", 0)

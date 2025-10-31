@@ -1,5 +1,5 @@
 import time
-import random
+import uuid
 import requests
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -9,6 +9,9 @@ from faker import Faker
 from customers.models import RegisteredCustomer
 from real_dfw_addresses import REAL_DFW_ADDRESSES
 
+# ------------------------------------------------------------
+# 🗺️ Region Mapping by ZIP Prefix
+# ------------------------------------------------------------
 REGION_MAP = {
     "Dallas": ["752", "75001", "75006"],
     "Plano / Richardson / Allen / Garland": ["75024", "75025", "75081", "75082", "75040", "75044"],
@@ -20,7 +23,7 @@ REGION_MAP = {
 }
 
 
-def infer_region(zipcode):
+def infer_region(zipcode: str) -> str:
     for region, prefixes in REGION_MAP.items():
         for prefix in prefixes:
             if zipcode.startswith(prefix):
@@ -31,8 +34,11 @@ def infer_region(zipcode):
 fake = Faker()
 
 
+# ------------------------------------------------------------
+# 📍 Google Geocoding (optional)
+# ------------------------------------------------------------
 def geocode_address(address):
-    """Use Google Geocoding API to validate and normalize addresses."""
+    """Validate and normalize a Dallas/Fort Worth address via Google API."""
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = {"address": address, "key": settings.GOOGLE_MAPS_SERVER_KEY}
 
@@ -52,7 +58,7 @@ def geocode_address(address):
             zipcode = components.get("postal_code", "75000")
 
             return {
-                "street_address": street_address,
+                "street": street_address,
                 "city": city,
                 "state": state,
                 "zipcode": zipcode,
@@ -66,6 +72,9 @@ def geocode_address(address):
         return None
 
 
+# ------------------------------------------------------------
+# 🎯 Django Command
+# ------------------------------------------------------------
 class Command(BaseCommand):
     help = "Seeds realistic RegisteredCustomers using real_dfw_addresses.py"
 
@@ -73,11 +82,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--skip-geocode",
             action="store_true",
-            help="Skip Google geocoding for faster seeding (uses fake city/state/zip)",
+            help="Skip Google geocoding for faster seeding (uses dummy city/state/zip)",
         )
 
     def handle(self, *args, **options):
         skip_geo = options["skip_geocode"]
+
+        # 🧹 Clean existing data (non-superusers only)
         RegisteredCustomer.objects.all().delete()
         User.objects.filter(is_superuser=False).delete()
         self.stdout.write(self.style.WARNING(
@@ -86,16 +97,17 @@ class Command(BaseCommand):
         total_seeded = 0
 
         for address in REAL_DFW_ADDRESSES:
+            # Optionally geocode or fake the geo data
             if skip_geo:
                 geo = {
-                    "street_address": address.split(",")[0],
+                    "street": address.split(",")[0],
                     "city": "Dallas",
                     "state": "TX",
                     "zipcode": "75001",
                 }
             else:
                 geo = geocode_address(address)
-                time.sleep(0.25)
+                time.sleep(0.25)  # avoid hitting API rate limits
 
             if not geo:
                 continue
@@ -103,19 +115,16 @@ class Command(BaseCommand):
             first = fake.first_name()
             last = fake.last_name()
 
-            base_username = slugify(f"{first}.{last}")[
-                :25]  # limit length for safety
+            base_username = slugify(f"{first}.{last}")[:25]
             username = base_username
             counter = 1
-
-            # Guarantee unique username
             while User.objects.filter(username=username).exists():
                 username = f"{base_username}{counter}"
                 counter += 1
 
             email = f"{username}@example.com"
 
-            # ✅ Create Django auth user
+            # ✅ Create Django User
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -124,19 +133,21 @@ class Command(BaseCommand):
                 last_name=last,
             )
 
+            # ✅ Map ZIP → region
             region = infer_region(geo["zipcode"])
 
-            # ✅ Create RegisteredCustomer (no FK to User)
+            # ✅ Create RegisteredCustomer (matching your new model)
             RegisteredCustomer.objects.create(
-                unique_customer_id=fake.uuid4(),
+                user=user,
+                unique_customer_id=uuid.uuid4(),
                 first_name=first,
                 last_name=last,
-                street_address=geo["street_address"],
-                city=geo["city"],
-                state=geo["state"],
-                zipcode=geo["zipcode"],
-                phone=fake.phone_number(),
                 email=email,
+                phone=fake.phone_number(),
+                billing_street_address=geo["street"],
+                billing_city=geo["city"],
+                billing_state=geo["state"],
+                billing_zipcode=geo["zipcode"],
                 region=region,
             )
 
@@ -147,6 +158,6 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"🎉 Successfully seeded {total_seeded} RegisteredCustomers "
-                f"(with password: password123)"
+                f"(login with <username>/password123)"
             )
         )

@@ -73,3 +73,17 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
             "fields": ("created_at",),
         }),
     )
+
+
+@admin.display(description="Chain Totals")
+def chain_summary(obj):
+    o, a, c, n = obj.compute_sections()
+    return f"Orig: ${o:.2f} | +${a:.2f} | {c:.2f} | Net: ${n:.2f}"
+
+
+# @admin.register(PaymentHistory)
+# class PaymentHistoryAdmin(admin.ModelAdmin):
+#     list_display = ("id", "user", "status", "amount",
+#                     "service_address", "chain_summary", "created_at")
+#     readonly_fields = ("created_at",)
+#     def chain_summary(self, obj): return chain_summary(obj)
