@@ -871,6 +871,7 @@ def live_invoice_view_address(request, address):
             "refund_pct": refund_pct,
             "is_completed": status == "Locked",
         })
+        # delete me
 
     paid_total = sum(p.amount for p in payments if p.amount > 0)
     refund_total = abs(sum(p.amount for p in payments if p.amount < 0))
