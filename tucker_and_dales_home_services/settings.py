@@ -11,6 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Environment setup ---
 env = environ.Env(DEBUG=(bool, False))
+# DEBUG = env.bool("DEBUG", default=False)
+DEBUG = False
 
 env_file = BASE_DIR / ".env"
 if env_file.exists():
@@ -21,7 +23,7 @@ else:
 
 # --- Security ---
 SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
-DEBUG = env.bool("DEBUG", default=False)
+
 ALLOWED_HOSTS = ["*"]
 
 # --- Installed Apps ---
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     "scheduling",
     "billing",
     "widget_tweaks",
+
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -219,25 +222,40 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # # Optional: auto-login after signup
 # ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"
 # Allauth behavior
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"   # "optional" or "none" if you prefer
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
-ACCOUNT_PRESERVE_USERNAME_CASING = False
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Tucker & Dale’s] "
+# ✅ New login methods (replaces ACCOUNT_AUTHENTICATION_METHOD)
+# allow both username and email login
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
 
-# Email backend — pick by ENV (console for local, SMTP for prod)
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend"  # default for local dev
-)
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@example.com")
-SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+# ✅ New-style signup fields (replaces ACCOUNT_EMAIL_REQUIRED)
+# Use '*' to mark required fields
+ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "password1*", "password2*"]
+
+# ✅ Rate limiting (replaces ACCOUNT_LOGIN_ATTEMPTS_LIMIT/TIMEOUT)
+ACCOUNT_RATE_LIMITS = {
+    "login_failed": "5/5m",   # 5 failed logins per 5 minutes
+    "signup": "10/h",         # optional rate limit for signups
+}
+
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # can be "optional" or "none"
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Tucker & Dale’s] "
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_PRESERVE_USERNAME_CASING = False
+
+# ✅ Redirects
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_SESSION_REMEMBER = True
 
 # SMTP (only used if EMAIL_BACKEND is SMTP)
+# ===========================
+# ✉️ EMAIL SETTINGS
+# ===========================
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "1") == "1"
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
