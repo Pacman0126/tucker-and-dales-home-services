@@ -18,6 +18,7 @@ from django.core.mail import send_mail
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.timezone import now, localdate
+from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib import messages
@@ -42,6 +43,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.enums import TA_RIGHT, TA_LEFT
 
+from billing.utils.email_helpers import send_payment_receipt_email
 from customers.models import RegisteredCustomer
 from scheduling.models import Employee, TimeSlot, ServiceCategory, Booking
 from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
@@ -1121,11 +1123,8 @@ def payment_success(request):
     - Send confirmation email with receipt
     - Render success page
     """
-    from django.core.mail import send_mail
-    from django.template.loader import render_to_string
-    from django.utils.html import strip_tags
-
     try:
+        # Retrieve cart safely
         cart_id = request.session.get("cart_id")
         cart = Cart.objects.filter(pk=cart_id, user=request.user).first()
 
@@ -1175,31 +1174,16 @@ def payment_success(request):
         cart.delete()
         request.session.pop("cart_id", None)
 
-        # ✅ Send receipt email
+        # ✅ Send email receipt (HTML + plain text fallback)
         try:
-            context = {
-                "user": request.user,
-                "payment": payment_record,
-                "bookings": created_bookings,
-                "service_address": service_address,
-            }
-            subject = "Your Tucker & Dale’s Receipt"
-            html_message = render_to_string(
-                "emails/payment_receipt.html", context)
-            plain_message = strip_tags(html_message)
-            send_mail(
-                subject,
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],
-                html_message=html_message,
-                fail_silently=False,
+            send_payment_receipt_email(
+                request.user, payment_record, created_bookings, request
             )
             print(f"📧 Sent receipt to {request.user.email}")
         except Exception as e:
-            print(f"⚠️ Could not send receipt email: {e}")
+            print(f"⚠️ Payment receipt email failed: {e}")
 
-        # ✅ Success confirmation
+        # ✅ Show confirmation page
         messages.success(
             request,
             f"Payment successful! Your booking for {service_address} has been confirmed.",

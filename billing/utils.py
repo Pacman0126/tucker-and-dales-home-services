@@ -8,6 +8,11 @@ from django.utils import timezone
 from django.utils.timezone import now
 from billing.models import Cart, CartItem
 
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
+
 
 # def merge_session_cart(session_key: str, user):
 #     """
@@ -262,3 +267,25 @@ def get_refund_policy(booking_datetime):
         return ("Late Cancel", 50)
     else:
         return ("Locked", 0)
+
+
+def send_payment_receipt_email(user, payment_record, bookings, request=None):
+    """Send a payment confirmation email after Stripe checkout."""
+    subject = f"Your Receipt from Tucker & Dale’s Home Services"
+    context = {
+        "user": user,
+        "payment_record": payment_record,
+        "bookings": bookings,
+        "request": request,
+    }
+    html_message = render_to_string("emails/payment_receipt.html", context)
+    plain_message = strip_tags(html_message)
+
+    send_mail(
+        subject,
+        plain_message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )

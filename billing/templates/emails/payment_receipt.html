@@ -1,26 +1,88 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Your Tucker & Dale’s Receipt</title>
-</head>
-<body style="font-family: Arial, sans-serif; background-color: #fafafa; padding: 20px;">
-  <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
-    <h2 style="color: #333;">Thank you for your payment, {{ user.username }}!</h2>
-    <p>We’ve received your payment of <b>${{ payment.amount }}</b> for services at:</p>
-    <blockquote>{{ service_address }}</blockquote>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f6f6f6;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+      .email-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        background: #ffffff;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      }
+      h2 {
+        color: #006400;
+        margin-top: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+      .total {
+        font-weight: bold;
+        text-align: right;
+      }
+      .footer {
+        font-size: 0.9rem;
+        color: #888;
+        margin-top: 2rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <h2>Payment Confirmation</h2>
+      <p>Hello {{ user.first_name|default:user.username }},</p>
+      <p>Thank you for your recent booking with <b>Tucker & Dale’s Home Services</b>.</p>
 
-    <h3>Your Bookings:</h3>
-    <ul>
-      {% for b in bookings %}
-        <li>{{ b.date }} – {{ b.time_slot.label }} – {{ b.service_category.name }} (${{ b.unit_price }})</li>
-      {% endfor %}
-    </ul>
+      <p><strong>Service Address:</strong> {{ payment_record.service_address }}</p>
+      <p><strong>Transaction Date:</strong> {{ payment_record.created_at|date:"F j, Y, g:i a" }}</p>
 
-    <p>You can view your full receipt anytime in your <a href="{{ request.build_absolute_uri('/billing/history/') }}">Payment History</a>.</p>
+      <table>
+        <tr>
+          <th>Description</th>
+          <th>Amount (USD)</th>
+        </tr>
+        {% for booking in bookings %}
+        <tr>
+          <td>{{ booking.service_category }} — {{ booking.date }} ({{ booking.time_slot.label }})</td>
+          <td>${{ booking.total_amount }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td class="total">Total Paid</td>
+          <td class="total">${{ payment_record.amount }}</td>
+        </tr>
+      </table>
 
-    <hr>
-    <p style="font-size: 0.9em; color: #666;">Tucker & Dale’s Home Services<br>Automated confirmation email</p>
-  </div>
-</body>
+      <p>Your booking has been confirmed and is now visible under your
+      <a href="{{ request.build_absolute_uri|cut:'payment_success' }}billing/payment/history/">Payment History</a>.</p>
+
+      <p>We appreciate your business!<br>
+      – The Tucker & Dale’s Team</p>
+
+      <div class="footer">
+        <p>This is an automated email. Please do not reply directly.</p>
+      </div>
+    </div>
+  </body>
 </html>
+
