@@ -1111,16 +1111,20 @@ def cart_detail(request):
     return render(request, "billing/_cart.html", {"cart": cart})
 
 
-# billing/views.py
 @login_required
 def payment_success(request):
     """
     Handle successful Stripe payment:
-    - Creates a PaymentHistory record
-    - Persists all CartItems as Bookings
-    - Clears the cart
-    - Displays the success confirmation page
+    - Create PaymentHistory record
+    - Persist all CartItems as Bookings
+    - Clear the cart
+    - Send confirmation email with receipt
+    - Render success page
     """
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
+
     try:
         cart_id = request.session.get("cart_id")
         cart = Cart.objects.filter(pk=cart_id, user=request.user).first()
@@ -1136,7 +1140,7 @@ def payment_success(request):
             or "Unknown"
         ).strip()
 
-        # ✅ Create payment record
+        # ✅ Create PaymentHistory record
         payment_record = PaymentHistory.objects.create(
             user=request.user,
             amount=cart.total,
@@ -1146,7 +1150,7 @@ def payment_success(request):
             notes="Stripe Checkout Payment",
         )
 
-        # ✅ Create corresponding Bookings
+        # ✅ Create Bookings for all CartItems
         created_bookings = []
         for item in cart.items.all():
             booking = Booking.objects.create(
@@ -1161,23 +1165,41 @@ def payment_success(request):
             )
             created_bookings.append(booking)
 
-        # ✅ Link PaymentHistory ↔ Bookings (one-directional)
+        # ✅ Link bookings ↔ payment
         if created_bookings:
             payment_record.linked_bookings.add(*created_bookings)
             payment_record.save(update_fields=["created_at"])
 
-        # ✅ Clear the cart entirely
+        # ✅ Clear the cart
         cart.items.all().delete()
         cart.delete()
         request.session.pop("cart_id", None)
 
-        # ✅ Optional email confirmation (disabled for now)
-        # try:
-        #     send_payment_receipt_email(request.user, payment_record)
-        # except Exception as e:
-        #     print(f"⚠️ Email send failed: {e}")
+        # ✅ Send receipt email
+        try:
+            context = {
+                "user": request.user,
+                "payment": payment_record,
+                "bookings": created_bookings,
+                "service_address": service_address,
+            }
+            subject = "Your Tucker & Dale’s Receipt"
+            html_message = render_to_string(
+                "emails/payment_receipt.html", context)
+            plain_message = strip_tags(html_message)
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [request.user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            print(f"📧 Sent receipt to {request.user.email}")
+        except Exception as e:
+            print(f"⚠️ Could not send receipt email: {e}")
 
-        # ✅ Success message + confirmation page
+        # ✅ Success confirmation
         messages.success(
             request,
             f"Payment successful! Your booking for {service_address} has been confirmed.",

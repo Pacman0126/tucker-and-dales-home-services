@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Your Tucker & Dale’s Receipt</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #fafafa; padding: 20px;">
+  <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
+    <h2 style="color: #333;">Thank you for your payment, {{ user.username }}!</h2>
+    <p>We’ve received your payment of <b>${{ payment.amount }}</b> for services at:</p>
+    <blockquote>{{ service_address }}</blockquote>
+
+    <h3>Your Bookings:</h3>
+    <ul>
+      {% for b in bookings %}
+        <li>{{ b.date }} – {{ b.time_slot.label }} – {{ b.service_category.name }} (${{ b.unit_price }})</li>
+      {% endfor %}
+    </ul>
+
+    <p>You can view your full receipt anytime in your <a href="{{ request.build_absolute_uri('/billing/history/') }}">Payment History</a>.</p>
+
+    <hr>
+    <p style="font-size: 0.9em; color: #666;">Tucker & Dale’s Home Services<br>Automated confirmation email</p>
+  </div>
+</body>
+</html>
