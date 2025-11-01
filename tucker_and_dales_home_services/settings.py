@@ -2,6 +2,7 @@
 Django settings for tucker_and_dales_home_services project.
 """
 
+from dotenv import load_dotenv
 import os
 from pathlib import Path
 import environ
@@ -12,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- Environment setup ---
 env = environ.Env(DEBUG=(bool, False))
 # DEBUG = env.bool("DEBUG", default=False)
-DEBUG = False
+DEBUG = True
 
 env_file = BASE_DIR / ".env"
 if env_file.exists():
@@ -224,38 +225,51 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Allauth behavior
 # ✅ New login methods (replaces ACCOUNT_AUTHENTICATION_METHOD)
 # allow both username and email login
-ACCOUNT_LOGIN_METHODS = {"username", "email"}
 
-# ✅ New-style signup fields (replaces ACCOUNT_EMAIL_REQUIRED)
-# Use '*' to mark required fields
-ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "password1*", "password2*"]
+# ==========================================
+# ✉️ EMAIL CONFIGURATION (Local + Heroku)
+# ==========================================
 
-# ✅ Rate limiting (replaces ACCOUNT_LOGIN_ATTEMPTS_LIMIT/TIMEOUT)
-ACCOUNT_RATE_LIMITS = {
-    "login_failed": "5/5m",   # 5 failed logins per 5 minutes
-    "signup": "10/h",         # optional rate limit for signups
-}
+# Load .env in local dev only (Heroku provides env vars automatically)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # can be "optional" or "none"
-ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Tucker & Dale’s] "
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_PRESERVE_USERNAME_CASING = False
-
-# ✅ Redirects
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
-ACCOUNT_LOGOUT_ON_GET = True
-ACCOUNT_SESSION_REMEMBER = True
-
-# SMTP (only used if EMAIL_BACKEND is SMTP)
-# ===========================
-# ✉️ EMAIL SETTINGS
-# ===========================
 EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL", f"Tucker & Dale’s <{EMAIL_HOST_USER or 'no-reply@localhost'}>"
+)
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", EMAIL_HOST_USER)
+
+# ✅ Optional fallback for local console debugging
+if os.getenv("DJANGO_DEBUG", "False") == "True":
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# ==========================================
+# 🔐 DJANGO-ALLAUTH SETTINGS
+# ==========================================
+INSTALLED_APPS += [
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+]
+SITE_ID = 1
+
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Tucker & Dale’s] "
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"  # use "http" if local only
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
