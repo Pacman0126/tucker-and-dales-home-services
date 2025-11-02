@@ -1,45 +1,41 @@
 {% extends "base.html" %}
 {% load static %}
 
-{# 1) Add a page-level body class so we can target home only #}
-{% block body_class %}home-page{% endblock %}
-
 {% block title %}Home | Tucker & Dale's Home Services{% endblock %}
 
-
 {% block content %}
-<div class="hero-section d-flex flex-column justify-content-center align-items-center text-center">
-  <div class="hero-content container py-4">
+<section class="hero-section d-flex flex-column justify-content-center align-items-center text-center py-5 bg-dark text-light rounded shadow-sm">
+  <div class="container py-4">
 
     <!-- 🏠 Hero Image -->
     <div class="mb-4">
       <img src="{% static 'images/hero.png' %}"
            alt="Tucker & Dale's Home Services"
-           class="img-fluid rounded shadow-sm"
+           class="img-fluid rounded shadow"
            style="max-height: 200px; object-fit: cover;">
     </div>
 
     <!-- 🧱 Tagline -->
-    <blockquote class="blockquote mb-4 text-light">
+    <blockquote class="blockquote mb-4">
       <p class="mb-0 fs-5">“Reliable, honest, neighborly service.”</p>
     </blockquote>
 
     <!-- 🧰 Services Offered -->
-    <h5 class="fw-bold text-uppercase text-light mb-3">Services Offered</h5>
-    <div class="service-badges mb-4">
-      <span class="service-badge">🧰 Garage / Basement</span>
-      <span class="service-badge">🌿 Lawncare</span>
-      <span class="service-badge">🧹 House Cleaning</span>
+    <h5 class="fw-bold text-uppercase mb-3">Services Offered</h5>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+      <span class="badge bg-success fs-6 p-2">🧰 Garage / Basement</span>
+      <span class="badge bg-primary fs-6 p-2">🌿 Lawncare</span>
+      <span class="badge bg-info text-dark fs-6 p-2">🧹 House Cleaning</span>
     </div>
 
     <!-- 📅 Book a Service CTA -->
     <div class="mt-3">
       <a href="{% url 'scheduling:search_by_date' %}"
-         class="btn btn-accent btn-lg rounded-pill shadow-sm">
+         class="btn btn-warning btn-lg rounded-pill shadow">
         Book a Service
       </a>
     </div>
 
   </div>
-</div>
+</section>
 {% endblock %}

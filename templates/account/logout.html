@@ -1,0 +1,12 @@
+{% extends 'base_auth.html' %}
+{% load i18n %}
+{% block title %}Logout | Tucker & Dale's{% endblock %}
+{% block content %}
+<h2 class="fw-bold mb-3">Sign Out</h2>
+<p>Are you sure you want to sign out?</p>
+<form method="post" action="{% url 'account_logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger w-100">Log Out</button>
+</form>
+<p class="small mt-3"><a href="{% url 'home' %}">Cancel</a></p>
+{% endblock %}

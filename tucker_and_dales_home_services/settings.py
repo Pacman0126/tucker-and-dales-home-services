@@ -11,11 +11,11 @@ from dotenv import load_dotenv
 # 🔧 CORE CONFIGURATION
 # =====================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = BASE_DIR.parent
 
 env = environ.Env(DEBUG=(bool, False))
-DEBUG = False
-
 env_file = BASE_DIR / ".env"
+
 if env_file.exists():
     env.read_env(env_file)
     print(f"✅ Loaded environment from {env_file}")
@@ -23,6 +23,7 @@ else:
     print("⚠️ No .env file found — relying on system environment variables (Heroku)")
 
 SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
+DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = ["*"]
 
 # =====================================================
@@ -39,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",  # ✅ only once
 
     # Local apps
-    "core",
+    "core.apps.CoreConfig",
     "customers",
     "scheduling",
     "billing",
@@ -73,10 +74,13 @@ MIDDLEWARE = [
 # =====================================================
 ROOT_URLCONF = "tucker_and_dales_home_services.urls"
 
+# =====================================================
+# 📁 PATHS
+# =====================================================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [PROJECT_DIR / "templates", BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -84,11 +88,12 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "billing.context_processors.cart_summary",
             ],
         },
     },
 ]
+
+STATIC_URL = "/static/"
 
 WSGI_APPLICATION = "tucker_and_dales_home_services.wsgi.application"
 
@@ -215,9 +220,17 @@ if os.getenv("DJANGO_DEBUG", "False") == "True":
 # =====================================================
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Tucker & Dale’s] "
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"  # change to http for localhost
+
+# change to http for localhost
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http" if DEBUG else "https"
+
+
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/"
+
+ACCOUNT_EMAIL_CONFIRMATION_AUTO_LOGIN = True
+ACCOUNT_EMAIL_CONFIRMATION_AUTO_LOGIN_REDIRECT_URL = '/'

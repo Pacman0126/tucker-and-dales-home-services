@@ -43,7 +43,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.enums import TA_RIGHT, TA_LEFT
 
-from billing.utils.email_helpers import send_payment_receipt_email
+from billing.utils import send_payment_receipt_email
 from customers.models import RegisteredCustomer
 from scheduling.models import Employee, TimeSlot, ServiceCategory, Booking
 from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
