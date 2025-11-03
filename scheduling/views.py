@@ -17,7 +17,7 @@ from billing.utils import _get_or_create_cart
 from billing.constants import SERVICE_PRICES, SALES_TAX_RATE
 
 
-from customers.models import RegisteredCustomer
+from customers.models import CustomerProfile
 from .models import (
     Employee,
 )

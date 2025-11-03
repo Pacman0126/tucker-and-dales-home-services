@@ -2,79 +2,112 @@ from django.db import models
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 # Create your models here.
 
 
-class RegisteredCustomer(models.Model):
+class CustomerProfile(models.Model):
     """
-    Represents a registered customer linked to a Django User.
-    Billing address is permanent and stored here.
-    Service address will be handled dynamically per session.
+    Single, canonical profile for each auth user.
+    Holds contact info + billing address used in checkout_summary, etc.
     """
 
-    # 🔗 User association
     user = models.OneToOneField(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="registered_customer_profile",
-        null=True,
-        blank=True,
+        related_name="customer_profile",
     )
 
-    # 🆔 Unique ID for external references (e.g., invoices, Stripe)
-    unique_customer_id = models.UUIDField(
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-    )
-
-    # 👤 Personal Info
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
+    # ── Contact / identity (optional) ─────────────────────────────────────────────
+    phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=30, blank=True)
+    company = models.CharField(max_length=120, blank=True)
+    preferred_contact = models.CharField(
+        max_length=16,
+        choices=[("email", "Email"), ("phone", "Phone")],
+        default="email",
+    )
+    timezone = models.CharField(max_length=64, blank=True)
 
-    # 💳 Billing Address (permanent)
+    # ── Billing address (THIS IS WHAT checkout_summary RELIES ON) ────────────────
     billing_street_address = models.CharField(max_length=255, blank=True)
     billing_city = models.CharField(max_length=100, blank=True)
-    billing_state = models.CharField(max_length=50, blank=True)
+    billing_state = models.CharField(max_length=100, blank=True)
     billing_zipcode = models.CharField(max_length=20, blank=True)
+    # region is used in your view to store "billing_country"
+    region = models.CharField(
+        # ISO-2 country code like "US", "DE" (adjust if you prefer)
+        max_length=2,
+        blank=True,
+        help_text="Country/region code (e.g., US, DE).",
+    )
 
-    # 🌍 Region / country for filtering or tax logic
-    region = models.CharField(max_length=100, default="Unknown")
+    # ── (Optional) last-known service address snapshot for UX shortcuts ──────────
+    service_street_address = models.CharField(max_length=255, blank=True)
+    service_city = models.CharField(max_length=100, blank=True)
+    service_state = models.CharField(max_length=100, blank=True)
+    service_zipcode = models.CharField(max_length=20, blank=True)
+    service_region = models.CharField(max_length=2, blank=True)
 
-    # 📅 Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Registered Customer"
-        verbose_name_plural = "Registered Customers"
-        ordering = ["last_name", "first_name"]
+        ordering = ["user__username"]
+        verbose_name = "Customer Profile"
+        verbose_name_plural = "Customer Profiles"
 
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.billing_city or 'No city'})"
+    def __str__(self) -> str:
+        return f"CustomerProfile<{self.user.username}>"
 
-    # ---------------------------------------------------
-    # 🧾 Utility Properties
-    # ---------------------------------------------------
-    @property
-    def full_billing_address(self):
-        """Returns a formatted single-line billing address."""
-        parts = [
-            self.billing_street_address,
-            self.billing_city,
-            self.billing_state,
-            self.billing_zipcode,
-        ]
-        return ", ".join(filter(None, parts))
-
+    # ── Helpers the views/templates call ─────────────────────────────────────────
     def has_valid_billing_address(self) -> bool:
-        """Quick validation check for completeness."""
-        return all([
-            self.billing_street_address.strip() if self.billing_street_address else None,
-            self.billing_city.strip() if self.billing_city else None,
-            self.billing_state.strip() if self.billing_state else None,
-            self.billing_zipcode.strip() if self.billing_zipcode else None,
-        ])
+        return all(
+            [
+                self.billing_street_address.strip(),
+                self.billing_city.strip(),
+                self.billing_state.strip(),
+                self.billing_zipcode.strip(),
+                self.region.strip(),
+            ]
+        )
+
+    @property
+    def full_billing_address(self) -> str:
+        """
+        The view expects a single string like:
+        '123 Main St, Dallas, TX 75001, US'
+        """
+        parts = [
+            (self.billing_street_address or "").strip(),
+            (self.billing_city or "").strip(),
+            (self.billing_state or "").strip(),
+            (self.billing_zipcode or "").strip(),
+        ]
+        main = ", ".join([p for p in parts if p])
+        tail = (self.region or "").strip()
+        return f"{main}, {tail}" if tail else main
+
+    def has_valid_service_address(self) -> bool:
+        return all(
+            [
+                self.service_street_address.strip(),
+                self.service_city.strip(),
+                self.service_state.strip(),
+                self.service_zipcode.strip(),
+                self.service_region.strip(),
+            ]
+        )
+
+    @property
+    def full_service_address(self) -> str:
+        parts = [
+            (self.service_street_address or "").strip(),
+            (self.service_city or "").strip(),
+            (self.service_state or "").strip(),
+            (self.service_zipcode or "").strip(),
+        ]
+        main = ", ".join([p for p in parts if p])
+        tail = (self.service_region or "").strip()
+        return f"{main}, {tail}" if tail else main

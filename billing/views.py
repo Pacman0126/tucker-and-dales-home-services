@@ -44,7 +44,7 @@ from reportlab.platypus import (
 from reportlab.lib.enums import TA_RIGHT, TA_LEFT
 
 from billing.utils import send_payment_receipt_email
-from customers.models import RegisteredCustomer
+from customers.models import CustomerProfile
 from scheduling.models import Employee, TimeSlot, ServiceCategory, Booking
 from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
 from .models import Payment
@@ -153,7 +153,7 @@ def checkout_summary(request):
     ensuring address and billing details are consistent.
     """
     from billing.utils import get_active_cart_for_request, get_service_address
-    from customers.models import RegisteredCustomer
+    from customers.models import CustomerProfile
     from .forms import CheckoutForm
 
     # --- 1️⃣ Retrieve the active cart (do NOT auto-create) ---
@@ -169,12 +169,12 @@ def checkout_summary(request):
     billing_address_str = request.session.get("billing_address", "")
     rc = None
     try:
-        rc = RegisteredCustomer.objects.get(user=request.user)
+        rc = CustomerProfile.objects.get(user=request.user)
         if not billing_address_str and rc.has_valid_billing_address():
             billing_address_str = rc.full_billing_address
             request.session["billing_address"] = billing_address_str
             request.session.modified = True
-    except RegisteredCustomer.DoesNotExist:
+    except CustomerProfile.DoesNotExist:
         # 🚦 redirect to complete profile if missing
         messages.info(request, "Please complete your profile before checkout.")
         request.session["next_after_profile"] = "billing:checkout"
@@ -245,6 +245,10 @@ def checkout_summary(request):
 # ----------------------------------------------------------------------
 @login_required
 def create_checkout_session(request):
+    """
+    Initiates a Stripe Checkout session for the active cart.
+    Saves all totals and cart metadata for Stripe webhooks.
+    """
     from decimal import Decimal
     import stripe
     from django.urls import reverse
@@ -253,18 +257,18 @@ def create_checkout_session(request):
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
+    # --- Retrieve the active cart ---
     cart = _get_or_create_cart(request)
     if not cart or not cart.items.exists():
         messages.warning(request, "Your cart is empty.")
         return redirect("billing:checkout")
 
-    # Totals (authoritative for our metadata display on success)
     subtotal = cart.subtotal
     tax = cart.tax
     total = cart.total
     service_address = request.session.get("service_address", "")
 
-    # Build absolute URLs for Stripe redirect
+    # --- Build absolute URLs for redirect ---
     success_url = (
         request.build_absolute_uri(reverse("billing:payment_success"))
         + "?session_id={CHECKOUT_SESSION_ID}"
@@ -272,19 +276,19 @@ def create_checkout_session(request):
     cancel_url = request.build_absolute_uri(reverse("billing:checkout"))
 
     try:
-        # Minimal line item to charge the full total:
-        # (You can switch back to per-item line_items if you prefer.)
         checkout_session = stripe.checkout.Session.create(
             mode="payment",
             payment_method_types=["card"],
-            line_items=[{
-                "price_data": {
-                    "currency": "usd",
-                    "product_data": {"name": "Home services booking"},
-                    "unit_amount": int(total * Decimal("100")),
-                },
-                "quantity": 1,
-            }],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {"name": "Home Services Booking"},
+                        "unit_amount": int(total * Decimal("100")),
+                    },
+                    "quantity": 1,
+                }
+            ],
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={
@@ -294,16 +298,16 @@ def create_checkout_session(request):
                 "service_address": service_address,
                 "cart_id": str(cart.pk),
                 "user_id": str(request.user.id),
+                "username": request.user.username,
             },
         )
-        # Optional: store the session id on the cart for traceability
+
         request.session["last_checkout_session_id"] = checkout_session.id
         request.session.modified = True
 
         return redirect(checkout_session.url, code=303)
 
     except Exception as e:
-        # Avoid printing emojis (Windows console encoding)
         print("Stripe create session error:", e)
         messages.error(request, f"Could not start checkout: {e}")
         return redirect("billing:checkout")
@@ -406,19 +410,29 @@ def download_receipt_pdf(request, pk):
     )
 
     # ❌ Cancellations
-    cancelled = [a for a in root.adjustments.all() if a.amount < 0]
-    if cancelled:
-        rows = [[a.created_at.strftime("%Y-%m-%d"),
-                 a.notes or "Refund / Penalty",
-                 f"-${abs(a.amount):.2f}"] for a in cancelled]
+    cancelled = root.adjustments.filter(amount__lt=0)
+    if cancelled.exists():
+        rows = [
+            [
+                a.created_at.strftime("%Y-%m-%d"),
+                a.notes or "Refund / Penalty",
+                f"-${abs(a.amount):.2f}",
+            ]
+            for a in cancelled
+        ]
         make_table("Cancellations / Refunds", rows, colors.red)
 
     # ➕ Additions
-    added = [a for a in root.adjustments.all() if a.amount > 0]
-    if added:
-        rows = [[a.created_at.strftime("%Y-%m-%d"),
-                 a.notes or "Additional Service",
-                 f"+${a.amount:.2f}"] for a in added]
+    added = root.adjustments.filter(amount__gt=0)
+    if added.exists():
+        rows = [
+            [
+                a.created_at.strftime("%Y-%m-%d"),
+                a.notes or "Additional Service",
+                f"+${a.amount:.2f}",
+            ]
+            for a in added
+        ]
         make_table("Added Services", rows, colors.blue)
 
     # 🧮 Totals
@@ -582,6 +596,7 @@ def stripe_webhook(request):
     Records payment details in PaymentHistory for user reference.
     """
     import stripe
+    from decimal import Decimal
     from billing.models import PaymentHistory, Cart
     from django.contrib.auth.models import User
 
@@ -589,10 +604,14 @@ def stripe_webhook(request):
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
     endpoint_secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", None)
 
+    print("⚙️ [Webhook] Stripe payload received")
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, endpoint_secret)
-    except (ValueError, stripe.error.SignatureVerificationError):
+        print(f"✅ [Webhook] Event type: {event['type']}")
+    except (ValueError, stripe.error.SignatureVerificationError) as e:
+        print(f"❌ [Webhook] Invalid payload or signature: {e}")
         return HttpResponseBadRequest("Invalid payload or signature")
 
     if event["type"] == "payment_intent.succeeded":
@@ -601,24 +620,35 @@ def stripe_webhook(request):
         amount = Decimal(intent.get("amount_received", 0)) / 100
         metadata = intent.get("metadata", {})
 
+        print(
+            f"💳 [Webhook] PaymentIntent {payment_id} succeeded for ${amount:.2f}")
+        print(f"🧾 [Webhook] Metadata: {metadata}")
+
         user_id = metadata.get("user_id")
         cart_id = metadata.get("cart_id")
 
-        # Retrieve user and cart if available
         user = User.objects.filter(id=user_id).first()
         cart = Cart.objects.filter(id=cart_id).first() if cart_id else None
 
         if user:
-            PaymentHistory.objects.create(
+            payment = PaymentHistory.objects.create(
                 user=user,
-                cart=cart,
-                stripe_payment_id=payment_id,
+                booking=None,
                 amount=amount,
+                adjustments_total_amt=Decimal("0.00"),
+                stripe_payment_id=payment_id,
                 service_address=metadata.get("service_address", ""),
                 raw_data=intent,
+                notes="Stripe Checkout Payment",
+                status="Paid",
             )
             print(
-                f"💾 Saved payment record for {user.username} (${amount:.2f})")
+                f"💾 [Webhook] Saved payment record ID={payment.id} for {user.username} (${amount:.2f})")
+        else:
+            print("⚠️ [Webhook] User not found for this payment — skipping save.")
+
+    else:
+        print(f"ℹ️ [Webhook] Ignored event type: {event['type']}")
 
     return HttpResponse(status=200)
 
@@ -1067,7 +1097,7 @@ def submit_adjustment(request):
     child = PaymentHistory.objects.create(
         user=request.user,
         parent=parent,
-        service_address=booking.service_address,
+        service_address=booking.address,
         amount=delta,
         currency=parent.currency,
         status="Adjustment",
@@ -1203,62 +1233,45 @@ def payment_success(request):
 @login_required
 def payment_history(request):
     """
-    Property-centric billing dashboard.
-    One card per service address showing all payment activity
-    (paid, refunded, adjusted) for the current user.
+    Groups PaymentHistory entries by service address so that
+    each property appears as its own card (for landlord or
+    multi-location scenarios).
     """
-    from django.db.models import Sum, Q
+    from decimal import Decimal
+    from collections import defaultdict
+    from billing.models import PaymentHistory
 
-    # ✅ Update booking statuses for this user (helper)
-    _refresh_booking_statuses_for_user(request.user)
-
-    # ✅ All addresses linked to this user's payments
-    addresses = (
-        PaymentHistory.objects
-        .filter(user=request.user)
-        .exclude(service_address__isnull=True)
-        .values_list("service_address", flat=True)
-        .distinct()
+    # Fetch all payments for the current user
+    payments = (
+        PaymentHistory.objects.filter(user=request.user)
+        .order_by("service_address", "-created_at")
     )
 
-    cards = []
-    for addr in addresses:
-        # Root = initial payment (no parent)
-        root = (
-            PaymentHistory.objects
-            .filter(user=request.user, service_address=addr, parent__isnull=True)
-            .order_by("-created_at")
-            .first()
-        )
-        if not root:
-            continue
+    properties = []
+    grouped = defaultdict(list)
 
-        # Compute section totals safely
-        if hasattr(root, "compute_sections"):
-            original_total, add_total, cancel_total, net_total = root.compute_sections()
-        else:
-            # fallback aggregation if compute_sections missing
-            all_tx = PaymentHistory.objects.filter(
-                user=request.user, service_address=addr)
-            original_total = all_tx.filter(parent__isnull=True).aggregate(
-                Sum("amount"))["amount__sum"] or 0
-            add_total = all_tx.filter(amount__gt=0, parent__isnull=False).aggregate(
-                Sum("amount"))["amount__sum"] or 0
-            cancel_total = abs(all_tx.filter(amount__lt=0).aggregate(
-                Sum("amount"))["amount__sum"] or 0)
-            net_total = original_total + add_total - cancel_total
+    # Group by service address
+    for p in payments:
+        address = p.service_address or "(Unknown Address)"
+        grouped[address].append(p)
 
-        cards.append({
+    # Build summarized data per property
+    for addr, entries in grouped.items():
+        total_in = sum(
+            (e.amount for e in entries if e.amount > 0), Decimal("0.00"))
+        total_out = sum((abs(e.amount)
+                        for e in entries if e.amount < 0), Decimal("0.00"))
+        net = total_in - total_out
+
+        properties.append({
             "address": addr,
-            "root": root,
-            "original_total": original_total,
-            "add_total": add_total,
-            "cancel_total": cancel_total,
-            "net_total": net_total,
-            "added": root.adjustments.filter(amount__gt=0),
-            "cancelled": root.adjustments.filter(amount__lt=0),
+            "entries": entries,
+            "total_in": total_in,
+            "total_out": total_out,
+            "net": net,
         })
 
-    return render(request, "billing/payment_history.html", {
-        "cards": cards,
-    })
+    print(
+        f"🏠 DEBUG: Found {len(properties)} grouped property cards for {request.user.username}")
+
+    return render(request, "billing/payment_history.html", {"properties": properties})

@@ -42,14 +42,12 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "user",
-        "booking",
         "amount",
         "currency",
         "status",
-        "payment_type",
         "created_at",
     )
-    list_filter = ("status", "payment_type", "created_at")
+    list_filter = ("status", "created_at")
     search_fields = ("user__username", "stripe_payment_id", "service_address")
     date_hierarchy = "created_at"
     readonly_fields = ("created_at",)
@@ -58,11 +56,9 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
         ("Transaction Info", {
             "fields": (
                 "user",
-                "booking",
                 "amount",
                 "currency",
                 "status",
-                "payment_type",
                 "notes",
             )
         }),

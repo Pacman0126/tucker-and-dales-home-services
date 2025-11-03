@@ -17,7 +17,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django import forms
 
-from .models import RegisteredCustomer
+from .models import CustomerProfile
 from .forms import LoginOrRegisterForm
 
 from billing.utils import merge_session_cart, get_or_create_cart
@@ -38,7 +38,7 @@ def superuser_required(user):
 @user_passes_test(superuser_required)
 def customer_list(request):
     query = request.GET.get("q", "").strip()
-    customers = RegisteredCustomer.objects.all().order_by("last_name", "first_name")
+    customers = CustomerProfile.objects.all().order_by("last_name", "first_name")
 
     if query:
         customers = customers.filter(
@@ -65,7 +65,7 @@ def customer_list(request):
 @login_required
 @user_passes_test(superuser_required)
 def customer_detail(request, pk):
-    customer = get_object_or_404(RegisteredCustomer, pk=pk)
+    customer = get_object_or_404(CustomerProfile, pk=pk)
     return render(request, "customers/customer_detail.html", {"customer": customer})
 
 
@@ -75,11 +75,11 @@ def customer_edit(request, pk):
     """
     Allow superuser to edit customer data (inline form, no external form class).
     """
-    customer = get_object_or_404(RegisteredCustomer, pk=pk)
+    customer = get_object_or_404(CustomerProfile, pk=pk)
 
     class InlineCustomerForm(forms.ModelForm):
         class Meta:
-            model = RegisteredCustomer
+            model = CustomerProfile
             fields = [
                 "first_name",
                 "last_name",
@@ -124,7 +124,7 @@ def customer_edit(request, pk):
 @login_required
 @user_passes_test(superuser_required)
 def customer_delete(request, pk):
-    customer = get_object_or_404(RegisteredCustomer, pk=pk)
+    customer = get_object_or_404(CustomerProfile, pk=pk)
     if request.method == "POST":
         logger.warning(f"Customer {customer.pk} deleted by {request.user}")
         customer.delete()
@@ -295,7 +295,7 @@ def register(request):
                 user.last_name = form.cleaned_data.get("last_name", "").strip()
                 user.save()
 
-                RegisteredCustomer.objects.create(
+                CustomerProfile.objects.create(
                     user=user,
                     first_name=user.first_name,
                     last_name=user.last_name,
@@ -331,7 +331,7 @@ def _post_login_address_check(request, user):
     Do NOT overwrite service_address if user started a booking as a guest.
     """
     try:
-        rc = RegisteredCustomer.objects.get(user=user)
+        rc = CustomerProfile.objects.get(user=user)
 
         if not rc.has_valid_billing_address():
             messages.warning(
@@ -351,7 +351,7 @@ def _post_login_address_check(request, user):
         request.session.modified = True
 
         return redirect("home")
-    except RegisteredCustomer.DoesNotExist:
+    except CustomerProfile.DoesNotExist:
         messages.warning(
             request, "No customer profile found. Please complete your profile before checkout.")
         request.session["next_after_profile"] = "billing:checkout"
@@ -388,7 +388,7 @@ def complete_profile(request):
         )
 
         class Meta:
-            model = RegisteredCustomer
+            model = CustomerProfile
             fields = [
                 "first_name", "last_name", "email", "phone",
                 "billing_street_address", "billing_city",
@@ -407,7 +407,7 @@ def complete_profile(request):
             return self.cleaned_data.get("email", "").strip().lower()
 
     # Ensure RegisteredCustomer exists
-    rc, _ = RegisteredCustomer.objects.get_or_create(user=user)
+    rc, _ = CustomerProfile.objects.get_or_create(user=user)
 
     initial = {
         "username": user.username,

@@ -91,6 +91,7 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
   z-index: 1;
+  pointer-events: none !important;
 }
 
 /* Everything inside hero stays visible */
@@ -583,6 +584,7 @@ a:hover {
 .btn {
   border-radius: var(--radius-pill);
   font-weight: 500;
+
 }
 
 /* Primary */
@@ -629,7 +631,7 @@ a:hover {
 /* ==============================
    Search Form
    ============================== */
-  
+
 form.search-form .form-control {
   background-color: var(--color-search-bg);
   color: var(--color-search-text);

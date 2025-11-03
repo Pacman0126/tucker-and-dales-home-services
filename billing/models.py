@@ -296,8 +296,12 @@ class PaymentHistory(models.Model):
         null=True,
         blank=True,
         related_name="adjustments",
+        help_text="Links follow-up payment records (refunds, add-ons, etc.) back to the root payment.",
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    adjustments_total_amt = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00"))
+
     currency = models.CharField(max_length=10, default="USD")
     service_address = models.TextField(blank=True)
     stripe_payment_id = models.CharField(max_length=255, blank=True, null=True)
