@@ -1,8 +1,9 @@
+from django.utils import timezone
 from decimal import Decimal
 from datetime import datetime as dt
 from typing import TYPE_CHECKING
 from django.utils.timezone import now
-
+from django.core.mail import send_mail
 
 from django.conf import settings
 from django.db import models
@@ -281,14 +282,17 @@ class PaymentHistory(models.Model):
         blank=True,
     )
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
     booking = models.ForeignKey(
         "scheduling.Booking",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="primary_payment_record",
+        related_name="primary_payment_records",
+        help_text="All payment records associated with this booking."
     )
     parent = models.ForeignKey(  # ✅ for invoice chain logic
         "self",
@@ -298,16 +302,27 @@ class PaymentHistory(models.Model):
         related_name="adjustments",
         help_text="Links follow-up payment records (refunds, add-ons, etc.) back to the root payment.",
     )
+
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     adjustments_total_amt = models.DecimalField(
-        max_digits=10, decimal_places=2, default=Decimal("0.00"))
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
 
     currency = models.CharField(max_length=10, default="USD")
     service_address = models.TextField(blank=True)
-    stripe_payment_id = models.CharField(max_length=255, blank=True, null=True)
+
+    stripe_payment_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        unique=True,
+        help_text="Unique Stripe payment intent ID for this transaction."
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="Paid")
+        max_length=20, choices=STATUS_CHOICES, default="Paid"
+    )
     payment_type = models.CharField(max_length=50, blank=True)
     notes = models.TextField(blank=True)
     raw_data = models.JSONField(default=dict, blank=True)
@@ -321,15 +336,7 @@ class PaymentHistory(models.Model):
     # ============================================================
     # 💰 Helper: compute all totals for this chain
     # ============================================================
-
     def compute_sections(self):
-        """
-        Computes subtotal breakdown for this payment chain:
-        - original_total: amount of this root payment
-        - add_total: sum of all positive adjustments (extra services)
-        - cancel_total: sum of all negative adjustments (refunds/penalties)
-        - net_total: combined total after all adjustments
-        """
         root = self if self.parent is None else self.parent
         adjustments = getattr(root, "adjustments", None)
 
@@ -343,11 +350,12 @@ class PaymentHistory(models.Model):
             if adj.amount >= 0:
                 add_total += adj.amount
             else:
-                cancel_total += adj.amount  # negative
+                cancel_total += adj.amount
 
         original_total = root.amount
-        net_total = (original_total + add_total +
-                     cancel_total).quantize(Decimal("0.01"))
+        net_total = (original_total + add_total + cancel_total).quantize(
+            Decimal("0.01")
+        )
         return (original_total, add_total, cancel_total, net_total)
 
     # ============================================================
@@ -355,15 +363,48 @@ class PaymentHistory(models.Model):
     # ============================================================
     @property
     def summary_label(self):
-        """
-        Returns a readable summary like:
-        'Refund (50%) — $25.00' or 'Added Service — $40.00'
-        """
         if self.status == "Refunded" and self.amount < 0:
-            pct = abs(self.amount / (self.parent.amount or 1)) * \
-                100 if self.parent else 0
+            pct = (
+                abs(self.amount / (self.parent.amount or 1)) * 100
+                if self.parent
+                else 0
+            )
             return f"Refund ({pct:.0f}%) — ${abs(self.amount):.2f}"
         elif self.status == "Adjustment" and self.amount > 0:
             return f"Added Service — ${self.amount:.2f}"
         else:
             return f"{self.status} — ${self.amount:.2f}"
+
+    # ============================================================
+    # 📧 Auto-notify on create: refunds, add-ons, cancellations
+    # ============================================================
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        # Send email only when new record created
+        if is_new and self.user and self.status in ["Refunded", "Adjustment", "Cancelled"]:
+            try:
+                subject = f"Tucker & Dale’s — {self.status} Notification"
+                message = (
+                    f"Hello {self.user.username},\n\n"
+                    f"This is a confirmation of a recent {self.status.lower()} "
+                    f"related to your booking at:\n\n"
+                    f"{self.service_address or '(No address specified)'}\n\n"
+                    f"Amount: ${abs(self.amount):.2f}\n"
+                    f"Status: {self.status}\n"
+                    f"Date: {timezone.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+                    f"Thank you for choosing Tucker & Dale’s Home Services!"
+                )
+
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [self.user.email],
+                    fail_silently=True,
+                )
+                print(
+                    f"📧 Auto-email sent to {self.user.email} for {self.status}")
+            except Exception as e:
+                print(f"❌ Failed to send {self.status} email: {e}")

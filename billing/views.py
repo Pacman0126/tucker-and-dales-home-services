@@ -2,20 +2,25 @@
 billing/views.py
 Handles checkout, Stripe integration, payment tracking, and admin management.
 """
+
 from io import BytesIO
 from scheduling.models import Booking
 from billing.models import PaymentHistory
-from django.utils.timezone import now
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 import datetime
-# from datetime import datetime as dt, timedelta
 import json
 from decimal import Decimal
 import stripe
 
+from django.db import models
+from django.utils.timezone import now
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+# from datetime import datetime as dt, timedelta
+
+
 from django.core.mail import send_mail
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest
 from django.utils import timezone
 from django.utils.timezone import now, localdate
 from django.utils.html import strip_tags
@@ -31,7 +36,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.db.models import Sum
-from django.http import FileResponse
+
 from django.urls import reverse
 
 from reportlab.lib.pagesizes import letter
@@ -43,7 +48,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.enums import TA_RIGHT, TA_LEFT
 
-from billing.utils import send_payment_receipt_email
+from billing.utils import send_payment_receipt_email, send_refund_confirmation_email
 from customers.models import CustomerProfile
 from scheduling.models import Employee, TimeSlot, ServiceCategory, Booking
 from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
@@ -592,63 +597,75 @@ def refund_payment(request, pk):
 @require_POST
 def stripe_webhook(request):
     """
-    Handles Stripe 'payment_intent.succeeded' events.
-    Records payment details in PaymentHistory for user reference.
+    Handles Stripe webhook events (mainly payment_intent.succeeded).
+    Creates PaymentHistory entries and links them to Bookings for refund traceability.
     """
     import stripe
     from decimal import Decimal
-    from billing.models import PaymentHistory, Cart
-    from django.contrib.auth.models import User
+    from django.conf import settings
+    from django.contrib.auth import get_user_model
+    from billing.models import PaymentHistory
+    from scheduling.models import Booking
 
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
     endpoint_secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", None)
 
-    print("⚙️ [Webhook] Stripe payload received")
-
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, endpoint_secret)
-        print(f"✅ [Webhook] Event type: {event['type']}")
     except (ValueError, stripe.error.SignatureVerificationError) as e:
-        print(f"❌ [Webhook] Invalid payload or signature: {e}")
+        print(f"❌ Webhook signature error: {e}")
         return HttpResponseBadRequest("Invalid payload or signature")
 
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
-        payment_id = intent.get("id")
-        amount = Decimal(intent.get("amount_received", 0)) / 100
-        metadata = intent.get("metadata", {})
+        amount = Decimal(intent.get("amount_received", 0)) / Decimal("100")
+        md = intent.get("metadata", {}) or {}
+
+        user_id = md.get("user_id")
+        service_address = (md.get("service_address") or "").strip()
+        stripe_payment_id = intent.get("id")
+
+        # ✅ Resolve user & booking
+        User = get_user_model()
+        user = User.objects.filter(id=user_id).first()
+
+        booking = (
+            Booking.objects.filter(
+                user=user,
+                service_address__iexact=service_address,
+            ).order_by("-created_at").first()
+            if user else None
+        )
+
+        # ✅ Create PaymentHistory and link booking if found
+        payment = PaymentHistory.objects.create(
+            user=user,
+            booking=booking,
+            amount=amount,
+            adjustments_total_amt=Decimal("0.00"),
+            status="Paid",
+            payment_type="Stripe Webhook Payment",
+            stripe_payment_id=stripe_payment_id,
+            service_address=service_address,
+            raw_data=event,
+            notes="Initial booking payment (via webhook)",
+        )
+
+        # ✅ Back-link the booking for future refunds
+        if booking:
+            booking.primary_payment_record = payment
+            booking.save(update_fields=["primary_payment_record"])
 
         print(
-            f"💳 [Webhook] PaymentIntent {payment_id} succeeded for ${amount:.2f}")
-        print(f"🧾 [Webhook] Metadata: {metadata}")
-
-        user_id = metadata.get("user_id")
-        cart_id = metadata.get("cart_id")
-
-        user = User.objects.filter(id=user_id).first()
-        cart = Cart.objects.filter(id=cart_id).first() if cart_id else None
-
-        if user:
-            payment = PaymentHistory.objects.create(
-                user=user,
-                booking=None,
-                amount=amount,
-                adjustments_total_amt=Decimal("0.00"),
-                stripe_payment_id=payment_id,
-                service_address=metadata.get("service_address", ""),
-                raw_data=intent,
-                notes="Stripe Checkout Payment",
-                status="Paid",
-            )
-            print(
-                f"💾 [Webhook] Saved payment record ID={payment.id} for {user.username} (${amount:.2f})")
-        else:
-            print("⚠️ [Webhook] User not found for this payment — skipping save.")
+            f"💾 [Webhook] PaymentHistory #{payment.id} for user "
+            f"{user.username if user else 'Unknown'} — booking "
+            f"{booking.id if booking else 'None'} (${amount})"
+        )
 
     else:
-        print(f"ℹ️ [Webhook] Ignored event type: {event['type']}")
+        print(f"ℹ️ Webhook event received: {event['type']} (ignored)")
 
     return HttpResponse(status=200)
 
@@ -939,49 +956,104 @@ def live_invoice_view_address(request, address):
 @require_POST
 def cancel_selected_services(request):
     """
-    Process batch cancellation requests with refund percentage per booking.
+    Cancels selected bookings, issues Stripe refunds (if available),
+    records refund entries in PaymentHistory, and updates booking statuses.
     """
-    booking_ids = request.POST.getlist("selected_bookings")
-    if not booking_ids:
-        return JsonResponse({"error": "No bookings selected."})
-
-    from scheduling.models import Booking
+    import stripe
+    from decimal import Decimal
+    from django.conf import settings
+    from django.db import models
+    from django.contrib import messages
     from billing.models import PaymentHistory
-    from billing.utils import get_refund_policy
+    from scheduling.models import Booking
 
-    total_refund = Decimal("0.00")
-    notes = []
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    selected_ids = request.POST.getlist("selected_bookings")
 
-    for bid in booking_ids:
+    if not selected_ids:
+        messages.warning(request, "No services selected for cancellation.")
+        return redirect("billing:payment_history")
+
+    for bid in selected_ids:
         try:
-            booking = Booking.objects.get(id=bid, customer__user=request.user)
-            price = Decimal(getattr(booking, "price", 0))
-            status, pct = get_refund_policy(
-                datetime.datetime.combine(booking.date, datetime.datetime.min.time()))
-            if pct > 0:
-                refund_amt = (price * Decimal(pct) / Decimal(100)
-                              ).quantize(Decimal("0.01"))
-                total_refund += refund_amt
-                PaymentHistory.objects.create(
-                    user=request.user,
-                    service_address=booking.service_address,
-                    amount=-refund_amt,
-                    notes=f"{status} refund ({pct}%) for {booking.service_category}",
-                    status="Refunded",
-                )
-                notes.append(
-                    f"{booking.service_category} on {booking.date} → {pct}% refund = ${refund_amt}")
-                booking.delete()
-            else:
-                notes.append(
-                    f"{booking.service_category} on {booking.date} → No refund (locked)")
+            booking = Booking.objects.get(id=bid, user=request.user)
         except Booking.DoesNotExist:
-            notes.append(f"Booking #{bid} not found.")
+            print(f"⚠️ Booking {bid} not found for {request.user.username}")
+            continue
 
-    return JsonResponse({
-        "ok": True,
-        "message": f"Processed {len(booking_ids)} cancellations.\nTotal refund: ${total_refund}\n\n" + "\n".join(notes)
-    })
+        # ✅ Find root payment record (either direct or via address fallback)
+        root_payment = (
+            PaymentHistory.objects.filter(
+                user=request.user,
+                booking=booking,
+                parent__isnull=True,
+            ).first()
+            or PaymentHistory.objects.filter(
+                user=request.user,
+                service_address__iexact=booking.service_address,
+                parent__isnull=True,
+            ).order_by("-created_at").first()
+        )
+
+        if not root_payment:
+            print(f"⚠️ No payment record found for booking {bid}")
+            continue
+
+        refund_amt = booking.total_amount or Decimal("0.00")
+        refund_status = "Cancelled"
+
+        try:
+            # ✅ Stripe refund attempt
+            if root_payment.stripe_payment_id:
+                stripe.Refund.create(
+                    payment_intent=root_payment.stripe_payment_id,
+                    amount=int(refund_amt * 100),
+                )
+                refund_status = "Refunded"
+                print(f"💸 Stripe refund successful for ${refund_amt}")
+            else:
+                print(
+                    "⚠️ Missing Stripe payment ID; recorded as manual cancellation only.")
+
+            # ✅ Record refund entry
+            refund_entry = PaymentHistory.objects.create(
+                user=request.user,
+                parent=root_payment,
+                booking=booking,
+                amount=-refund_amt,
+                adjustments_total_amt=Decimal("0.00"),
+                status=refund_status,
+                notes=(
+                    "Service cancelled and refunded"
+                    if refund_status == "Refunded"
+                    else "Service cancelled"
+                ),
+                service_address=booking.service_address,
+            )
+
+            # ✅ Update booking status and log
+            booking.status = "Cancelled"
+            booking.save(update_fields=["status"])
+            print(
+                f"✅ Booking {booking.id} cancelled — Refund record #{refund_entry.id}")
+
+            # ✅ Send refund confirmation email
+            try:
+                from billing.utils import send_refund_confirmation_email
+                send_refund_confirmation_email(
+                    request.user, refund_entry)
+            except Exception as e:
+                print(f"⚠️ Refund email failed: {e}")
+
+        except Exception as e:
+            print(f"❌ Refund failed for booking {bid}: {e}")
+            messages.error(
+                request, f"Refund failed for {booking.service_address}")
+
+    messages.success(
+        request, "Selected services have been cancelled and refunded.")
+
+    return redirect(reverse("billing:payment_history") + f"?t={timezone.now().timestamp()}")
 
 
 @login_required
@@ -1030,7 +1102,12 @@ def add_service_adjustment(request):
             stripe_charge = payment_intent.id
         else:
             # Simulated refund (sandbox)
-            last_payment = booking.payments.filter(amount__gt=0).first()
+            last_payment = (
+                PaymentHistory.objects
+                .filter(linked_bookings=booking, amount__gt=0)
+                .order_by("-created_at")
+                .first()
+            )
             if last_payment and last_payment.raw_data.get("payment_intent_id"):
                 stripe_refund = stripe.Refund.create(
                     payment_intent=last_payment.raw_data.get(
@@ -1058,7 +1135,7 @@ def add_service_adjustment(request):
                 "delta_amount": f"{delta_amount:.2f}",
             },
         )
-        booking.payments.add(adj_entry)
+        adj_entry.linked_bookings.add(booking)
         booking.total_amount += delta_amount
         booking.save(update_fields=["total_amount", "updated_at"])
 
@@ -1097,7 +1174,7 @@ def submit_adjustment(request):
     child = PaymentHistory.objects.create(
         user=request.user,
         parent=parent,
-        service_address=booking.address,
+        service_address=booking.service_address,
         amount=delta,
         currency=parent.currency,
         status="Adjustment",
@@ -1149,12 +1226,12 @@ def payment_success(request):
     Handle successful Stripe payment:
     - Create PaymentHistory record
     - Persist all CartItems as Bookings
+    - Link each booking to this PaymentHistory
     - Clear the cart
-    - Send confirmation email with receipt
+    - Send confirmation email
     - Render success page
     """
     try:
-        # Retrieve cart safely
         cart_id = request.session.get("cart_id")
         cart = Cart.objects.filter(pk=cart_id, user=request.user).first()
 
@@ -1162,25 +1239,26 @@ def payment_success(request):
             messages.error(request, "Your cart is empty or expired.")
             return redirect("billing:checkout")
 
-        # ✅ Derive service address safely
         service_address = (
             getattr(cart, "address_key", None)
             or request.session.get("customer_address")
             or "Unknown"
         ).strip()
 
-        # ✅ Create PaymentHistory record
+        # ✅ Create root payment record
         payment_record = PaymentHistory.objects.create(
             user=request.user,
             amount=cart.total,
+            adjustments_total_amt=Decimal("0.00"),
             currency="usd",
             status="Paid",
             service_address=service_address,
             notes="Stripe Checkout Payment",
+            payment_type="Stripe Checkout",
         )
 
-        # ✅ Create Bookings for all CartItems
         created_bookings = []
+
         for item in cart.items.all():
             booking = Booking.objects.create(
                 user=request.user,
@@ -1191,20 +1269,21 @@ def payment_success(request):
                 unit_price=item.unit_price,
                 total_amount=item.subtotal,
                 status="Booked",
+                primary_payment_record=payment_record,
             )
             created_bookings.append(booking)
 
-        # ✅ Link bookings ↔ payment
+        # ✅ M2M link remains for grouping
         if created_bookings:
             payment_record.linked_bookings.add(*created_bookings)
-            payment_record.save(update_fields=["created_at"])
+            payment_record.save()
 
-        # ✅ Clear the cart
+        # ✅ Clear cart
         cart.items.all().delete()
         cart.delete()
         request.session.pop("cart_id", None)
 
-        # ✅ Send email receipt (HTML + plain text fallback)
+        # ✅ Send email receipt
         try:
             send_payment_receipt_email(
                 request.user, payment_record, created_bookings, request
@@ -1213,16 +1292,10 @@ def payment_success(request):
         except Exception as e:
             print(f"⚠️ Payment receipt email failed: {e}")
 
-        # ✅ Show confirmation page
+        # ✅ Success redirect so page refreshes properly
         messages.success(
-            request,
-            f"Payment successful! Your booking for {service_address} has been confirmed.",
-        )
-        return render(
-            request,
-            "billing/success.html",
-            {"payment_record": payment_record, "bookings": created_bookings},
-        )
+            request, "Payment successful! Your booking has been confirmed.")
+        return redirect("billing:payment_history")
 
     except Exception as e:
         print(f"❌ Payment success error: {e}")
@@ -1233,45 +1306,42 @@ def payment_success(request):
 @login_required
 def payment_history(request):
     """
-    Groups PaymentHistory entries by service address so that
-    each property appears as its own card (for landlord or
-    multi-location scenarios).
+    Groups all PaymentHistory records by (service_address, stripe_payment_id),
+    showing each checkout (root + its adjustments) as one card.
     """
-    from decimal import Decimal
-    from collections import defaultdict
-    from billing.models import PaymentHistory
+    user = request.user
 
-    # Fetch all payments for the current user
-    payments = (
-        PaymentHistory.objects.filter(user=request.user)
-        .order_by("service_address", "-created_at")
+    # Only top-level payments (root transactions)
+    roots = (
+        PaymentHistory.objects.filter(user=user, parent__isnull=True)
+        .order_by("-created_at")
     )
 
-    properties = []
-    grouped = defaultdict(list)
+    cards = []
 
-    # Group by service address
-    for p in payments:
-        address = p.service_address or "(Unknown Address)"
-        grouped[address].append(p)
+    for root in roots:
+        # All related records: the root + any adjustments
+        related_entries = PaymentHistory.objects.filter(
+            models.Q(id=root.id) | models.Q(parent=root)
+        ).order_by("created_at")
 
-    # Build summarized data per property
-    for addr, entries in grouped.items():
-        total_in = sum(
-            (e.amount for e in entries if e.amount > 0), Decimal("0.00"))
-        total_out = sum((abs(e.amount)
-                        for e in entries if e.amount < 0), Decimal("0.00"))
-        net = total_in - total_out
+        # Totals
+        original_total, add_total, cancel_total, net_total = root.compute_sections()
 
-        properties.append({
-            "address": addr,
-            "entries": entries,
-            "total_in": total_in,
-            "total_out": total_out,
-            "net": net,
+        # Build card dict
+        cards.append({
+            "address": root.service_address,
+            "stripe_payment_id": root.stripe_payment_id or "N/A",
+            "root": root,
+            "entries": related_entries,       # ✅ show these in table
+            "original_total": original_total,
+            "add_total": add_total,
+            "cancel_total": cancel_total,
+            "net_total": net_total,
+            "added": root.adjustments.filter(amount__gt=0),
+            "cancelled": root.adjustments.filter(amount__lt=0),
         })
 
     print(
-        f"🏠 DEBUG: Found {len(properties)} grouped property cards for {request.user.username}")
-
-    return render(request, "billing/payment_history.html", {"properties": properties})
+        f"🏠 DEBUG: Found {len(cards)} grouped property cards for {user.username}")
+    return render(request, "billing/payment_history.html", {"cards": cards})

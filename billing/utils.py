@@ -14,25 +14,6 @@ from django.utils.html import strip_tags
 from django.conf import settings
 
 
-# def merge_session_cart(session_key: str, user):
-#     """
-#     Attach any existing anonymous cart (by session_key)
-#     to the now-authenticated user.
-#     """
-#     if not session_key:
-#         return
-
-#     try:
-#         session_cart = Cart.objects.filter(session_key=session_key).first()
-#         if session_cart:
-#             session_cart.user = user
-#             session_cart.session_key = None
-#             session_cart.save(update_fields=["user", "session_key"])
-#             print(f"🛒 Merged cart {session_cart.id} → {user.username}")
-#     except Exception as e:
-#         print(f"⚠️ merge_session_cart() failed: {e}")
-
-
 def _clear_cart_for_session(request):
     """
     Clears all cart items for this session (used when address changes).
@@ -289,3 +270,46 @@ def send_payment_receipt_email(user, payment_record, bookings, request=None):
         html_message=html_message,
         fail_silently=False,
     )
+
+
+def send_refund_confirmation_email(user, refund_record):
+    """
+    Sends an email confirmation when a refund or cancellation is processed.
+    """
+    subject = "Your Tucker & Dale’s Refund Confirmation"
+
+    # Build email context safely
+    context = {
+        "user": user,
+        "address": refund_record.service_address or "Unknown Address",
+        "amount": abs(refund_record.amount),
+        "status": refund_record.status,
+        "notes": refund_record.notes or "Refund processed successfully.",
+        "date": refund_record.created_at.strftime("%Y-%m-%d %H:%M"),
+    }
+
+    # ✅ HTML + Plain text versions
+    html_body = render_to_string(
+        "billing/email_refund_confirmation.html", context)
+
+    text_body = (
+        f"Hello {user.first_name or user.username},\n\n"
+        f"Your refund for services at {context['address']} "
+        f"has been processed successfully.\n"
+        f"Refund amount: ${context['amount']:.2f}\n"
+        f"Status: {context['status']}\n"
+        f"Date: {context['date']}\n\n"
+        f"Thank you for choosing Tucker & Dale’s Home Services!"
+    )
+
+    # ✅ Send both formats
+    send_mail(
+        subject,
+        text_body,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_body,
+        fail_silently=False,
+    )
+
+    print(f"📧 Sent refund confirmation to {user.email}")

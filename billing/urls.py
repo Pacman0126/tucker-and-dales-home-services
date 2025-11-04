@@ -25,9 +25,7 @@ urlpatterns = [
     path("submit-adjustment/", views.submit_adjustment, name="submit_adjustment"),
     path("summary/pdf/", views.download_yearly_summary_pdf,
          name="download_yearly_summary_pdf"),
-    #     path("payment/receipt/<int:pk>/",
-    #          views.payment_receipt_pdf, name="payment_receipt_pdf"),
-    # path("download-receipt/", views.download_receipt, name="download_receipt"),
+
     path("receipt/pdf/<int:pk>/", views.download_receipt_pdf,
          name="download_receipt_pdf"),
 
@@ -37,7 +35,6 @@ urlpatterns = [
     path("cart/remove-selected/", views.remove_selected_from_cart,
          name="remove_selected_from_cart"),
     path("cart/clear/", views.cart_clear, name="cart_clear"),
-    # path("cart/detail/", views.cart_detail, name="cart_detail"),
 
     # 🧾 Admin & Stripe Webhooks
     path("admin/all-payments/", views.all_payments_admin,

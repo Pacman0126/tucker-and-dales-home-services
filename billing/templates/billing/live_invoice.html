@@ -3,57 +3,59 @@
 
 {% block content %}
 <div class="container py-4">
-  <h4 class="fw-semibold mb-4">🏠 Live Invoice for {{ address }}</h4>
+  <h4 class="fw-semibold mb-4 text-dark" style="color:#212529 !important;">🏠 Live Invoice for {{ address }}</h4>
 
   <!-- ========================== -->
   <!-- 🟩 ORIGINAL SERVICES -->
   <!-- ========================== -->
   {% if bookings_original %}
   <h5 class="fw-semibold text-success mb-2">Original Services</h5>
-  <div class="card shadow-sm mb-4">
-    <div class="card-body p-0">
-      <table class="table table-sm align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th></th>
-            <th>Date</th>
-            <th>Service</th>
-            <th>Time Slot</th>
-            <th>Status</th>
-            <th>Refund %</th>
-            <th class="text-end">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for b in bookings_original %}
-          <tr class="{% if b.status == 'Locked' %}table-light{% elif b.status == 'Late Cancel' %}table-warning{% elif b.status == 'Cancellable' %}table-success{% endif %}">
-            <td>
-              {% if b.status in 'Cancellable, Late Cancel' %}
-                <input type="checkbox" name="cancel_booking" value="{{ b.id }}" data-refund="{{ b.refund_pct }}">
-              {% else %}
-                <input type="checkbox" disabled>
-              {% endif %}
-            </td>
-            <td>{{ b.date|date:"M j, Y" }}</td>
-            <td>{{ b.service }}</td>
-            <td>{{ b.time_slot }}</td>
-            <td>
-              {% if b.status == "Cancellable" %}
-                <span class="badge bg-success">Cancellable</span>
-              {% elif b.status == "Late Cancel" %}
-                <span class="badge bg-warning text-dark">Late Cancel (50%)</span>
-              {% elif b.status == "Locked" %}
-                <span class="badge bg-secondary">Completed</span>
-              {% endif %}
-            </td>
-            <td>{{ b.refund_pct }}%</td>
-            <td class="text-end">${{ b.price|floatformat:2 }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <form id="cancelForm" method="post" action="{% url 'billing:cancel_selected_services' %}">
+    {% csrf_token %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-body p-0">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th></th>
+              <th>Date</th>
+              <th>Service</th>
+              <th>Time Slot</th>
+              <th>Status</th>
+              <th>Refund %</th>
+              <th class="text-end">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in bookings_original %}
+            <tr class="{% if b.status == 'Locked' %}table-light{% elif b.status == 'Late Cancel' %}table-warning{% elif b.status == 'Cancellable' %}table-success{% endif %}">
+              <td>
+                {% if b.status in 'Cancellable, Late Cancel' %}
+                  <input type="checkbox" name="selected_bookings" value="{{ b.id }}" data-refund="{{ b.refund_pct }}">
+                {% else %}
+                  <input type="checkbox" disabled>
+                {% endif %}
+              </td>
+              <td>{{ b.date|date:"M j, Y" }}</td>
+              <td>{{ b.service }}</td>
+              <td>{{ b.time_slot }}</td>
+              <td>
+                {% if b.status == "Cancellable" %}
+                  <span class="badge bg-success">Cancellable</span>
+                {% elif b.status == "Late Cancel" %}
+                  <span class="badge bg-warning text-dark">Late Cancel (50%)</span>
+                {% elif b.status == "Locked" %}
+                  <span class="badge bg-secondary">Completed</span>
+                {% endif %}
+              </td>
+              <td>{{ b.refund_pct }}%</td>
+              <td class="text-end">${{ b.price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
   {% endif %}
 
   <!-- ========================== -->
@@ -139,25 +141,32 @@
   <!-- ========================== -->
   <!-- ⚙️ ACTION BUTTONS -->
   <!-- ========================== -->
-  <div class="d-flex justify-content-between flex-wrap gap-2">
-    <a href="{% url 'billing:payment_history' %}" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left-circle"></i> Back to History
-    </a>
+  <div class="d-flex justify-content-between flex-wrap gap-2 mb-4">
+      <a href="{% url 'billing:payment_history' %}" class="btn btn-secondary text-white shadow-sm">
+        <i class="bi bi-arrow-left-circle"></i> Back to History
+      </a>
     <div>
-      <button id="cancelSelected" class="btn btn-outline-danger me-2">
+      <button id="cancelSelected" type="button" class="btn btn-danger btn-sm">
         <i class="bi bi-x-circle"></i> Cancel Selected
       </button>
-      <a href="{% url 'scheduling:search_by_time_slot' %}" class="btn btn-outline-success">
-        <i class="bi bi-plus-circle"></i> Add Service
-      </a>
+        <a href="{% url 'scheduling:search_by_time_slot' %}" class="btn btn-success text-white shadow-sm">
+          <i class="bi bi-plus-circle"></i> Add Service
+        </a>
     </div>
   </div>
+  </form>
 </div>
 
+<!-- ========================== -->
+<!-- 🧠 SCRIPT: AJAX CANCEL HANDLER -->
+<!-- ========================== -->
 <script>
 document.getElementById("cancelSelected")?.addEventListener("click", async () => {
-  const selected = [...document.querySelectorAll("input[name='cancel_booking']:checked")];
-  if (!selected.length) { alert("Select at least one booking."); return; }
+  const selected = [...document.querySelectorAll("input[name='selected_bookings']:checked")];
+  if (!selected.length) {
+    alert("Select at least one booking to cancel.");
+    return;
+  }
 
   const summary = selected.map(cb => `#${cb.value} (${cb.dataset.refund}% refund)`).join('\n');
   if (!confirm("Cancel the following bookings?\n" + summary)) return;
@@ -176,9 +185,21 @@ document.getElementById("cancelSelected")?.addEventListener("click", async () =>
     },
     body: payload
   });
-  const data = await resp.json();
-  alert(data.message || data.error || "Cancellation processed.");
-  location.reload();
+
+  if (!resp.ok) {
+    alert("Server error while cancelling.");
+    return;
+  }
+
+  try {
+    const data = await resp.json();
+    alert(data.message || "Cancellation processed successfully.");
+  } catch {
+    alert("Cancellation processed.");
+  }
+
+  // ✅ Always refresh page to show updated invoice
+  window.location.reload();
 });
 </script>
 {% endblock %}
