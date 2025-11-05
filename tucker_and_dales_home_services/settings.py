@@ -23,7 +23,7 @@ else:
     print("⚠️ No .env file found — relying on system environment variables (Heroku)")
 
 SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = False
 
 # Security hardening when not DEBUG
 if not DEBUG:
