@@ -5,7 +5,7 @@ from django.utils import timezone
 from faker import Faker
 
 from scheduling.models import ServiceCategory, Employee, TimeSlot, Booking, JobAssignment
-from customers.models import RegisteredCustomer
+from customers.models import CustomerProfile
 
 fake = Faker()
 
@@ -67,7 +67,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("✅ Employees seeded."))
 
         # 🔹 Registered customers
-        registered_customers = list(RegisteredCustomer.objects.all())
+        registered_customers = list(CustomerProfile.objects.all())
         use_customers = len(registered_customers) > 0
         if not use_customers:
             self.stdout.write(self.style.WARNING(

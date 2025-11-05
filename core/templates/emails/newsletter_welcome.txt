@@ -1,0 +1,10 @@
+You're on the list!
+
+Hi {{ user.first_name|default:user.username }},
+
+Thanks for joining the Tucker & Dale’s Monthly Newsletter.
+You’ll receive the first issue on {{ first_issue_date }}.
+
+Expect specials, discounts, and seasonal coupon codes.
+
+Unsubscribe: {{ unsubscribe_url }}

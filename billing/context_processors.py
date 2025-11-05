@@ -26,7 +26,7 @@ def cart_context(request):
     cart_data = {"item_count": 0, "subtotal": Decimal("0.00")}
 
     try:
-        # You can adapt this to how your Cart model/session is structured
+
         cart = Cart.objects.get_for_request(request)
         cart_data["item_count"] = cart.items.count()
         cart_data["subtotal"] = cart.subtotal

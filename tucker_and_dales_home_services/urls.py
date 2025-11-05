@@ -20,17 +20,14 @@ from core import views as core_views
 from scheduling import views as scheduling_views
 
 urlpatterns = [
-    # built-in login/password reset
+
     path("", core_views.home, name="home"),
     path("accounts/logout/", core_views.custom_logout, name="logout"),
-    # path("accounts/", include("django.contrib.auth.urls")),
-    path("accounts/", include("allauth.urls")),  # ✅ Allauth
+    path("accounts/", include("allauth.urls")),  # Allauth
 
     path("admin/", admin.site.urls),
-    # path("", include("core.urls")),
     path("billing/", include("billing.urls", namespace="billing")),
+    path("", include("core.urls")),
     path("customers/", include("customers.urls")),
     path("schedule/", include("scheduling.urls")),
-
-    # path("base-search/", core_views.base_search, name="base_search"),
 ]

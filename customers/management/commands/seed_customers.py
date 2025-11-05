@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from faker import Faker
-from customers.models import RegisteredCustomer
+from customers.models import CustomerProfile
 from real_dfw_addresses import REAL_DFW_ADDRESSES
 
 # ------------------------------------------------------------
@@ -76,7 +76,7 @@ def geocode_address(address):
 # 🎯 Django Command
 # ------------------------------------------------------------
 class Command(BaseCommand):
-    help = "Seeds realistic RegisteredCustomers using real_dfw_addresses.py"
+    help = "Seeds realistic Registered Customers using real_dfw_addresses.py"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -89,7 +89,7 @@ class Command(BaseCommand):
         skip_geo = options["skip_geocode"]
 
         # 🧹 Clean existing data (non-superusers only)
-        RegisteredCustomer.objects.all().delete()
+        CustomerProfile.objects.all().delete()
         User.objects.filter(is_superuser=False).delete()
         self.stdout.write(self.style.WARNING(
             "🧹 Cleared old customers and users."))
@@ -137,7 +137,7 @@ class Command(BaseCommand):
             region = infer_region(geo["zipcode"])
 
             # ✅ Create RegisteredCustomer (matching your new model)
-            RegisteredCustomer.objects.create(
+            CustomerProfile.objects.create(
                 user=user,
                 unique_customer_id=uuid.uuid4(),
                 first_name=first,
@@ -157,7 +157,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"🎉 Successfully seeded {total_seeded} RegisteredCustomers "
+                f"🎉 Successfully seeded {total_seeded} Registered Customers "
                 f"(login with <username>/password123)"
             )
         )

@@ -9,8 +9,6 @@ from django.conf import settings
 from django.db import models
 import stripe
 
-
-from scheduling.models import Booking
 if TYPE_CHECKING:
     from django.http import HttpRequest
 

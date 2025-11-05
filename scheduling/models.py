@@ -1,10 +1,9 @@
+from typing import TYPE_CHECKING
+from datetime import datetime
 from django.utils.timezone import now
 from django.db import models
-from django.utils import timezone
 from django.conf import settings
 from decimal import Decimal
-from typing import TYPE_CHECKING
-# from scheduling.models import TimeSlot, ServiceCategory, Employee
 
 
 class ServiceCategory(models.Model):
@@ -149,10 +148,21 @@ class Booking(models.Model):
 
     @property
     def datetime_start(self):
-        """If TimeSlot defines start_time, combine with date."""
+        """
+        Safe helper when TimeSlot has only a label like '7:30-9:30'.
+        Parses the first time in the label; returns None on failure.
+        """
         try:
-            from datetime import datetime
-            return datetime.combine(self.date, self.time_slot.start_time)
+            label = (self.time_slot.label or "").strip()  # e.g., "7:30-9:30"
+            start_part = label.split("-")[0].strip()      # "7:30"
+            # Try HH:MM, fall back to HH if needed
+            for fmt in ("%H:%M", "%I:%M", "%H", "%I"):
+                try:
+                    t = datetime.strptime(start_part, fmt).time()
+                    return datetime.combine(self.date, t)
+                except ValueError:
+                    continue
+            return None
         except Exception:
             return None
 

@@ -1,9 +1,6 @@
-from scheduling.models import TimeSlot
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
 
-from customers.models import CustomerProfile
-from .models import ServiceCategory, TimeSlot
+from .models import TimeSlot
 
 
 class SearchByDateForm(forms.Form):

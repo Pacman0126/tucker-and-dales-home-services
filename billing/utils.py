@@ -1,12 +1,12 @@
 __all__ = ["_get_or_create_cart",
            "get_service_address", "lock_service_address"]
-from decimal import Decimal
+
 from typing import Optional
-from datetime import datetime, timedelta
-from django.contrib import messages
+from datetime import datetime
+
 from django.utils import timezone
 from django.utils.timezone import now
-from billing.models import Cart, CartItem
+from billing.models import Cart
 
 from django.core.mail import send_mail
 from django.template.loader import render_to_string

@@ -1,0 +1,12 @@
+Tucker & Dale’s Monthly Newsletter
+
+Hi {{ user.first_name|default:user.username }},
+
+Here’s what’s new this month at Tucker & Dale’s Home Services:
+
+• Featured service of the month
+• Seasonal home-care tips
+• Monthly promo code: KEEPITCLEAN
+
+Sent on {{ send_date }}
+Unsubscribe: {{ unsubscribe_url }}

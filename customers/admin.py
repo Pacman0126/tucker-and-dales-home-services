@@ -1,6 +1,6 @@
 # customers/admin.py
 from django.contrib import admin
-from .models import CustomerProfile
+from customers.models import CustomerProfile
 
 
 # Register your models here.

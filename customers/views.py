@@ -1,3 +1,4 @@
+import logging
 from django.contrib.auth import authenticate, login, get_backends
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404
@@ -5,22 +6,20 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.utils import timezone
+
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.db import transaction
-from django.contrib.auth.forms import UserCreationForm
-import logging
+
 
 from django.contrib.auth.models import User
 
 from django.contrib import messages
 from django import forms
-
-from .models import CustomerProfile
+from billing.utils import merge_session_cart
 from .forms import LoginOrRegisterForm
+from .models import CustomerProfile
 
-from billing.utils import merge_session_cart, get_or_create_cart
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,6 @@ def superuser_required(user):
 # ============================================================
 # 🔹 ADMIN CUSTOMER MANAGEMENT
 # ============================================================
-
 @user_passes_test(superuser_required)
 def customer_list(request):
     query = request.GET.get("q", "").strip()
@@ -171,7 +169,6 @@ def _safe_login(request, user):
 
     # 🛒 Merge or link existing cart
     try:
-        from billing.utils import merge_session_cart
         merged = merge_session_cart(
             old_session_key, user) if old_session_key else None
         if merged:

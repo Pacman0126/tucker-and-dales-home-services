@@ -23,8 +23,24 @@ else:
     print("⚠️ No .env file found — relying on system environment variables (Heroku)")
 
 SECRET_KEY = env("SECRET_KEY", default="unsafe-secret-key")
-DEBUG = env.bool("DEBUG", default=False)
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+# Security hardening when not DEBUG
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+
 ALLOWED_HOSTS = ["*"]
+
+CSRF_TRUSTED_ORIGINS = [
+    *(f"http://{h}" for h in ALLOWED_HOSTS if h),
+    *(f"https://{h}" for h in ALLOWED_HOSTS if h),
+]
+
+# IMPORTANT: base URL used in emails for unsubscribe links etc.
+SITE_BASE_URL = os.getenv("SITE_BASE_URL", "http://127.0.0.1:8000")
 
 # =====================================================
 # 🧩 INSTALLED APPS
@@ -70,6 +86,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+STATIC_ROOT = Path(BASE_DIR) / "staticfiles"
+STATIC_URL = "/static/"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # =====================================================
 # 🧱 TEMPLATES
 # =====================================================
@@ -215,6 +234,15 @@ SERVER_EMAIL = os.getenv("SERVER_EMAIL", EMAIL_HOST_USER)
 # Console backend in debug mode
 if os.getenv("DJANGO_DEBUG", "False") == "True":
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# =====================================================
+# 🗞️ NEWSLETTER / SITE CONFIG
+# =====================================================
+SITE_BASE_URL = os.getenv("SITE_BASE_URL", "http://127.0.0.1:8000")
+
+# used for building unsubscribe URLs and email links
+if not SITE_BASE_URL.endswith("/"):
+    SITE_BASE_URL = SITE_BASE_URL.rstrip("/")
 
 # =====================================================
 # 🔐 DJANGO-ALLAUTH SETTINGS

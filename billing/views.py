@@ -7,6 +7,7 @@ from io import BytesIO
 from scheduling.models import Booking
 from billing.models import PaymentHistory
 import datetime
+from datetime import datetime as dt
 import json
 from decimal import Decimal
 import stripe
@@ -16,14 +17,8 @@ from django.utils.timezone import now
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-# from datetime import datetime as dt, timedelta
-
-
-from django.core.mail import send_mail
-from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest
-from django.utils import timezone
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.timezone import now, localdate
-from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib import messages
@@ -34,7 +29,6 @@ from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.db import transaction
 from django.db.models import Sum
 
 from django.urls import reverse
@@ -46,16 +40,15 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 )
-from reportlab.lib.enums import TA_RIGHT, TA_LEFT
 
-from billing.utils import send_payment_receipt_email, send_refund_confirmation_email
-from customers.models import CustomerProfile
-from scheduling.models import Employee, TimeSlot, ServiceCategory, Booking
-from .utils import _get_or_create_cart, get_service_address, lock_service_address, normalize_address, get_active_cart_for_request
+from billing.utils import send_payment_receipt_email
+
+from scheduling.models import Booking
+from .utils import _get_or_create_cart, normalize_address
 from .models import Payment
 from .constants import SERVICE_PRICES, SALES_TAX_RATE
-from .forms import CheckoutForm
-from .models import Cart, CartItem, CartManager, PaymentHistory
+
+from .models import Cart, CartItem, PaymentHistory
 # ----------------------------------------------------------------------
 # ⚙️ Stripe Setup
 # ----------------------------------------------------------------------
@@ -63,19 +56,6 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 PENALTY_WINDOW_HOURS = 72
-
-
-# def _refresh_booking_statuses_for_user(user):
-#     """
-#     Mark bookings Completed if in the past (and not already Cancelled).
-#     Leave Booked for future. This runs whenever we render history or on success.
-#     """
-#     today = localdate()
-#     qs = Booking.objects.filter(user=user).exclude(status="Cancelled")
-#     for b in qs:
-#         if b.date < today and b.status != "Completed":
-#             b.status = "Completed"
-#             b.save(update_fields=["status"])
 
 
 def _penalty_applies(booking: Booking) -> bool:
@@ -100,8 +80,6 @@ def checkout(request):
     Displays the user's cart summary and recalculates totals before Stripe checkout.
     Allows items to be removed (via AJAX or via 'Remove Selected' checkboxes).
     """
-    from billing.models import Cart, CartItem
-    from decimal import Decimal
 
     cart = (
         Cart.objects.filter(user=request.user)
@@ -254,11 +232,6 @@ def create_checkout_session(request):
     Initiates a Stripe Checkout session for the active cart.
     Saves all totals and cart metadata for Stripe webhooks.
     """
-    from decimal import Decimal
-    import stripe
-    from django.urls import reverse
-    from django.conf import settings
-    from .models import Cart
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -321,8 +294,6 @@ def create_checkout_session(request):
 # ----------------------------------------------------------------------
 # ✅ Payment Success / Cancel
 # ----------------------------------------------------------------------
-
-
 @login_required
 def payment_cancel(request):
     """Handles user cancellation from Stripe checkout."""
@@ -334,10 +305,6 @@ def payment_cancel(request):
 # ----------------------------------------------------------------------
 # 🧾 Payment History (user)
 # ----------------------------------------------------------------------
-
-
-# Optional helper to refresh booking statuses based on current date
-
 def _refresh_booking_statuses_for_user(user):
     """Auto-refresh status for user's bookings (Completed / Active)."""
     today = now().date()
@@ -376,7 +343,7 @@ def download_receipt_pdf(request, pk):
         "<b>Tucker & Dale’s Home Services</b>", styles["Title"]
     ))
     elements.append(Paragraph(
-        f"Receipt generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}",
+        f"Receipt generated: {now().strftime('%Y-%m-%d %H:%M')}",
         styles["Normal"]
     ))
     elements.append(Spacer(1, 0.25 * inch))
@@ -472,12 +439,7 @@ def download_yearly_summary_pdf(request):
     for this user, grouped by service_address.
     Useful for landlords/property managers tracking multiple sites.
     """
-    from io import BytesIO
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib.styles import getSampleStyleSheet
+
     from django.utils import timezone
 
     buffer = BytesIO()
@@ -600,12 +562,8 @@ def stripe_webhook(request):
     Handles Stripe webhook events (mainly payment_intent.succeeded).
     Creates PaymentHistory entries and links them to Bookings for refund traceability.
     """
-    import stripe
-    from decimal import Decimal
-    from django.conf import settings
+
     from django.contrib.auth import get_user_model
-    from billing.models import PaymentHistory
-    from scheduling.models import Booking
 
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
@@ -669,22 +627,17 @@ def stripe_webhook(request):
 
     return HttpResponse(status=200)
 
-
-# =========================================================
-# 🛒 CART UTILITIES
-# =========================================================
-
-
 # =========================================================
 #  CART VIEWS
 # =========================================================
+
+
 @require_POST
 def cart_add(request):
     """
     Adds a booking item to the cart.
     Clears cart if address in session differs from existing cart.
     """
-    from billing.constants import SERVICE_PRICES
 
     cart = _get_or_create_cart(request)
 
@@ -711,7 +664,7 @@ def cart_add(request):
         return JsonResponse({"ok": False, "error": "Missing parameters."}, status=400)
 
     # ⏰ Parse date
-    from datetime import datetime as dt
+
     try:
         date_obj = dt.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
@@ -727,7 +680,6 @@ def cart_add(request):
         return JsonResponse({"ok": False, "error": "Invalid reference."}, status=404)
 
     # 💲 Compute pre-tax price (2h per slot)
-    from decimal import Decimal
     base_rate = Decimal(str(SERVICE_PRICES.get(service.name, 25.00)))
     hours = Decimal("2")
     unit_price_pre_tax = (base_rate * hours).quantize(Decimal("0.01"))
@@ -742,7 +694,6 @@ def cart_add(request):
             f"⚠️ Cart cleared due to new service address: {current_service_addr}")
 
     # 🧾 Add or update the cart item
-    from billing.models import CartItem
     item, created = CartItem.objects.get_or_create(
         cart=cart,
         employee=employee,
@@ -756,7 +707,6 @@ def cart_add(request):
         item.save(update_fields=["unit_price"])
 
     # 🔄 Render updated cart partial
-    from django.template.loader import render_to_string
     html = render_to_string("billing/_cart.html",
                             {"cart": cart}, request=request)
     summary_text = f"({cart.items.count()}) - (${cart.total:.2f})"
@@ -833,7 +783,7 @@ def live_invoice_view(request, booking_id):
     Shows the existing services, cancellations, and additions
     before adjustments are finalized.
     """
-    from scheduling.models import Booking
+
     booking = get_object_or_404(Booking, pk=booking_id)
 
     # Related payments for this user + service address
@@ -881,9 +831,7 @@ def live_invoice_view_address(request, address):
     Divides items into Original bookings, Cancellations (refunds), and Added services.
     """
     from urllib.parse import unquote
-    from datetime import datetime
     from django.utils import timezone
-    from scheduling.models import Booking
     from billing.utils import get_refund_policy
 
     address = unquote(address)
@@ -959,13 +907,6 @@ def cancel_selected_services(request):
     Cancels selected bookings, issues Stripe refunds (if available),
     records refund entries in PaymentHistory, and updates booking statuses.
     """
-    import stripe
-    from decimal import Decimal
-    from django.conf import settings
-    from django.db import models
-    from django.contrib import messages
-    from billing.models import PaymentHistory
-    from scheduling.models import Booking
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
     selected_ids = request.POST.getlist("selected_bookings")
@@ -1053,7 +994,7 @@ def cancel_selected_services(request):
     messages.success(
         request, "Selected services have been cancelled and refunded.")
 
-    return redirect(reverse("billing:payment_history") + f"?t={timezone.now().timestamp()}")
+    return redirect(reverse("billing:payment_history") + f"?t={now().timestamp()}")
 
 
 @login_required
@@ -1066,12 +1007,8 @@ def add_service_adjustment(request):
     - Always recorded in PaymentHistory and linked to the booking
     - Works in Stripe sandbox mode (no live account needed)
     """
-    from decimal import Decimal
-    import stripe
-    from django.utils.timezone import now
+
     from django.db import transaction
-    from billing.models import PaymentHistory
-    from scheduling.models import Booking
 
     booking_id = request.POST.get("booking_id")
     delta_amount = Decimal(request.POST.get("delta_amount") or "0.00")
