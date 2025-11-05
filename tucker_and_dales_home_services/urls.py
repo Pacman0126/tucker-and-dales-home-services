@@ -21,13 +21,12 @@ from scheduling import views as scheduling_views
 
 urlpatterns = [
 
-    path("", core_views.home, name="home"),
     path("accounts/logout/", core_views.custom_logout, name="logout"),
     path("accounts/", include("allauth.urls")),  # Allauth
 
     path("admin/", admin.site.urls),
     path("billing/", include("billing.urls", namespace="billing")),
-    path("", include("core.urls")),
+    path("", include("core.urls", namespace="core")),
     path("customers/", include("customers.urls")),
     path("schedule/", include("scheduling.urls")),
 ]

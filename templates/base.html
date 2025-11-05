@@ -3,6 +3,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- ✅ SEO Meta Tags -->
+  <meta name="description" content="Book trusted home services with Tucker & Dale’s — from cleaning to lawn care, we make home maintenance simple, fast, and affordable.">
+  <meta name="keywords" content="home services, house cleaning, lawn care, Dallas TX, Tucker and Dale, home maintenance, online booking, local cleaners">
+  <meta name="author" content="Tucker & Dale’s Home Services">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Tucker & Dale’s Home Services">
+  <meta property="og:description" content="Book and manage home services with trusted local professionals. Simple scheduling, secure payments, and reliable results.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tucker-and-dales.herokuapp.com/">
+  <meta property="og:image" content="{% static 'images/social-share.jpg' %}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tucker & Dale’s Home Services">
+  <meta name="twitter:description" content="Professional home services made easy. Schedule online today.">
+  <meta name="twitter:image" content="{% static 'images/social-share.jpg' %}">
+
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="{% static 'favicon.ico' %}" />
   <title>{% block title %}Tucker & Dale's Home Services{% endblock %}</title>
@@ -68,29 +83,47 @@
   {% endcomment %}
 {% if navbar_mode == "home" %}
 <!-- 🏠 HOME NAVBAR -->
-<nav class="navbar navbar-dark bg-dark fixed-top shadow-sm" style="z-index:1040; height:56px;">
-  <div class="container-fluid justify-content-between">
-
-    <!-- Left: Active Home pill -->
-    <a href="{% url 'home' %}"
-      class="btn btn-teal-highlight btn-sm fw-semibold px-3 active">
-      <i class="bi bi-house-door-fill me-1"></i> Home
+<nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg shadow-sm" style="z-index:1040;">
+  <div class="container-fluid">
+    <!-- Brand -->
+    <a class="navbar-brand fw-semibold" href="{% url 'core:home' %}">
+      <i class="bi bi-house-door-fill me-1 text-success"></i> Tucker & Dale’s
     </a>
 
-    <!-- Right: Login / Logout + greeting -->
-    <div class="d-flex align-items-center gap-2">
-      {% if user.is_authenticated %}
-        <span class="text-white small me-2">Hi, {{ user.username }}</span>
-        <a href="{% url 'account_logout' %}" class="btn btn-outline-light btn-sm">
-          <i class="bi bi-box-arrow-right me-1"></i> Logout
-        </a>
-      {% else %}
-        <a href="{% url 'account_login' %}" class="btn btn-outline-light btn-sm">
-          <i class="bi bi-box-arrow-in-right me-1"></i> Login / Register
-        </a>
-      {% endif %}
-    </div>
+    <!-- Burger toggle -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+      aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
+    <!-- Collapsible menu -->
+    <div class="collapse navbar-collapse justify-content-end" id="mainNavbar">
+      <ul class="navbar-nav align-items-lg-center mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{% url 'scheduling:search_by_date' %}">Book a Service</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'billing:payment_history' %}">Payment History</a></li>
+
+        {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle me-1"></i> {{ user.username }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="userDropdown">
+              <li><a class="dropdown-item" href="{% url 'customers:complete_profile' %}">
+                <i class="bi bi-person-lines-fill me-1"></i> My Profile</a></li>
+              <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+                <i class="bi bi-box-arrow-right me-1"></i> Logout</a></li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a href="{% url 'account_login' %}" class="btn btn-outline-light btn-sm ms-lg-2">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Login / Register
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
   </div>
 </nav>
 
@@ -155,7 +188,7 @@
           </li>
 
           <li>
-            <a class="dropdown-item" href="{% url 'home' %}">
+            <a class="dropdown-item" href="{% url 'core:home' %}">
               <i class="bi bi-house me-1"></i> Return Home
             </a>
           </li>
@@ -166,7 +199,7 @@
 
     <!-- Right group: Home + Cart -->
     <div class="d-flex align-items-center gap-2">
-      <a href="{% url 'home' %}" class="btn btn-outline-light btn-sm">
+      <a href="{% url 'core:home' %}" class="btn btn-outline-light btn-sm">
         <i class="bi bi-house-fill"></i> Home
       </a>
 
@@ -204,7 +237,7 @@
   </main>
 
   <!-- ✅ STICKY FOOTER -->
-  <footer class="text-center py-3">
+  {% comment %} <footer class="text-center py-3">
     <div class="container small">
       <div class="d-flex justify-content-center gap-3 flex-wrap">
         <a href="{% url 'home' %}"><i class="bi bi-house"></i> Home</a>
@@ -214,7 +247,7 @@
       </div>
       <div class="mt-2">&copy; {{ now|date:"Y" }} Tucker & Dale’s Home Services</div>
     </div>
-  </footer>
+  </footer> {% endcomment %}
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
