@@ -113,7 +113,6 @@ TEMPLATES = [
     },
 ]
 
-STATIC_URL = "/static/"
 
 WSGI_APPLICATION = "tucker_and_dales_home_services.wsgi.application"
 
