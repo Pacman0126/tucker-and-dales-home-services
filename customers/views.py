@@ -1,24 +1,23 @@
 import logging
-from django.contrib.auth import authenticate, login, get_backends
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import render, get_object_or_404
-from django.shortcuts import redirect
+
+from django import forms
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, get_backends, login
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from django.core.paginator import Paginator
-from django.db.models import Q
-from django.db import transaction
-
-
-from django.contrib.auth.models import User
-
-from django.contrib import messages
-from django import forms
 from billing.utils import merge_session_cart
-from .forms import LoginOrRegisterForm
-from .models import CustomerProfile
+from customers.forms import LoginOrRegisterForm
+from customers.models import CustomerProfile
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 logger = logging.getLogger(__name__)
@@ -30,24 +29,54 @@ def superuser_required(user):
     return user.is_authenticated and user.is_superuser
 
 
+@login_required
+def profile_view(request):
+    """
+    Logged-in user's profile page.
+    Loads safely even if the related profile does not exist yet.
+    """
+    customer_profile = CustomerProfile.objects.filter(
+        user=request.user).first()
+
+    context = {
+        "customer_profile": customer_profile,
+        "customer": customer_profile,  # backward-compatible template alias
+    }
+    return render(request, "customers/profile.html", context)
+
+
 # ============================================================
 # 🔹 ADMIN CUSTOMER MANAGEMENT
 # ============================================================
 @user_passes_test(superuser_required)
 def customer_list(request):
     query = request.GET.get("q", "").strip()
-    customers = CustomerProfile.objects.all().order_by("last_name", "first_name")
+
+    customers = CustomerProfile.objects.select_related("user").all().order_by(
+        "user__last_name",
+        "user__first_name",
+        "user__username",
+    )
 
     if query:
         customers = customers.filter(
-            Q(first_name__icontains=query)
-            | Q(last_name__icontains=query)
-            | Q(street_address__icontains=query)
-            | Q(city__icontains=query)
+            Q(user__first_name__icontains=query)
+            | Q(user__last_name__icontains=query)
+            | Q(user__username__icontains=query)
             | Q(email__icontains=query)
+            | Q(phone__icontains=query)
+            | Q(company__icontains=query)
+            | Q(billing_street_address__icontains=query)
+            | Q(billing_city__icontains=query)
+            | Q(billing_state__icontains=query)
+            | Q(billing_zipcode__icontains=query)
+            | Q(service_street_address__icontains=query)
+            | Q(service_city__icontains=query)
+            | Q(service_state__icontains=query)
+            | Q(service_zipcode__icontains=query)
         )
-        logger.info(
-            f"Search performed: '{query}' -> {customers.count()} results")
+        # logger.info("Search performed: '%s' -> %s results",
+        #             query, customers.count())
 
     paginator = Paginator(customers, 12)
     page_number = request.GET.get("page")
@@ -56,14 +85,21 @@ def customer_list(request):
     return render(
         request,
         "customers/customer_list.html",
-        {"customers": page_obj, "page_obj": page_obj, "query": query},
+        {
+            "customers": page_obj,
+            "page_obj": page_obj,
+            "query": query,
+        },
     )
 
 
 @login_required
 @user_passes_test(superuser_required)
 def customer_detail(request, pk):
-    customer = get_object_or_404(CustomerProfile, pk=pk)
+    customer = get_object_or_404(
+        CustomerProfile.objects.select_related("user"),
+        pk=pk,
+    )
     return render(request, "customers/customer_detail.html", {"customer": customer})
 
 
@@ -71,46 +107,95 @@ def customer_detail(request, pk):
 @user_passes_test(superuser_required)
 def customer_edit(request, pk):
     """
-    Allow superuser to edit customer data (inline form, no external form class).
+    Allow superuser to edit customer User + CustomerProfile data together.
     """
-    customer = get_object_or_404(CustomerProfile, pk=pk)
+    customer = get_object_or_404(
+        CustomerProfile.objects.select_related("user"), pk=pk)
+    user = customer.user
 
     class InlineCustomerForm(forms.ModelForm):
+        first_name = forms.CharField(
+            required=False,
+            widget=forms.TextInput(attrs={"class": "form-control"}),
+        )
+        last_name = forms.CharField(
+            required=False,
+            widget=forms.TextInput(attrs={"class": "form-control"}),
+        )
+        username = forms.CharField(
+            required=True,
+            widget=forms.TextInput(attrs={"class": "form-control"}),
+        )
+
         class Meta:
             model = CustomerProfile
             fields = [
+                "username",
                 "first_name",
                 "last_name",
-                "street_address",
-                "city",
-                "state",
-                "zipcode",
-                "phone",
                 "email",
+                "phone",
+                "company",
+                "preferred_contact",
+                "timezone",
+                "billing_street_address",
+                "billing_city",
+                "billing_state",
+                "billing_zipcode",
+                "region",
+                "service_street_address",
+                "service_city",
+                "service_state",
+                "service_zipcode",
+                "service_region",
             ]
             widgets = {
-                field: forms.TextInput(attrs={"class": "form-control"})
-                for field in [
-                    "first_name",
-                    "last_name",
-                    "street_address",
-                    "city",
-                    "state",
-                    "zipcode",
-                    "phone",
-                    "email",
-                ]
+                "email": forms.EmailInput(attrs={"class": "form-control"}),
+                "phone": forms.TextInput(attrs={"class": "form-control"}),
+                "company": forms.TextInput(attrs={"class": "form-control"}),
+                "preferred_contact": forms.Select(attrs={"class": "form-select"}),
+                "timezone": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_street_address": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_city": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_state": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_zipcode": forms.TextInput(attrs={"class": "form-control"}),
+                "region": forms.TextInput(attrs={"class": "form-control"}),
+                "service_street_address": forms.TextInput(attrs={"class": "form-control"}),
+                "service_city": forms.TextInput(attrs={"class": "form-control"}),
+                "service_state": forms.TextInput(attrs={"class": "form-control"}),
+                "service_zipcode": forms.TextInput(attrs={"class": "form-control"}),
+                "service_region": forms.TextInput(attrs={"class": "form-control"}),
             }
+
+        def clean_email(self):
+            return self.cleaned_data.get("email", "").strip().lower()
 
     if request.method == "POST":
         form = InlineCustomerForm(request.POST, instance=customer)
         if form.is_valid():
-            form.save()
-            logger.info(f"Customer {customer.pk} updated by {request.user}")
+            updated_customer = form.save(commit=False)
+
+            user.username = form.cleaned_data["username"].strip()
+            user.first_name = form.cleaned_data.get("first_name", "").strip()
+            user.last_name = form.cleaned_data.get("last_name", "").strip()
+            user.email = form.cleaned_data.get("email", "").strip().lower()
+            user.save()
+
+            updated_customer.email = user.email
+            updated_customer.save()
+
+            logger.info("Customer %s updated by %s", customer.pk, request.user)
             messages.success(request, "Customer updated successfully.")
             return redirect("customers:customer_detail", pk=customer.pk)
     else:
-        form = InlineCustomerForm(instance=customer)
+        form = InlineCustomerForm(
+            instance=customer,
+            initial={
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+            },
+        )
 
     return render(
         request,
@@ -123,16 +208,19 @@ def customer_edit(request, pk):
 @user_passes_test(superuser_required)
 def customer_delete(request, pk):
     customer = get_object_or_404(CustomerProfile, pk=pk)
+
     if request.method == "POST":
-        logger.warning(f"Customer {customer.pk} deleted by {request.user}")
+        logger.warning("Customer %s deleted by %s", customer.pk, request.user)
         customer.delete()
         messages.success(request, "Customer deleted successfully.")
         return redirect("customers:customer_list")
+
     return render(
         request,
         "customers/customer_confirm_delete.html",
         {"customer": customer},
     )
+
 # ----------------------------------------------------------------
 # 🧩 Helper: Safe login wrapper to set backend if missing
 # ----------------------------------------------------------------
@@ -194,132 +282,140 @@ def _safe_login(request, user):
 # ============================================================
 # 🔹 CUSTOMER SELF-REGISTRATION
 # ============================================================
+# def register(request):
+#     """
+#     Hybrid register/login:
+#       - Username+password → login (redirect to profile update if email mismatch)
+#       - Email+password → login (redirect to profile update if username mismatch)
+#       - Username exists but bad password → error
+#       - Otherwise → create new user + profile
+#       - ✅ Preserves ?next= param for post-login redirect
+#     """
+#     if request.method == "POST":
+#         form = LoginOrRegisterForm(request.POST)
+
+#         if form.is_valid():
+#             username = form.cleaned_data["username"].strip()
+#             email = form.cleaned_data["email"].strip().lower()
+#             password1 = form.cleaned_data["password1"]
+
+#             # ✅ Capture intended next destination before any return
+#             next_url = request.GET.get("next") or request.POST.get("next")
+
+#             # ======================================================
+#             # CASE 1 — Username + password match → login
+#             # ======================================================
+#             user = authenticate(request, username=username, password=password1)
+#             if user:
+#                 if user.email.lower() != email:
+#                     messages.warning(
+#                         request,
+#                         f"Your stored email is '{user.email}', but you entered '{email}'. "
+#                         "Please confirm or update your profile."
+#                     )
+#                     _safe_login(request, user)
+#                     request.session["entered_username"] = username
+#                     request.session["next_after_profile"] = next_url or "billing:checkout"
+#                     request.session["checkout_pending"] = True
+#                     return redirect("customers:complete_profile")
+
+#                 _safe_login(request, user)
+
+#                 # ✅ Redirect to intended page if provided
+#                 if next_url:
+#                     return redirect(next_url)
+#                 return _post_login_address_check(request, user)
+
+#             # ======================================================
+#             # CASE 2 — Email + password match (different username)
+#             # ======================================================
+#             user_by_email = User.objects.filter(email__iexact=email).first()
+#             if user_by_email:
+#                 authenticated_user = authenticate(
+#                     request,
+#                     username=user_by_email.username,
+#                     password=password1,
+#                 )
+#                 if authenticated_user:
+#                     if authenticated_user.username.lower() != username.lower():
+#                         messages.warning(
+#                             request,
+#                             f"You’re already registered as '{authenticated_user.username}', "
+#                             f"but you entered '{username}'. "
+#                             "Please verify or update your username."
+#                         )
+#                         _safe_login(request, authenticated_user)
+#                         request.session["entered_username"] = username
+#                         request.session["next_after_profile"] = next_url or "billing:checkout"
+#                         request.session["checkout_pending"] = True
+#                         return redirect("customers:complete_profile")
+
+#                     # ✅ Normal email-based login
+#                     _safe_login(request, authenticated_user)
+#                     if next_url:
+#                         return redirect(next_url)
+#                     return _post_login_address_check(request, authenticated_user)
+
+#                 messages.error(request, "Incorrect password for this email.")
+#                 return render(request, "customers/register.html", {"form": form})
+
+#             # ======================================================
+#             # CASE 3 — Username exists but password incorrect
+#             # ======================================================
+#             if User.objects.filter(username=username).exists():
+#                 messages.error(
+#                     request,
+#                     "That username already exists, but the password entered is incorrect.",
+#                 )
+#                 return render(request, "customers/register.html", {"form": form})
+
+#             # ======================================================
+#             # CASE 4 — Create new user
+#             # ======================================================
+#             with transaction.atomic():
+#                 user = form.save(commit=False)
+#                 user.email = email
+#                 user.first_name = form.cleaned_data.get(
+#                     "first_name", "").strip()
+#                 user.last_name = form.cleaned_data.get("last_name", "").strip()
+#                 user.save()
+
+#                 CustomerProfile.objects.create(
+#                     user=user,
+#                     email=user.email,
+#                 )
+
+#             messages.success(
+#                 request,
+#                 "Registration successful — please complete your profile."
+#             )
+#             _safe_login(request, user)
+#             request.session["next_after_profile"] = next_url or reverse(
+#                 "billing:checkout")
+#             request.session["checkout_pending"] = True
+#             return redirect("customers:complete_profile")
+
+#         # Invalid form
+#         messages.error(request, "Please correct the errors below.")
+#         return render(request, "customers/register.html", {"form": form})
+
+#     # ======================================================
+#     # GET — normal render, preserve ?next in hidden field
+#     # ======================================================
+#     form = LoginOrRegisterForm()
+#     next_url = request.GET.get("next", "")
+#     context = {"form": form, "next": next_url}
+#     return render(request, "customers/register.html", context)
 def register(request):
     """
-    Hybrid register/login:
-      - Username+password → login (redirect to profile update if email mismatch)
-      - Email+password → login (redirect to profile update if username mismatch)
-      - Username exists but bad password → error
-      - Otherwise → create new user + profile
-      - ✅ Preserves ?next= param for post-login redirect
+    Legacy compatibility wrapper.
+    Redirect any old register entry points to allauth signup.
     """
-    if request.method == "POST":
-        form = LoginOrRegisterForm(request.POST)
-
-        if form.is_valid():
-            username = form.cleaned_data["username"].strip()
-            email = form.cleaned_data["email"].strip().lower()
-            password1 = form.cleaned_data["password1"]
-
-            # ✅ Capture intended next destination before any return
-            next_url = request.GET.get("next") or request.POST.get("next")
-
-            # ======================================================
-            # CASE 1 — Username + password match → login
-            # ======================================================
-            user = authenticate(request, username=username, password=password1)
-            if user:
-                if user.email.lower() != email:
-                    messages.warning(
-                        request,
-                        f"Your stored email is '{user.email}', but you entered '{email}'. "
-                        "Please confirm or update your profile."
-                    )
-                    _safe_login(request, user)
-                    request.session["entered_username"] = username
-                    request.session["next_after_profile"] = next_url or "billing:checkout"
-                    request.session["checkout_pending"] = True
-                    return redirect("customers:complete_profile")
-
-                _safe_login(request, user)
-
-                # ✅ Redirect to intended page if provided
-                if next_url:
-                    return redirect(next_url)
-                return _post_login_address_check(request, user)
-
-            # ======================================================
-            # CASE 2 — Email + password match (different username)
-            # ======================================================
-            user_by_email = User.objects.filter(email__iexact=email).first()
-            if user_by_email:
-                authenticated_user = authenticate(
-                    request,
-                    username=user_by_email.username,
-                    password=password1,
-                )
-                if authenticated_user:
-                    if authenticated_user.username.lower() != username.lower():
-                        messages.warning(
-                            request,
-                            f"You’re already registered as '{authenticated_user.username}', "
-                            f"but you entered '{username}'. "
-                            "Please verify or update your username."
-                        )
-                        _safe_login(request, authenticated_user)
-                        request.session["entered_username"] = username
-                        request.session["next_after_profile"] = next_url or "billing:checkout"
-                        request.session["checkout_pending"] = True
-                        return redirect("customers:complete_profile")
-
-                    # ✅ Normal email-based login
-                    _safe_login(request, authenticated_user)
-                    if next_url:
-                        return redirect(next_url)
-                    return _post_login_address_check(request, authenticated_user)
-
-                messages.error(request, "Incorrect password for this email.")
-                return render(request, "customers/register.html", {"form": form})
-
-            # ======================================================
-            # CASE 3 — Username exists but password incorrect
-            # ======================================================
-            if User.objects.filter(username=username).exists():
-                messages.error(
-                    request,
-                    "That username already exists, but the password entered is incorrect.",
-                )
-                return render(request, "customers/register.html", {"form": form})
-
-            # ======================================================
-            # CASE 4 — Create new user
-            # ======================================================
-            with transaction.atomic():
-                user = form.save(commit=False)
-                user.email = email
-                user.first_name = form.cleaned_data.get(
-                    "first_name", "").strip()
-                user.last_name = form.cleaned_data.get("last_name", "").strip()
-                user.save()
-
-                CustomerProfile.objects.create(
-                    user=user,
-                    first_name=user.first_name,
-                    last_name=user.last_name,
-                    email=user.email,
-                )
-
-            messages.success(
-                request,
-                "Registration successful — please complete your profile."
-            )
-            _safe_login(request, user)
-            request.session["next_after_profile"] = next_url or reverse(
-                "billing:checkout")
-            request.session["checkout_pending"] = True
-            return redirect("customers:complete_profile")
-
-        # Invalid form
-        messages.error(request, "Please correct the errors below.")
-        return render(request, "customers/register.html", {"form": form})
-
-    # ======================================================
-    # GET — normal render, preserve ?next in hidden field
-    # ======================================================
-    form = LoginOrRegisterForm()
-    next_url = request.GET.get("next", "")
-    context = {"form": form, "next": next_url}
-    return render(request, "customers/register.html", context)
+    next_url = request.GET.get("next") or request.POST.get("next")
+    target = reverse("account_signup")
+    if next_url:
+        return redirect(f"{target}?next={next_url}")
+    return redirect(target)
 
 
 def _post_login_address_check(request, user):
@@ -364,7 +460,7 @@ def _post_login_address_check(request, user):
 def complete_profile(request):
     """
     Lets users verify or update their stored profile and billing address.
-    Redirects correctly back to /billing/checkout if triggered by checkout flow.
+    Redirects correctly back to checkout if triggered by checkout flow.
     """
 
     user = request.user
@@ -374,50 +470,77 @@ def complete_profile(request):
         username = forms.CharField(
             required=False,
             label="Stored Username (you can update this)",
-            widget=forms.TextInput(attrs={"class": "form-control"})
+            widget=forms.TextInput(attrs={"class": "form-control"}),
         )
         entered_username_display = forms.CharField(
             required=False,
             label="Entered Username (from login)",
             widget=forms.TextInput(
                 attrs={"class": "form-control", "readonly": "readonly"}
-            )
+            ),
+        )
+        first_name = forms.CharField(
+            required=False,
+            label="First name",
+            widget=forms.TextInput(attrs={"class": "form-control"}),
+        )
+        last_name = forms.CharField(
+            required=False,
+            label="Last name",
+            widget=forms.TextInput(attrs={"class": "form-control"}),
         )
 
         class Meta:
             model = CustomerProfile
             fields = [
-                "first_name", "last_name", "email", "phone",
-                "billing_street_address", "billing_city",
-                "billing_state", "billing_zipcode",
+                "username",
+                "entered_username_display",
+                "first_name",
+                "last_name",
+                "email",
+                "phone",
+                "company",
+                "preferred_contact",
+                "timezone",
+                "billing_street_address",
+                "billing_city",
+                "billing_state",
+                "billing_zipcode",
+                "region",
             ]
             widgets = {
-                f: forms.TextInput(attrs={"class": "form-control"})
-                for f in [
-                    "first_name", "last_name", "billing_street_address",
-                    "billing_city", "billing_state", "billing_zipcode",
-                    "phone", "email",
-                ]
+                "email": forms.EmailInput(attrs={"class": "form-control"}),
+                "phone": forms.TextInput(attrs={"class": "form-control"}),
+                "company": forms.TextInput(attrs={"class": "form-control"}),
+                "preferred_contact": forms.Select(attrs={"class": "form-select"}),
+                "timezone": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_street_address": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_city": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_state": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_zipcode": forms.TextInput(attrs={"class": "form-control"}),
+                "region": forms.TextInput(attrs={"class": "form-control"}),
             }
 
         def clean_email(self):
             return self.cleaned_data.get("email", "").strip().lower()
 
-    # Ensure RegisteredCustomer exists
-    rc, _ = CustomerProfile.objects.get_or_create(user=user)
+    rc, _ = CustomerProfile.objects.get_or_create(
+        user=user,
+        defaults={"email": user.email or ""},
+    )
 
     initial = {
         "username": user.username,
         "entered_username_display": entered_username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
     }
 
     if request.method == "POST":
         form = InlineProfileForm(request.POST, instance=rc, initial=initial)
         if form.is_valid():
             rc = form.save(commit=False)
-            rc.save()
 
-            # --- Sync Django User model ---
             new_username = form.cleaned_data.get("username", "").strip()
             if new_username and new_username != user.username:
                 user.username = new_username
@@ -426,15 +549,16 @@ def complete_profile(request):
             if new_email and new_email != user.email.lower():
                 user.email = new_email
 
-            user.first_name = rc.first_name
-            user.last_name = rc.last_name
+            user.first_name = form.cleaned_data.get("first_name", "").strip()
+            user.last_name = form.cleaned_data.get("last_name", "").strip()
             user.save()
 
-            # Clear transient flags
+            rc.email = user.email
+            rc.save()
+
             for key in ("entered_username", "force_profile_update"):
                 request.session.pop(key, None)
 
-            # 🔧 Determine next step
             next_url = request.session.pop("next_after_profile", None)
             if not next_url and request.GET.get("next"):
                 next_url = request.GET.get("next")
@@ -446,13 +570,12 @@ def complete_profile(request):
                 elif "checkout" in request.META.get("HTTP_REFERER", ""):
                     next_url = reverse("billing:checkout")
                 else:
-                    next_url = reverse("home")
+                    next_url = reverse("core:home")
 
-            # 🧩 Safety: ensure redirect always goes to real checkout route
             if "checkout/summary" in next_url or not next_url.endswith("/checkout/"):
                 next_url = reverse("billing:checkout")
 
-            messages.success(request, "✅ Profile updated successfully!")
+            messages.success(request, "Profile updated successfully.")
             return redirect(next_url)
 
         messages.error(request, "Please correct the highlighted errors below.")

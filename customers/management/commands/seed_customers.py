@@ -126,7 +126,7 @@ class Command(BaseCommand):
 
             # ✅ Create Django User
             user = User.objects.create_user(
-                username=username,
+                username=email,
                 email=email,
                 password="password123",
                 first_name=first,
@@ -139,10 +139,6 @@ class Command(BaseCommand):
             # ✅ Create RegisteredCustomer (matching your new model)
             CustomerProfile.objects.create(
                 user=user,
-                unique_customer_id=uuid.uuid4(),
-                first_name=first,
-                last_name=last,
-                email=email,
                 phone=fake.phone_number(),
                 billing_street_address=geo["street"],
                 billing_city=geo["city"],

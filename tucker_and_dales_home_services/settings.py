@@ -3,7 +3,6 @@ Django settings for tucker_and_dales_home_services project.
 """
 
 from pathlib import Path
-import os
 import environ
 
 # =====================================================
@@ -41,6 +40,7 @@ CSRF_TRUSTED_ORIGINS = env.list(
     default=[],
 )
 
+# If DEBUG, force-add local origins so login POST doesn't 403
 if DEBUG:
     local_origins = {
         "http://127.0.0.1:8000",
@@ -56,13 +56,18 @@ else:
             "https://*.codeinstitute-ide.net",
         ]
 
+# =====================================================
+# 🔒 SSL / COOKIE BEHAVIOR
+# =====================================================
+# Behind proxies (Heroku). Safe locally too.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Match Gambinos pattern:
+# no forced SSL redirect locally; only secure cookies in production
 if DEBUG:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 else:
-    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
@@ -175,7 +180,6 @@ DATABASES = {
     )
 }
 
-# Optional DB hardening for production
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 DATABASES["default"].setdefault("OPTIONS", {})
 DATABASES["default"]["OPTIONS"].setdefault("connect_timeout", 5)
@@ -238,12 +242,7 @@ ACCOUNT_SIGNUP_FIELDS = [
 ]
 
 ACCOUNT_UNIQUE_EMAIL = True
-
-# Keep this simple for resubmit stability.
-# The assessor flagged broken email verification links,
-# so do not require verification until the full auth flow is stable.
 ACCOUNT_EMAIL_VERIFICATION = "none"
-
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Tucker & Dale's] "
 
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
@@ -286,7 +285,7 @@ GOOGLE_MAPS_BROWSER_KEY = env("GOOGLE_MAPS_BROWSER_KEY", default="")
 GOOGLE_MAPS_SERVER_KEY = env("GOOGLE_MAPS_SERVER_KEY", default="")
 
 # =====================================================
-# 📧 EMAIL (Brevo in prod, console locally unless overridden)
+# 📧 EMAIL CONFIGURATION
 # =====================================================
 
 
@@ -307,14 +306,16 @@ def _clean_env_str(key: str, default: str = "") -> str:
 USE_CONSOLE_EMAIL = env.bool("USE_CONSOLE_EMAIL", default=False)
 
 if DEBUG and USE_CONSOLE_EMAIL:
+    # Local development: print emails to console
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
-    EMAIL_BACKEND = env(
+    # Production or explicit SMTP testing
+    EMAIL_BACKEND = env.str(
         "EMAIL_BACKEND",
         default="django.core.mail.backends.smtp.EmailBackend",
     )
 
-EMAIL_HOST = _clean_env_str("EMAIL_HOST", default="smtp-relay.brevo.com")
+EMAIL_HOST = env.str("EMAIL_HOST", default="smtp-relay.brevo.com")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
@@ -323,11 +324,9 @@ EMAIL_HOST_PASSWORD = _clean_env_str("EMAIL_HOST_PASSWORD", default="")
 
 DEFAULT_FROM_EMAIL = _clean_env_str(
     "DEFAULT_FROM_EMAIL",
-    default=(
-        "Tucker & Dale's Home Services "
-        "<no-reply@gambinosrestaurantandlounge.com>"
-    ),
+    default="Tucker & Dale's Home Services <no-reply@tuckeranddales.com>",
 )
+
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # =====================================================

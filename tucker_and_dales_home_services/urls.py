@@ -16,17 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from core import views as core_views
-from scheduling import views as scheduling_views
+
 
 urlpatterns = [
-
-    path("accounts/logout/", core_views.custom_logout, name="logout"),
-    path("accounts/", include("allauth.urls")),  # Allauth
-
     path("admin/", admin.site.urls),
-    path("billing/", include("billing.urls", namespace="billing")),
+
+    # allauth owns auth routes
+    path("accounts/", include("allauth.urls")),
+
+    # app routes
     path("", include("core.urls", namespace="core")),
+    path("billing/", include("billing.urls", namespace="billing")),
     path("customers/", include("customers.urls")),
     path("schedule/", include("scheduling.urls")),
 ]

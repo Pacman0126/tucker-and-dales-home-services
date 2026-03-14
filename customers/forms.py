@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import CustomerProfile
+
+from customers.models import CustomerProfile
 
 
 # ==============================================================
@@ -11,7 +12,7 @@ class LoginOrRegisterForm(UserCreationForm):
     """
     Registration/login hybrid form.
     - Allows existing usernames/emails (uniqueness handled in the view)
-    - Keeps Django’s password validation & field normalization
+    - Keeps Django's password validation & field normalization
     """
 
     email = forms.EmailField(
@@ -67,15 +68,14 @@ class LoginOrRegisterForm(UserCreationForm):
 
     def clean_username(self):
         """Disable built-in unique username enforcement (handled in view)."""
-        username = self.cleaned_data.get("username", "").strip()
-        return username
+        return self.cleaned_data.get("username", "").strip()
 
     def clean_email(self):
         """Normalize email without enforcing uniqueness."""
         return self.cleaned_data.get("email", "").strip().lower()
 
     def validate_unique(self):
-        """Bypass default unique constraint validation."""
+        """Bypass default unique constraint validation; handled in the view."""
         pass
 
 
@@ -84,8 +84,9 @@ class LoginOrRegisterForm(UserCreationForm):
 # ==============================================================
 class CustomerProfileForm(forms.ModelForm):
     """
-    Allows updating billing address, phone, and email.
-    Service address will be handled per session (not stored here).
+    Canonical CustomerProfile form.
+    Stores contact + billing + optional service snapshot fields.
+    First/last name remain on Django's User model, not CustomerProfile.
     """
 
     class Meta:
@@ -93,48 +94,77 @@ class CustomerProfileForm(forms.ModelForm):
         fields = [
             "email",
             "phone",
+            "company",
+            "preferred_contact",
+            "timezone",
             "billing_street_address",
             "billing_city",
             "billing_state",
             "billing_zipcode",
+            "region",
+            "service_street_address",
+            "service_city",
+            "service_state",
+            "service_zipcode",
+            "service_region",
         ]
-
         widgets = {
             "email": forms.EmailInput(
-                attrs={
-                    "class": "form-control mb-2",
-                    "placeholder": "Email address",
-                }
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Email address"}
             ),
             "phone": forms.TextInput(
-                attrs={
-                    "class": "form-control mb-2",
-                    "placeholder": "Phone number",
-                }
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Phone number"}
+            ),
+            "company": forms.TextInput(
+                attrs={"class": "form-control mb-2", "placeholder": "Company"}
+            ),
+            "preferred_contact": forms.Select(
+                attrs={"class": "form-select mb-2"}
+            ),
+            "timezone": forms.TextInput(
+                attrs={"class": "form-control mb-2", "placeholder": "Timezone"}
             ),
             "billing_street_address": forms.TextInput(
-                attrs={
-                    "class": "form-control mb-2",
-                    "placeholder": "Street address",
-                }
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Billing street address"}
             ),
             "billing_city": forms.TextInput(
-                attrs={
-                    "class": "form-control mb-2",
-                    "placeholder": "City",
-                }
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Billing city"}
             ),
             "billing_state": forms.TextInput(
-                attrs={
-                    "class": "form-control mb-2",
-                    "placeholder": "State",
-                }
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Billing state"}
             ),
             "billing_zipcode": forms.TextInput(
-                attrs={
-                    "class": "form-control mb-2",
-                    "placeholder": "ZIP / Postal Code",
-                }
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Billing ZIP / Postal Code"}
+            ),
+            "region": forms.TextInput(
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Billing country / region code"}
+            ),
+            "service_street_address": forms.TextInput(
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Service street address"}
+            ),
+            "service_city": forms.TextInput(
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Service city"}
+            ),
+            "service_state": forms.TextInput(
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Service state"}
+            ),
+            "service_zipcode": forms.TextInput(
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Service ZIP / Postal Code"}
+            ),
+            "service_region": forms.TextInput(
+                attrs={"class": "form-control mb-2",
+                       "placeholder": "Service country / region code"}
             ),
         }
 
