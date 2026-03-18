@@ -18,7 +18,7 @@ def login_after_email_confirmation(request, email_address, **kwargs):
     """Automatically log the user in right after they confirm email."""
     user = email_address.user
     perform_login(request, user, email_verification='optional')
-    return redirect('home')
+    return redirect('core:home')
 
 
 @receiver(user_signed_up)

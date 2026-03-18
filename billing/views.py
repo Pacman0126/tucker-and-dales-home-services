@@ -1243,12 +1243,11 @@ def payment_success(request):
 @login_required
 def payment_history(request):
     """
-    Groups all PaymentHistory records by (service_address, stripe_payment_id),
-    showing each checkout (root + its adjustments) as one card.
+    Groups all PaymentHistory records by root transaction and includes
+    the actual booked service dates tied to that payment.
     """
     user = request.user
 
-    # Only top-level payments (root transactions)
     roots = (
         PaymentHistory.objects.filter(user=user, parent__isnull=True)
         .order_by("-created_at")
@@ -1257,20 +1256,26 @@ def payment_history(request):
     cards = []
 
     for root in roots:
-        # All related records: the root + any adjustments
         related_entries = PaymentHistory.objects.filter(
             models.Q(id=root.id) | models.Q(parent=root)
         ).order_by("created_at")
 
-        # Totals
+        related_bookings = Booking.objects.filter(
+            primary_payment_record=root
+        ).select_related(
+            "service_category",
+            "time_slot",
+            "employee",
+        ).order_by("date", "time_slot__label")
+
         original_total, add_total, cancel_total, net_total = root.compute_sections()
 
-        # Build card dict
         cards.append({
             "address": root.service_address,
             "stripe_payment_id": root.stripe_payment_id or "N/A",
             "root": root,
-            "entries": related_entries,       # ✅ show these in table
+            "entries": related_entries,
+            "bookings": related_bookings,
             "original_total": original_total,
             "add_total": add_total,
             "cancel_total": cancel_total,
@@ -1280,5 +1285,5 @@ def payment_history(request):
         })
 
     print(
-        f"🏠 DEBUG: Found {len(cards)} grouped property cards for {user.username}")
+        f"DEBUG: Found {len(cards)} grouped property cards for {user.username}")
     return render(request, "billing/payment_history.html", {"cards": cards})

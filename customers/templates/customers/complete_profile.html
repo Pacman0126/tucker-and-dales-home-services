@@ -4,41 +4,45 @@
 {% block content %}
 <div class="container py-5">
   <div class="row justify-content-center">
-    <div class="col-md-7 col-lg-6">
+    <div class="col-md-8 col-lg-7">
       <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
 
-        <!-- Header -->
         <div class="card-header bg-dark text-white text-center py-3">
           <h4 class="mb-0">Verify or Update Your Profile</h4>
         </div>
 
-        <!-- Body -->
         <div class="card-body bg-light">
-          <p class="text-muted mb-3">
-            We detected a difference between your stored and entered login details.
-            Please confirm or update your username, email, and billing address before continuing.
-          </p>
+          {% if show_identity_warning %}
+            <p class="text-muted mb-3">
+              We detected a difference between your stored and entered login details.
+              Please confirm or update your username, email, and billing address before continuing.
+            </p>
+          {% else %}
+            <p class="text-muted mb-3">
+              Please confirm your contact and billing details before continuing.
+            </p>
+          {% endif %}
 
-          <!-- ✅ Display field-specific errors -->
           {% if form.errors %}
-          <div class="alert alert-danger">
-            {% for field, errors in form.errors.items %}
-              <strong>{{ field|title }}</strong>: {{ errors|join:", " }}<br>
-            {% endfor %}
-          </div>
+            <div class="alert alert-danger">
+              {% for field, errors in form.errors.items %}
+                <strong>{{ field|title }}</strong>: {{ errors|join:", " }}<br>
+              {% endfor %}
+            </div>
           {% endif %}
 
           <form method="post" novalidate>
             {% csrf_token %}
 
-            <!-- Username section -->
-            <div class="mb-3">
-              {{ form.entered_username_display.label_tag }}
-              {{ form.entered_username_display }}
-              <small class="form-text text-muted">
-                This is the username you entered when logging in.
-              </small>
-            </div>
+            {% if form.entered_username_display.value %}
+              <div class="mb-3">
+                {{ form.entered_username_display.label_tag }}
+                {{ form.entered_username_display }}
+                <small class="form-text text-muted">
+                  This is the username you entered when logging in.
+                </small>
+              </div>
+            {% endif %}
 
             <div class="mb-3">
               {{ form.username.label_tag }}
@@ -50,26 +54,74 @@
 
             <hr>
 
-            <!-- Core contact fields -->
             <div class="row">
-              <div class="col-md-6 mb-3">{{ form.first_name.label_tag }}{{ form.first_name }}</div>
-              <div class="col-md-6 mb-3">{{ form.last_name.label_tag }}{{ form.last_name }}</div>
+              <div class="col-md-6 mb-3">
+                {{ form.first_name.label_tag }}
+                {{ form.first_name }}
+              </div>
+              <div class="col-md-6 mb-3">
+                {{ form.last_name.label_tag }}
+                {{ form.last_name }}
+              </div>
             </div>
-            <div class="mb-3">{{ form.email.label_tag }}{{ form.email }}</div>
-            <div class="mb-3">{{ form.phone.label_tag }}{{ form.phone }}</div>
 
-            <!-- Billing address -->
-            <h5 class="mt-4 mb-2 text-secondary">Billing Address</h5>
-            <div class="mb-3">{{ form.billing_street_address.label_tag }}{{ form.billing_street_address }}</div>
+            <div class="mb-3">
+              {{ form.email.label_tag }}
+              {{ form.email }}
+            </div>
+
             <div class="row">
-              <div class="col-md-6 mb-3">{{ form.billing_city.label_tag }}{{ form.billing_city }}</div>
-              <div class="col-md-3 mb-3">{{ form.billing_state.label_tag }}{{ form.billing_state }}</div>
-              <div class="col-md-3 mb-3">{{ form.billing_zipcode.label_tag }}{{ form.billing_zipcode }}</div>
+              <div class="col-md-6 mb-3">
+                {{ form.phone.label_tag }}
+                {{ form.phone }}
+              </div>
+              <div class="col-md-6 mb-3">
+                {{ form.preferred_contact.label_tag }}
+                {{ form.preferred_contact }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              {{ form.company.label_tag }}
+              {{ form.company }}
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                {{ form.timezone.label_tag }}
+                {{ form.timezone }}
+              </div>
+              <div class="col-md-6 mb-3">
+                {{ form.region.label_tag }}
+                {{ form.region }}
+              </div>
+            </div>
+
+            <h5 class="mt-4 mb-2 text-secondary">Billing Address</h5>
+
+            <div class="mb-3">
+              {{ form.billing_street_address.label_tag }}
+              {{ form.billing_street_address }}
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                {{ form.billing_city.label_tag }}
+                {{ form.billing_city }}
+              </div>
+              <div class="col-md-3 mb-3">
+                {{ form.billing_state.label_tag }}
+                {{ form.billing_state }}
+              </div>
+              <div class="col-md-3 mb-3">
+                {{ form.billing_zipcode.label_tag }}
+                {{ form.billing_zipcode }}
+              </div>
             </div>
 
             <div class="d-grid mt-4">
               <button type="submit" class="btn btn-success btn-lg fw-semibold rounded-pill">
-                Save & Continue
+                Save &amp; Continue
               </button>
             </div>
           </form>

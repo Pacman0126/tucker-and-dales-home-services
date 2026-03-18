@@ -73,8 +73,14 @@
         </tr>
       </table>
 
-      <p>Your booking has been confirmed and is now visible under your
-      <a href="{{ request.build_absolute_uri|cut:'payment_success' }}billing/payment/history/">Payment History</a>.</p>
+      <p>
+        Your booking has been confirmed.
+        {% if login_to_history_url %}
+          <a href="{{ login_to_history_url }}">Sign in to view your Payment History</a>.
+        {% else %}
+          Sign in to your account to view your Payment History.
+        {% endif %}
+      </p>
 
       <p>We appreciate your business!<br>
       – The Tucker & Dale’s Team</p>

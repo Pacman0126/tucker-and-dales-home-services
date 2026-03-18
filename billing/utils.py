@@ -3,9 +3,10 @@ __all__ = ["_get_or_create_cart",
 
 from typing import Optional
 from datetime import datetime
-
+from urllib.parse import urlencode
 from django.utils import timezone
 from django.utils.timezone import now
+from django.urls import reverse
 from billing.models import Cart
 
 from django.core.mail import send_mail
@@ -252,13 +253,29 @@ def get_refund_policy(booking_datetime):
 
 def send_payment_receipt_email(user, payment_record, bookings, request=None):
     """Send a payment confirmation email after Stripe checkout."""
-    subject = f"Your Receipt from Tucker & Dale’s Home Services"
+    subject = "Your Receipt from Tucker & Dale’s Home Services"
+
+    payment_history_url = ""
+    login_to_history_url = ""
+
+    if request is not None:
+        payment_history_path = reverse("billing:payment_history")
+        payment_history_url = request.build_absolute_uri(payment_history_path)
+
+        login_path = reverse("account_login")
+        query = urlencode({"next": payment_history_path})
+        login_to_history_url = request.build_absolute_uri(
+            f"{login_path}?{query}")
+
     context = {
         "user": user,
         "payment_record": payment_record,
         "bookings": bookings,
         "request": request,
+        "payment_history_url": payment_history_url,
+        "login_to_history_url": login_to_history_url,
     }
+
     html_message = render_to_string("emails/payment_receipt.html", context)
     plain_message = strip_tags(html_message)
 

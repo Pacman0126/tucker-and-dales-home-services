@@ -443,7 +443,7 @@ def _post_login_address_check(request, user):
             request.session["service_address"] = rc.full_billing_address
         request.session.modified = True
 
-        return redirect("home")
+        return redirect("core:home")
     except CustomerProfile.DoesNotExist:
         messages.warning(
             request, "No customer profile found. Please complete your profile before checkout.")
@@ -524,9 +524,14 @@ def complete_profile(request):
         def clean_email(self):
             return self.cleaned_data.get("email", "").strip().lower()
 
-    rc, _ = CustomerProfile.objects.get_or_create(
+    rc, created = CustomerProfile.objects.get_or_create(
         user=user,
-        defaults={"email": user.email or ""},
+        defaults={
+            "email": (user.email or "").strip().lower(),
+            "preferred_contact": "email",
+            "timezone": "America/Chicago",
+            "region": "US",
+        },
     )
 
     initial = {
@@ -534,7 +539,16 @@ def complete_profile(request):
         "entered_username_display": entered_username,
         "first_name": user.first_name,
         "last_name": user.last_name,
+        "email": rc.email or user.email or "",
+        "preferred_contact": rc.preferred_contact or "email",
+        "timezone": rc.timezone or "America/Chicago",
+        "region": rc.region or "US",
     }
+
+    show_identity_warning = bool(
+        entered_username and entered_username.strip(
+        ).lower() != user.username.strip().lower()
+    )
 
     if request.method == "POST":
         form = InlineProfileForm(request.POST, instance=rc, initial=initial)
@@ -546,7 +560,8 @@ def complete_profile(request):
                 user.username = new_username
 
             new_email = form.cleaned_data.get("email", "").strip().lower()
-            if new_email and new_email != user.email.lower():
+            current_user_email = (user.email or "").strip().lower()
+            if new_email and new_email != current_user_email:
                 user.email = new_email
 
             user.first_name = form.cleaned_data.get("first_name", "").strip()
@@ -582,4 +597,11 @@ def complete_profile(request):
     else:
         form = InlineProfileForm(instance=rc, initial=initial)
 
-    return render(request, "customers/complete_profile.html", {"form": form})
+    return render(
+        request,
+        "customers/complete_profile.html",
+        {
+            "form": form,
+            "show_identity_warning": show_identity_warning,
+        },
+    )

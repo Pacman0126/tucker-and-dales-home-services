@@ -1,15 +1,21 @@
 import random
 from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from faker import Faker
 
-from scheduling.models import ServiceCategory, Employee, TimeSlot, Booking, JobAssignment
+from scheduling.models import (
+    ServiceCategory,
+    Employee,
+    TimeSlot,
+    Booking,
+    JobAssignment,
+)
 from customers.models import CustomerProfile
 
-fake = Faker()
 
-# 🔹 Dallas-area fallback addresses (only used if no RegisteredCustomers exist)
+# 🔹 Dallas-area fallback addresses
+# Only used if a profile has missing address data.
 DALLAS_ADDRESSES = [
     "123 Greenville Ave, Dallas, TX 75206",
     "1400 Pacific Ave, Dallas, TX 75202",
@@ -27,12 +33,35 @@ DALLAS_ADDRESSES = [
     "400 W Campbell Rd, Richardson, TX 75080",
 ]
 
+# 🔹 Make the schedule busier
+SLOT_UTILIZATION = 0.35
+
+
+def profile_full_address(profile: CustomerProfile) -> str:
+    parts = [
+        (profile.billing_street_address or "").strip(),
+        (profile.billing_city or "").strip(),
+        (profile.billing_state or "").strip(),
+        (profile.billing_zipcode or "").strip(),
+    ]
+    return ", ".join([p for p in parts if p])
+
+
+def profile_full_name(profile: CustomerProfile) -> str:
+    first = (profile.user.first_name or "").strip()
+    last = (profile.user.last_name or "").strip()
+    full_name = f"{first} {last}".strip()
+    return full_name or profile.user.username
+
 
 class Command(BaseCommand):
-    help = "Seed scheduling data using RegisteredCustomers (Bookings, Employees, etc.)"
+    help = (
+        "Seed 120 days of scheduling data using restored CustomerProfiles, "
+        "with 15 employees drawn from the preserved user pool."
+    )
 
     def handle(self, *args, **kwargs):
-        # 🧹 Clear old data
+        # 🧹 Clear scheduling-only data
         JobAssignment.objects.all().delete()
         Booking.objects.all().delete()
         Employee.objects.all().delete()
@@ -50,86 +79,101 @@ class Command(BaseCommand):
 
         # 🔹 Time slots
         slot_labels = ["7:30–9:30", "10:00–12:00", "12:30–2:30", "3:00–5:00"]
-        slot_objs = {label: TimeSlot.objects.create(
-            label=label) for label in slot_labels}
+        slot_objs = {
+            label: TimeSlot.objects.create(label=label)
+            for label in slot_labels
+        }
         self.stdout.write(self.style.SUCCESS("✅ Time slots created."))
 
-        # 🔹 Employees
-        employees = []
-        for category_name, category_obj in category_objs.items():
+        # 🔹 Restored customer profiles
+        customer_profiles = list(
+            CustomerProfile.objects.select_related("user").order_by("user__id")
+        )
+
+        if not customer_profiles:
+            raise ValueError(
+                "No CustomerProfile records found. Restore customer profiles first."
+            )
+
+        if len(customer_profiles) < 15:
+            raise ValueError(
+                f"Need at least 15 CustomerProfiles to draw employees from the user pool. "
+                f"Current count: {len(customer_profiles)}"
+            )
+
+        # 🔹 Draw 15 employees from the user pool
+        employee_source_profiles = random.sample(customer_profiles, 15)
+
+        employees_by_category = {name: [] for name in categories}
+        source_index = 0
+
+        for category_name in categories:
+            category_obj = category_objs[category_name]
+
             for _ in range(5):
-                emp = Employee.objects.create(
-                    name=fake.name(),
-                    home_address=random.choice(DALLAS_ADDRESSES),
+                profile = employee_source_profiles[source_index]
+                source_index += 1
+
+                employee = Employee.objects.create(
+                    name=profile_full_name(profile),
+                    home_address=profile_full_address(
+                        profile) or random.choice(DALLAS_ADDRESSES),
                     service_category=category_obj,
                 )
-                employees.append(emp)
-        self.stdout.write(self.style.SUCCESS("✅ Employees seeded."))
+                employees_by_category[category_name].append(employee)
 
-        # 🔹 Registered customers
-        registered_customers = list(CustomerProfile.objects.all())
-        use_customers = len(registered_customers) > 0
-        if not use_customers:
-            self.stdout.write(self.style.WARNING(
-                "⚠️ No RegisteredCustomers found, using fallback addresses."))
+        self.stdout.write(
+            self.style.SUCCESS(
+                "✅ 15 employees created from the preserved user pool.")
+        )
 
         today = timezone.now().date()
         total_bookings = 0
+        total_assignments = 0
 
-        for day in range(28):
+        # 🔹 120-day scheduling horizon
+        for day in range(120):
             booking_date = today + timedelta(days=day)
 
             for category_name, category_obj in category_objs.items():
-                category_emps = list(Employee.objects.filter(
-                    service_category=category_obj))
+                category_emps = list(employees_by_category[category_name])
                 random.shuffle(category_emps)
-                reserved_free_emp = category_emps.pop()  # keep one free each day
+
+                # Keep one employee free each day in each category
+                reserved_free_emp = category_emps.pop()
+                available_emps = [
+                    e for e in category_emps if e != reserved_free_emp]
 
                 for slot_label, slot_obj in slot_objs.items():
-                    if random.random() < 0.2:  # 20% slot utilization
-                        if use_customers:
-                            cust = random.choice(registered_customers)
-                            addr_parts = [
-                                cust.billing_street_address,
-                                cust.billing_city,
-                                cust.billing_state,
-                                cust.billing_zipcode,
-                            ]
-                            service_address = ", ".join(
-                                p for p in addr_parts if p) or random.choice(DALLAS_ADDRESSES)
-                            booking = Booking.objects.create(
-                                user=cust.user,
-                                service_address=service_address,
-                                service_category=category_obj,
-                                date=booking_date,
-                                time_slot=slot_obj,
-                                status="active",
-                            )
-                        else:
-                            service_address = random.choice(DALLAS_ADDRESSES)
-                            booking = Booking.objects.create(
-                                service_address=service_address,
-                                service_category=category_obj,
-                                date=booking_date,
-                                time_slot=slot_obj,
-                                status="active",
-                            )
+                    if random.random() < SLOT_UTILIZATION:
+                        cust = random.choice(customer_profiles)
+                        service_address = profile_full_address(
+                            cust) or random.choice(DALLAS_ADDRESSES)
 
-                        # Assign an employee (not the reserved one)
-                        available_emps = [
-                            e for e in category_emps if e != reserved_free_emp]
-                        if available_emps:
-                            emp = random.choice(available_emps)
-                            JobAssignment.objects.create(
-                                employee=emp,
-                                booking=booking,
-                                jobsite_address=booking.service_address,
-                            )
+                        assigned_emp = random.choice(available_emps)
+
+                        booking = Booking.objects.create(
+                            user=cust.user,
+                            service_address=service_address,
+                            service_category=category_obj,
+                            date=booking_date,
+                            time_slot=slot_obj,
+                            employee=assigned_emp,
+                            status="Booked",
+                        )
+
+                        JobAssignment.objects.create(
+                            employee=assigned_emp,
+                            booking=booking,
+                            jobsite_address=booking.service_address,
+                        )
 
                         total_bookings += 1
+                        total_assignments += 1
 
         msg = (
-            f"✅ Bookings + assignments seeded: {total_bookings} "
-            f"({'RegisteredCustomers' if use_customers else 'fallback addresses'})"
+            f"✅ Bookings + assignments seeded: {total_bookings} bookings, "
+            f"{total_assignments} assignments, 15 employees drawn from restored CustomerProfiles, "
+            f"120-day horizon, utilization={SLOT_UTILIZATION:.0%}."
         )
         self.stdout.write(self.style.SUCCESS(msg))

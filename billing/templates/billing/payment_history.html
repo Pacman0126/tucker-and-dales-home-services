@@ -14,51 +14,119 @@
             <strong>{{ prop.address }}</strong>
           </div>
           <div class="text-end">
-            <div class="fw-semibold {% if prop.net < 0 %}text-danger{% else %}text-success{% endif %}">
-              Net: ${{ prop.net|floatformat:2 }}
+            <div class="fw-semibold {% if prop.net_total < 0 %}text-danger{% else %}text-success{% endif %}">
+              Net: ${{ prop.net_total|floatformat:2 }}
             </div>
             <small class="text-muted">
-              In: ${{ prop.total_in|floatformat:2 }} / Out: ${{ prop.total_out|floatformat:2 }}
+              Original: ${{ prop.original_total|floatformat:2 }}
+              / Added: ${{ prop.add_total|floatformat:2 }}
+              / Cancelled: ${{ prop.cancel_total|floatformat:2 }}
             </small>
           </div>
         </div>
 
         <div class="card-body">
-          <table class="table table-sm align-middle">
-            <thead>
-              <tr><th>Date</th><th>Status</th><th>Notes</th><th class="text-end">Amount</th></tr>
-            </thead>
-            <tbody>
-              {% for p in prop.entries %}
-              <tr class="{% if p.amount < 0 %}table-warning{% endif %}">
-                <td>{{ p.created_at|date:"Y-m-d" }}</td>
-                <td>
-                  {% if p.status == "Paid" %}
-                    <span class="badge bg-success">Paid</span>
-                  {% elif p.status == "Refunded" %}
-                    <span class="badge bg-warning text-dark">Refunded</span>
-                  {% elif p.status == "Adjustment" %}
-                    <span class="badge bg-info text-dark">Adjustment</span>
-                  {% else %}
-                    <span class="badge bg-secondary">{{ p.status }}</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if "manual adjustment" in p.notes %}
-                    Service cancelled
-                  {% else %}
-                    {{ p.notes|default:"—" }}
-                  {% endif %}
-                </td>
-                <td class="text-end {% if p.amount < 0 %}text-danger{% else %}text-success{% endif %}">
-                  {% if p.amount < 0 %}-{% endif %}${{ p.amount|floatformat:2|cut:"-" }}
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="4" class="text-center text-muted">No transactions yet.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="mb-4">
+            <h5 class="fw-semibold mb-3">Scheduled Service Dates</h5>
+
+            {% if prop.bookings %}
+              <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Service Date</th>
+                      <th>Time Slot</th>
+                      <th>Service</th>
+                      <th>Employee</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for booking in prop.bookings %}
+                      <tr>
+                        <td>{{ booking.date|date:"Y-m-d" }}</td>
+                        <td>{{ booking.time_slot.label }}</td>
+                        <td>{{ booking.service_category.name }}</td>
+                        <td>
+                          {% if booking.employee %}
+                            {{ booking.employee.name }}
+                          {% else %}
+                            <span class="text-muted">Unassigned</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if booking.status == "Booked" %}
+                            <span class="badge bg-success">Booked</span>
+                          {% elif booking.status == "Cancelled" %}
+                            <span class="badge bg-warning text-dark">Cancelled</span>
+                          {% elif booking.status == "Completed" %}
+                            <span class="badge bg-secondary">Completed</span>
+                          {% else %}
+                            <span class="badge bg-light text-dark">{{ booking.status }}</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="5" class="text-center text-muted">No scheduled service dates found.</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted mb-0">No scheduled service dates found for this payment.</p>
+            {% endif %}
+          </div>
+
+          <hr>
+
+          <h5 class="fw-semibold mb-3">Payment Activity</h5>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Payment Date</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                  <th class="text-end">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in prop.entries %}
+                  <tr class="{% if p.amount < 0 %}table-warning{% endif %}">
+                    <td>{{ p.created_at|date:"Y-m-d" }}</td>
+                    <td>
+                      {% if p.status == "Paid" %}
+                        <span class="badge bg-success">Paid</span>
+                      {% elif p.status == "Refunded" %}
+                        <span class="badge bg-warning text-dark">Refunded</span>
+                      {% elif p.status == "Adjustment" %}
+                        <span class="badge bg-info text-dark">Adjustment</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ p.status }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if "manual adjustment" in p.notes %}
+                        Service cancelled
+                      {% else %}
+                        {{ p.notes|default:"—" }}
+                      {% endif %}
+                    </td>
+                    <td class="text-end {% if p.amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                      {% if p.amount < 0 %}-{% endif %}${{ p.amount|floatformat:2|cut:"-" }}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted">No transactions yet.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div class="card-footer d-flex justify-content-end gap-2">
@@ -73,12 +141,12 @@
         </div>
       </div>
     {% endfor %}
-      <div class="text-center mt-4">
-        <a href="{% url 'scheduling:search_by_date' %}" class="btn btn-outline-primary">
-          <i class="bi bi-arrow-left"></i> Back to Booking Search
-        </a>
-      </div>
 
+    <div class="text-center mt-4">
+      <a href="{% url 'scheduling:search_by_date' %}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left"></i> Back to Booking Search
+      </a>
+    </div>
 
   {% else %}
     <div class="alert alert-info text-center">
@@ -94,7 +162,6 @@
 
 {% if request.GET.r %}
   <script>
-    // Force refresh on load after cancellation or refund
     window.addEventListener('DOMContentLoaded', () => {
       window.location.reload(true);
     });
