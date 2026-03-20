@@ -265,13 +265,18 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Use simple static file storage locally so DEBUG=False testing
+# does not crash on missing manifest entries.
+# Use WhiteNoise manifest storage in deployment for hashed assets.
+if DEBUG:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 # =====================================================
 # 💳 STRIPE / GOOGLE MAPS
 # =====================================================

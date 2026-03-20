@@ -41,7 +41,6 @@ def login_after_email_confirmation(request, email_address, **kwargs):
 @receiver(user_signed_up)
 def send_welcome_email(request, user, **kwargs):
     subject = "Welcome to Tucker & Dale’s Home Services!"
-
     dashboard_url = build_absolute_url(request, "core:home")
 
     context = {
@@ -51,15 +50,15 @@ def send_welcome_email(request, user, **kwargs):
         "site_url": dashboard_url,
     }
 
-    html_message = render_to_string(
-        "emails/welcome_email.html",
-        context,
-        request=request,
-    )
-    plain_message = strip_tags(html_message)
-
     try:
-        send_mail(
+        html_message = render_to_string(
+            "emails/welcome_email.html",
+            context,
+            request=request,
+        )
+        plain_message = strip_tags(html_message)
+
+        sent_count = send_mail(
             subject,
             plain_message,
             settings.DEFAULT_FROM_EMAIL,
@@ -67,7 +66,8 @@ def send_welcome_email(request, user, **kwargs):
             html_message=html_message,
             fail_silently=False,
         )
-        print(f"Sent welcome email to {user.email}")
+        print(
+            f"Welcome email send_mail returned {sent_count} for {user.email}")
     except Exception as e:
         print(f"Failed to send welcome email to {user.email}: {e}")
 
@@ -80,7 +80,7 @@ def send_welcome_email(request, user, **kwargs):
 
         unsubscribe_url = build_absolute_url(
             request,
-            "newsletter:unsubscribe",
+            "core:newsletter_unsubscribe",
             token=sub.token,
         )
 
@@ -95,7 +95,7 @@ def send_welcome_email(request, user, **kwargs):
         txt = render_to_string(
             "emails/newsletter_welcome.txt", ctx, request=request)
 
-        send_mail(
+        sent_count = send_mail(
             "You’re subscribed to Tucker & Dale’s Monthly Newsletter",
             txt,
             settings.DEFAULT_FROM_EMAIL,
@@ -103,10 +103,9 @@ def send_welcome_email(request, user, **kwargs):
             html_message=html,
             fail_silently=False,
         )
-
         print(
-            f"Subscribed {user.email}; first issue {next_on} "
-            f"({'created' if created else 'already existed'})"
+            f"Newsletter send_mail returned {sent_count} for {user.email}; "
+            f"first issue {next_on} ({'created' if created else 'already existed'})"
         )
     except Exception as e:
         print(f"Newsletter auto-subscribe/notify failed for {user.email}: {e}")
