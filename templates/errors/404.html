@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-4 p-md-5 text-center">
+
+                    <div class="mb-4">
+                        <span class="badge rounded-pill text-bg-danger px-3 py-2 fs-6">
+                            Error 404
+                        </span>
+                    </div>
+
+                    <h1 class="display-4 fw-bold mb-3">Page not found</h1>
+
+                    <p class="lead text-muted mb-4">
+                        The page you were looking for doesn’t exist, may have been moved,
+                        or the address may have been entered incorrectly. If you are not
+                        already logged in, click 'Log In', Otherwise click 'Back to Home'
+                        to return to the homepage.
+                     </p>
+
+                    <div class="mx-auto mb-4" style="max-width: 520px;">
+                        <div class="p-3 rounded-4 bg-light border">
+                            {% comment %} <p class="mb-2 fw-semibold">Try one of these instead:</p> {% endcomment %}
+                            <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+                                {% if request.user.is_authenticated %}
+                                    <a href="{% url 'core:home' %}" class="btn btn-primary">
+                                        Back to Home
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'account_login' %}" class="btn btn-primary">
+                                        Log In
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="small text-muted mb-0">
+                        If you followed a link on this site, the page may no longer be available.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

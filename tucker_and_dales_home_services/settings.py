@@ -2,6 +2,7 @@
 Django settings for tucker_and_dales_home_services project.
 """
 
+from typing import Any, cast
 from pathlib import Path
 import environ
 
@@ -249,7 +250,25 @@ ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = None
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
 USE_X_FORWARDED_HOST = True
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
+
+
+raw_allowed_hosts = cast(Any, ALLOWED_HOSTS)
+
+if isinstance(raw_allowed_hosts, (list, tuple, set)):
+    allowed_hosts_list = [str(host) for host in raw_allowed_hosts]
+else:
+    allowed_hosts_list = []
+
+LOCAL_DEV_HOSTS = {"localhost", "127.0.0.1"}
+IS_LOCAL_DEV = bool(LOCAL_DEV_HOSTS.intersection(allowed_hosts_list))
+
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http" if IS_LOCAL_DEV else "https"
+
+
+# ACCOUNT_DEFAULT_HTTP_PROTOCOL = env.str(
+#     "ACCOUNT_DEFAULT_HTTP_PROTOCOL",
+#     default="https" if not DEBUG else "http",
+# )
 
 # =====================================================
 # 🌍 I18N / TIMEZONE

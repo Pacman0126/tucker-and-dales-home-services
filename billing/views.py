@@ -47,7 +47,7 @@ from scheduling.models import Booking
 from .utils import _get_or_create_cart, normalize_address
 from .models import Payment
 from .constants import SERVICE_PRICES, SALES_TAX_RATE
-
+from core.decorators import verified_email_required
 from .models import Cart, CartItem, PaymentHistory
 # ----------------------------------------------------------------------
 # ⚙️ Stripe Setup
@@ -75,6 +75,7 @@ def _penalty_applies(booking: Booking) -> bool:
 
 
 @login_required
+@verified_email_required
 def checkout(request):
     """
     Displays the user's cart summary and recalculates totals before Stripe checkout.
@@ -129,6 +130,7 @@ def checkout(request):
 # 🧾 Checkout Summary (pre-Stripe)
 # ----------------------------------------------------------------------
 @login_required
+@verified_email_required
 def checkout_summary(request):
     """
     Displays the cart summary before payment.
@@ -901,6 +903,7 @@ def live_invoice_view_address(request, address):
 
 
 @login_required
+@verified_email_required
 @require_POST
 def cancel_selected_services(request):
     """
@@ -1085,6 +1088,7 @@ def add_service_adjustment(request):
 
 
 @login_required
+@verified_email_required
 @require_POST
 def submit_adjustment(request):
     """
@@ -1158,6 +1162,7 @@ def cart_detail(request):
 
 
 @login_required
+@verified_email_required
 def payment_success(request):
     """
     Handle successful Stripe payment:
@@ -1241,6 +1246,7 @@ def payment_success(request):
 
 
 @login_required
+@verified_email_required
 def payment_history(request):
     """
     Groups all PaymentHistory records by root transaction and includes

@@ -15,6 +15,7 @@ from django.urls import reverse
 from billing.utils import merge_session_cart
 from customers.forms import LoginOrRegisterForm
 from customers.models import CustomerProfile
+from core.decorators import verified_email_required
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -30,6 +31,7 @@ def superuser_required(user):
 
 
 @login_required
+@verified_email_required
 def profile_view(request):
     """
     Logged-in user's profile page.

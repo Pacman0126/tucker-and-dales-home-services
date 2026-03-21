@@ -1,6 +1,11 @@
 __all__ = ["_get_or_create_cart",
            "get_service_address", "lock_service_address"]
 
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
+
 from typing import Optional
 from datetime import datetime
 from urllib.parse import urlencode
@@ -8,11 +13,6 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django.urls import reverse
 from billing.models import Cart
-
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.conf import settings
 
 
 def _clear_cart_for_session(request):

@@ -43,11 +43,17 @@ def home(request):
 #     return HttpResponse("CUSTOM 500 WORKING", status=500)
 
 
+# def custom_404(request, exception):
+#     return HttpResponse(
+#         "<h1 style='background:yellow;color:black;padding:30px;'>CUSTOM 404 WORKING</h1>",
+#         status=404,
+#     )
+
+
+# def custom_500(request):
+#     return HttpResponse("CUSTOM 500 WORKING", status=500)
 def custom_404(request, exception):
-    return HttpResponse(
-        "<h1 style='background:yellow;color:black;padding:30px;'>CUSTOM 404 WORKING</h1>",
-        status=404,
-    )
+    return render(request, "errors/404.html", status=404)
 
 
 def custom_500(request):
