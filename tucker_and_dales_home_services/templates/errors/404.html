@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container py-5 text-center">
+    <div style="background: yellow; color: black; font-size: 32px; padding: 20px; text-align: center;">
+    {{ marker }}
+    </div>
     <h1 class="display-5 mb-3">Page not found</h1>
     <p class="lead mb-4">The page you requested does not exist.</p>
     <a href="{% url 'core:home' %}" class="btn btn-danger">Back to Home</a>

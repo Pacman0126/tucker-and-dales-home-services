@@ -12,14 +12,14 @@
   <meta property="og:description" content="Book and manage home services with trusted local professionals. Simple scheduling, secure payments, and reliable results.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://tucker-and-dales.herokuapp.com/">
-  <meta property="og:image" content="{% static 'images/social-share.jpg' %}">
+  {% comment %} <meta property="og:image" content="{% static 'images/social-share.jpg' %}"> {% endcomment %}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Tucker & Dale’s Home Services">
   <meta name="twitter:description" content="Professional home services made easy. Schedule online today.">
-  <meta name="twitter:image" content="{% static 'images/social-share.jpg' %}">
+  {% comment %} <meta name="twitter:image" content="{% static 'images/social-share.jpg' %}"> {% endcomment %}
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="{% static 'favicon.ico' %}" />
+  <link rel="icon" href="{% static 'images/favicon.ico' %}">
   <title>{% block title %}Tucker & Dale's Home Services{% endblock %}</title>
   <!-- Prevent cached pages after refunds/cancellations -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">

@@ -14,18 +14,44 @@ def home(request):
     return render(request, "core/home.html", {"navbar_mode": "home"})
 
 
-def custom_404(request, exception):
-    return render(request, "errors/404.html", status=404)
+# def custom_404(request, exception):
+#     return render(
+#         request,
+#         "errors/404.html",
+#         {"marker": "CUSTOM 404 IS WORKING"},
+#         status=404,
+#     )
+
+# def custom_404(request, exception):
+#     return HttpResponse(
+#         "<h1 style='background:yellow;color:black;padding:30px;'>CUSTOM 404 VIEW IS DEFINITELY WORKING</h1>",
+#         status=404,
+#     )
+
+# def custom_404(request, exception):
+#     return render(request, "404.html", status=404)
 
 
-def custom_500(request):
-    return render(request, "errors/500.html", status=500)
+# def custom_500(request):
+#     return render(request, "errors/500.html", status=500)
+
 # def custom_404(request, exception):
 #     return HttpResponse("CUSTOM 404 WORKING", status=404)
 
 
 # def custom_500(request):
 #     return HttpResponse("CUSTOM 500 WORKING", status=500)
+
+
+def custom_404(request, exception):
+    return HttpResponse(
+        "<h1 style='background:yellow;color:black;padding:30px;'>CUSTOM 404 WORKING</h1>",
+        status=404,
+    )
+
+
+def custom_500(request):
+    return HttpResponse("CUSTOM 500 WORKING", status=500)
 
 
 def custom_logout(request):

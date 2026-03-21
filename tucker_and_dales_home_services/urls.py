@@ -15,20 +15,23 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+from django.views.generic import RedirectView
+from django.templatetags.static import static
 
 handler404 = "core.views.custom_404"
 handler500 = "core.views.custom_500"
 
 urlpatterns = [
+    path(
+        "favicon.ico",
+        RedirectView.as_view(url=static("images/favicon.ico"), permanent=True),
+    ),
     path("admin/", admin.site.urls),
-
-    # allauth owns auth routes
     path("accounts/", include("allauth.urls")),
-
-    # app routes
-    path("", include("core.urls", namespace="core")),
-    path("billing/", include("billing.urls", namespace="billing")),
-    path("customers/", include("customers.urls")),
-    path("schedule/", include("scheduling.urls")),
+    path("", include(("core.urls", "core"), namespace="core")),
+    path("billing/", include(("billing.urls", "billing"), namespace="billing")),
+    path("customers/", include(("customers.urls", "customers"), namespace="customers")),
+    path("schedule/", include(("scheduling.urls",
+         "scheduling"), namespace="scheduling")),
 ]
