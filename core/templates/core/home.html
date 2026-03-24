@@ -30,10 +30,20 @@
 
     <!-- 📅 Book a Service CTA -->
     <div class="mt-3">
-      <a href="{% url 'scheduling:search_by_date' %}"
-         class="btn btn-warning btn-lg rounded-pill shadow">
-        Book a Service
-      </a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'scheduling:search_by_date' %}"
+          class="btn btn-warning btn-lg rounded-pill shadow">
+          Book a Service
+        </a>
+      {% else %}
+        <a href="{% url 'scheduling:search_by_date' %}"
+          class="btn btn-outline-light btn-lg rounded-pill shadow">
+          Search for Services
+        </a>
+        <p class="mt-3 mb-0 small text-light-emphasis">
+          You can browse services and availability now. To book, please register or log in first.
+        </p>
+      {% endif %}
     </div>
 
   </div>

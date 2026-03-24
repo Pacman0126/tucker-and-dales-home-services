@@ -4,76 +4,62 @@ Handles checkout, Stripe integration, payment tracking, and admin management.
 """
 
 from io import BytesIO
-from scheduling.models import Booking
-from billing.models import PaymentHistory
-import datetime
 from datetime import datetime as dt
-import json
 from decimal import Decimal
+
 import stripe
 
-from django.db import models
-from django.utils.timezone import now
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-
-from django.http import HttpResponse, HttpResponseBadRequest
-from django.utils.timezone import now, localdate
-from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.views.decorators.http import require_POST
+from django.db import models, transaction
+from django.db.models import Sum
+from django.http import (
+    FileResponse,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
 from django.middleware.csrf import get_token
-from django.http import JsonResponse, HttpResponse, FileResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.timezone import localdate, now
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.db.models import Sum
 
-from django.urls import reverse
-
-from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-)
+from reportlab.lib.units import inch
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from billing.constants import SALES_TAX_RATE, SERVICE_PRICES
+from billing.models import Cart, CartItem, Payment, PaymentHistory
 from billing.utils import send_payment_receipt_email
 
+from core.decorators import verified_email_required, login_required_json
 from scheduling.models import Booking
 from .utils import _get_or_create_cart, normalize_address
-from .models import Payment
-from .constants import SERVICE_PRICES, SALES_TAX_RATE
-from core.decorators import verified_email_required
-from .models import Cart, CartItem, PaymentHistory
-# ----------------------------------------------------------------------
-# ⚙️ Stripe Setup
-# ----------------------------------------------------------------------
-stripe.api_key = settings.STRIPE_SECRET_KEY
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 PENALTY_WINDOW_HOURS = 72
 
 
 def _penalty_applies(booking: Booking) -> bool:
     """True if within 72h window from now."""
-    # if you have a concrete datetime, use it; else fallback to date-at-midnight logic
     start_dt = getattr(booking, "datetime_start", None)
     if start_dt:
         hours = (start_dt - now()).total_seconds() / 3600.0
     else:
-        # date based approximation
         hours = (booking.date - localdate()).days * 24.0
     return hours < PENALTY_WINDOW_HOURS
 
-# ----------------------------------------------------------------------
-# 🏁 Simple Checkout Page (called by navbar burger)
-# ----------------------------------------------------------------------
 
-
+# ----------------------------------------------------------------------
+# 🏁 Simple Checkout Page
+# ----------------------------------------------------------------------
 @login_required
 @verified_email_required
 def checkout(request):
@@ -81,7 +67,6 @@ def checkout(request):
     Displays the user's cart summary and recalculates totals before Stripe checkout.
     Allows items to be removed (via AJAX or via 'Remove Selected' checkboxes).
     """
-
     cart = (
         Cart.objects.filter(user=request.user)
         .prefetch_related("items__service_category", "items__employee", "items__time_slot")
@@ -93,7 +78,6 @@ def checkout(request):
             request, "Your cart is empty — please add services before checkout.")
         return redirect("scheduling:search_by_time_slot")
 
-    # 🧾 Dynamic removal support if JS posted any selected_items
     if request.method == "POST" and "selected_items" in request.POST:
         ids_to_remove = request.POST.getlist("selected_items")
         if ids_to_remove:
@@ -103,16 +87,10 @@ def checkout(request):
                 request, f"Removed {len(ids_to_remove)} item(s) from your cart.")
             return redirect("billing:checkout")
 
-    # 🧮 Recalculate totals
-    subtotal = Decimal("0.00")
-    for item in cart.items.all():
-        subtotal += item.unit_price or Decimal("0.00")
-
-    TAX_RATE = Decimal(getattr(settings, "SALES_TAX_RATE", 0.0825))
     subtotal = sum((item.unit_price or Decimal("0.00"))
                    for item in cart.items.all())
-    TAX_RATE = Decimal(getattr(settings, "SALES_TAX_RATE", 0.0825))
-    tax = (subtotal * TAX_RATE).quantize(Decimal("0.01"))
+    tax_rate = Decimal(getattr(settings, "SALES_TAX_RATE", 0.0825))
+    tax = (subtotal * tax_rate).quantize(Decimal("0.01"))
     total = (subtotal + tax).quantize(Decimal("0.01"))
 
     context = {
@@ -120,9 +98,8 @@ def checkout(request):
         "subtotal": subtotal,
         "tax": tax,
         "total": total,
-        "SALES_TAX_RATE": TAX_RATE,
+        "SALES_TAX_RATE": tax_rate,
     }
-
     return render(request, "billing/checkout.html", context)
 
 
@@ -141,16 +118,13 @@ def checkout_summary(request):
     from customers.models import CustomerProfile
     from .forms import CheckoutForm
 
-    # --- 1️⃣ Retrieve the active cart (do NOT auto-create) ---
     cart = get_active_cart_for_request(request, create_if_missing=False)
     if not cart or not cart.items.exists():
         messages.warning(request, "Your cart is empty.")
         return redirect("scheduling:search_by_date")
 
-    # --- 2️⃣ Retrieve service address from session ---
     service_address = get_service_address(request)
 
-    # --- 3️⃣ Retrieve or preload user billing address ---
     billing_address_str = request.session.get("billing_address", "")
     rc = None
     try:
@@ -160,33 +134,29 @@ def checkout_summary(request):
             request.session["billing_address"] = billing_address_str
             request.session.modified = True
     except CustomerProfile.DoesNotExist:
-        # 🚦 redirect to complete profile if missing
         messages.info(request, "Please complete your profile before checkout.")
         request.session["next_after_profile"] = "billing:checkout"
         request.session["checkout_pending"] = True
         request.session.modified = True
         return redirect("customers:complete_profile")
 
-    # --- 4️⃣ Require address info before proceeding ---
     if not service_address or not billing_address_str:
         messages.info(
-            request, "Please complete your address details before checkout."
-        )
+            request, "Please complete your address details before checkout.")
         request.session["next_after_profile"] = "billing:checkout"
         request.session["checkout_pending"] = True
         request.session.modified = True
         return redirect("customers:complete_profile")
 
-    # --- 5️⃣ Handle POST submission ---
     if request.method == "POST":
         form = CheckoutForm(request.POST, user=request.user)
         if form.is_valid():
             billing_data = form.cleaned_data
 
-            # ✅ Update RegisteredCustomer with submitted billing info
             if rc:
                 rc.billing_street_address = billing_data.get(
-                    "billing_street_address", rc.billing_street_address)
+                    "billing_street_address", rc.billing_street_address
+                )
                 rc.billing_city = billing_data.get(
                     "billing_city", rc.billing_city)
                 rc.billing_state = billing_data.get(
@@ -194,25 +164,25 @@ def checkout_summary(request):
                 rc.billing_zipcode = billing_data.get(
                     "billing_zipcode", rc.billing_zipcode)
                 rc.region = billing_data.get("billing_country", rc.region)
-                rc.save(update_fields=[
-                    "billing_street_address",
-                    "billing_city",
-                    "billing_state",
-                    "billing_zipcode",
-                    "region",
-                ])
+                rc.save(
+                    update_fields=[
+                        "billing_street_address",
+                        "billing_city",
+                        "billing_state",
+                        "billing_zipcode",
+                        "region",
+                    ]
+                )
 
-            # ✅ Store billing data for Stripe session
             request.session["billing_data"] = billing_data
             request.session.modified = True
             return redirect("billing:create_checkout_session")
-        else:
-            messages.error(
-                request, "Please correct the billing form errors below.")
+
+        messages.error(
+            request, "Please correct the billing form errors below.")
     else:
         form = CheckoutForm(user=request.user)
 
-    # --- 6️⃣ Render checkout summary page ---
     context = {
         "cart": cart,
         "form": form,
@@ -229,15 +199,15 @@ def checkout_summary(request):
 # 💳 Stripe Checkout Session
 # ----------------------------------------------------------------------
 @login_required
+@verified_email_required
+@require_POST
 def create_checkout_session(request):
     """
     Initiates a Stripe Checkout session for the active cart.
     Saves all totals and cart metadata for Stripe webhooks.
     """
-
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
-    # --- Retrieve the active cart ---
     cart = _get_or_create_cart(request)
     if not cart or not cart.items.exists():
         messages.warning(request, "Your cart is empty.")
@@ -248,7 +218,6 @@ def create_checkout_session(request):
     total = cart.total
     service_address = request.session.get("service_address", "")
 
-    # --- Build absolute URLs for redirect ---
     success_url = (
         request.build_absolute_uri(reverse("billing:payment_success"))
         + "?session_id={CHECKOUT_SESSION_ID}"
@@ -284,7 +253,6 @@ def create_checkout_session(request):
 
         request.session["last_checkout_session_id"] = checkout_session.id
         request.session.modified = True
-
         return redirect(checkout_session.url, code=303)
 
     except Exception as e:
@@ -297,6 +265,7 @@ def create_checkout_session(request):
 # ✅ Payment Success / Cancel
 # ----------------------------------------------------------------------
 @login_required
+@verified_email_required
 def payment_cancel(request):
     """Handles user cancellation from Stripe checkout."""
     messages.info(
@@ -305,217 +274,234 @@ def payment_cancel(request):
 
 
 # ----------------------------------------------------------------------
-# 🧾 Payment History (user)
+# 🧾 Payment History helpers
 # ----------------------------------------------------------------------
 def _refresh_booking_statuses_for_user(user):
     """Auto-refresh status for user's bookings (Completed / Active)."""
     today = now().date()
     bookings = Booking.objects.filter(user=user)
-    for b in bookings:
-        if b.date < today and b.status != "Completed":
-            b.status = "Completed"
-            b.save(update_fields=["status"])
-        elif b.date >= today and b.status == "Completed":
-            b.status = "Booked"
-            b.save(update_fields=["status"])
+    for booking in bookings:
+        if booking.date < today and booking.status != "Completed":
+            booking.status = "Completed"
+            booking.save(update_fields=["status"])
+        elif booking.date >= today and booking.status == "Completed":
+            booking.status = "Booked"
+            booking.save(update_fields=["status"])
 
 
 # ----------------------------------------------------------------------
-# 🧾 All Payments (admin)
+# 🧾 Download receipt PDF
 # ----------------------------------------------------------------------
 @login_required
+@verified_email_required
 def download_receipt_pdf(request, pk):
     """Generate a detailed PDF receipt with grouped adjustments."""
     root = get_object_or_404(
         PaymentHistory, id=pk, user=request.user, parent__isnull=True
     )
-    chain = root.compute_sections()
 
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter,
-                            leftMargin=0.75 * inch,
-                            rightMargin=0.75 * inch,
-                            topMargin=0.75 * inch,
-                            bottomMargin=0.75 * inch)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=0.75 * inch,
+        rightMargin=0.75 * inch,
+        topMargin=0.75 * inch,
+        bottomMargin=0.75 * inch,
+    )
     styles = getSampleStyleSheet()
     elements = []
 
-    # Header
-    elements.append(Paragraph(
-        "<b>Tucker & Dale’s Home Services</b>", styles["Title"]
-    ))
-    elements.append(Paragraph(
-        f"Receipt generated: {now().strftime('%Y-%m-%d %H:%M')}",
-        styles["Normal"]
-    ))
+    elements.append(
+        Paragraph("<b>Tucker & Dale’s Home Services</b>", styles["Title"]))
+    elements.append(
+        Paragraph(
+            f"Receipt generated: {now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"])
+    )
     elements.append(Spacer(1, 0.25 * inch))
 
-    # Customer + service info
     elements.append(
-        Paragraph(f"<b>Service Address:</b> {root.service_address}", styles["Normal"]))
-    elements.append(Paragraph(
-        f"<b>Transaction ID:</b> {root.stripe_payment_id or 'N/A'}", styles["Normal"]))
+        Paragraph(
+            f"<b>Service Address:</b> {root.service_address}", styles["Normal"])
+    )
+    elements.append(
+        Paragraph(
+            f"<b>Transaction ID:</b> {root.stripe_payment_id or 'N/A'}",
+            styles["Normal"],
+        )
+    )
     elements.append(
         Paragraph(f"<b>Status:</b> {root.status}", styles["Normal"]))
     elements.append(Spacer(1, 0.25 * inch))
 
     def make_table(title, rows, color):
-        """Utility to create styled tables for each section."""
         elements.append(Paragraph(f"<b>{title}</b>", styles["Heading4"]))
         data = [["Date", "Description", "Amount (USD)"]] + rows
-        tbl = Table(data, colWidths=[1.5 * inch, 3.5 * inch, 1.5 * inch])
-        tbl.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), color),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("ALIGN", (2, 1), (2, -1), "RIGHT"),
-            ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ]))
-        elements.append(tbl)
+        table = Table(data, colWidths=[1.5 * inch, 3.5 * inch, 1.5 * inch])
+        table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), color),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("ALIGN", (2, 1), (2, -1), "RIGHT"),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ]
+            )
+        )
+        elements.append(table)
         elements.append(Spacer(1, 0.15 * inch))
 
-    # ✅ Original Services
     make_table(
         "Original Services",
-        [[root.created_at.strftime("%Y-%m-%d"),
-          root.notes or "Initial Booking Payment",
-          f"${root.amount:.2f}"]],
-        colors.green
+        [[
+            root.created_at.strftime("%Y-%m-%d"),
+            root.notes or "Initial Booking Payment",
+            f"${root.amount:.2f}",
+        ]],
+        colors.green,
     )
 
-    # ❌ Cancellations
     cancelled = root.adjustments.filter(amount__lt=0)
     if cancelled.exists():
         rows = [
             [
-                a.created_at.strftime("%Y-%m-%d"),
-                a.notes or "Refund / Penalty",
-                f"-${abs(a.amount):.2f}",
+                adj.created_at.strftime("%Y-%m-%d"),
+                adj.notes or "Refund / Penalty",
+                f"-${abs(adj.amount):.2f}",
             ]
-            for a in cancelled
+            for adj in cancelled
         ]
         make_table("Cancellations / Refunds", rows, colors.red)
 
-    # ➕ Additions
     added = root.adjustments.filter(amount__gt=0)
     if added.exists():
         rows = [
             [
-                a.created_at.strftime("%Y-%m-%d"),
-                a.notes or "Additional Service",
-                f"+${a.amount:.2f}",
+                adj.created_at.strftime("%Y-%m-%d"),
+                adj.notes or "Additional Service",
+                f"+${adj.amount:.2f}",
             ]
-            for a in added
+            for adj in added
         ]
         make_table("Added Services", rows, colors.blue)
 
-    # 🧮 Totals
-    o, a, c, net = root.compute_sections()
+    original_total, add_total, cancel_total, net_total = root.compute_sections()
     totals_data = [
-        ["Original Total:", f"${o:.2f}"],
-        ["Added Services:", f"+${a:.2f}"],
-        ["Refunds / Penalties:", f"-${abs(c):.2f}"],
-        ["Final Adjusted Total:", f"${net:.2f}"],
+        ["Original Total:", f"${original_total:.2f}"],
+        ["Added Services:", f"+${add_total:.2f}"],
+        ["Refunds / Penalties:", f"-${abs(cancel_total):.2f}"],
+        ["Final Adjusted Total:", f"${net_total:.2f}"],
     ]
-    totals_tbl = Table(totals_data, colWidths=[3.5 * inch, 3.5 * inch])
-    totals_tbl.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
-        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
-        ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),
-    ]))
+    totals_table = Table(totals_data, colWidths=[3.5 * inch, 3.5 * inch])
+    totals_table.setStyle(
+        TableStyle(
+            [
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
+                ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+                ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),
+            ]
+        )
+    )
     elements.append(Spacer(1, 0.25 * inch))
-    elements.append(totals_tbl)
+    elements.append(totals_table)
 
     doc.build(elements)
     buffer.seek(0)
-    filename = f"Receipt_{root.service_address.replace(' ', '_')}_{root.created_at.date()}.pdf"
+    filename = (
+        f"Receipt_{root.service_address.replace(' ', '_')}_{root.created_at.date()}.pdf"
+    )
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
 
 @login_required
+@verified_email_required
 def download_yearly_summary_pdf(request):
     """
     Generate a combined summary PDF of all PaymentHistory chains
     for this user, grouped by service_address.
-    Useful for landlords/property managers tracking multiple sites.
     """
-
-    from django.utils import timezone
-
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter,
-                            leftMargin=0.75 * inch,
-                            rightMargin=0.75 * inch,
-                            topMargin=0.75 * inch,
-                            bottomMargin=0.75 * inch)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=0.75 * inch,
+        rightMargin=0.75 * inch,
+        topMargin=0.75 * inch,
+        bottomMargin=0.75 * inch,
+    )
     styles = getSampleStyleSheet()
     elements = []
 
-    # 🧭 Header
     elements.append(
         Paragraph("<b>Tucker & Dale’s Home Services</b>", styles["Title"]))
     elements.append(
         Paragraph(f"Annual Summary for {request.user.username}", styles["Normal"]))
-    elements.append(Paragraph(
-        f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"]))
+    elements.append(
+        Paragraph(
+            f"Generated: {now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"])
+    )
     elements.append(Spacer(1, 0.3 * inch))
 
-    # 🏘️ Group PaymentHistory roots by service_address
     roots = (
-        PaymentHistory.objects
-        .filter(user=request.user, parent__isnull=True)
+        PaymentHistory.objects.filter(user=request.user, parent__isnull=True)
         .select_related("user")
         .order_by("service_address", "-created_at")
     )
+
     grouped = {}
     for root in roots:
         grouped.setdefault(root.service_address, []).append(root)
 
     grand_total = Decimal("0.00")
 
-    # 🧾 Iterate properties
-    for addr, chains in grouped.items():
-        elements.append(Paragraph(f"<b>🏠 {addr}</b>", styles["Heading2"]))
+    for address, chains in grouped.items():
+        elements.append(Paragraph(f"<b>🏠 {address}</b>", styles["Heading2"]))
         elements.append(Spacer(1, 0.1 * inch))
 
-        prop_total = Decimal("0.00")
+        property_total = Decimal("0.00")
 
         for root in chains:
-            o, a, c, net = root.compute_sections()
-            prop_total += net
+            original_total, add_total, cancel_total, net_total = root.compute_sections()
+            property_total += net_total
 
             data = [
                 ["Date", "Original", "Added", "Refunded", "Adjusted Total"],
                 [
                     root.created_at.strftime("%Y-%m-%d"),
-                    f"${o:.2f}",
-                    f"+${a:.2f}" if a > 0 else "$0.00",
-                    f"-${abs(c):.2f}" if c else "$0.00",
-                    f"${net:.2f}",
+                    f"${original_total:.2f}",
+                    f"+${add_total:.2f}" if add_total > 0 else "$0.00",
+                    f"-${abs(cancel_total):.2f}" if cancel_total else "$0.00",
+                    f"${net_total:.2f}",
                 ],
             ]
-            t = Table(data, colWidths=[
-                      1.3 * inch, 1.3 * inch, 1.3 * inch, 1.3 * inch, 1.3 * inch])
-            t.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-            ]))
-            elements.append(t)
+            table = Table(
+                data,
+                colWidths=[1.3 * inch, 1.3 * inch,
+                           1.3 * inch, 1.3 * inch, 1.3 * inch],
+            )
+            table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+                        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                    ]
+                )
+            )
+            elements.append(table)
             elements.append(Spacer(1, 0.1 * inch))
 
-        # Property subtotal
-        elements.append(Paragraph(
-            f"<b>Total for {addr}:</b> ${prop_total:.2f}",
-            styles["Normal"]
-        ))
+        elements.append(
+            Paragraph(
+                f"<b>Total for {address}:</b> ${property_total:.2f}", styles["Normal"])
+        )
         elements.append(Spacer(1, 0.3 * inch))
-        grand_total += prop_total
+        grand_total += property_total
 
-    # 🧮 Grand total
     elements.append(Spacer(1, 0.5 * inch))
     elements.append(
         Paragraph("<b>Grand Total Across All Properties</b>", styles["Heading3"]))
@@ -525,19 +511,26 @@ def download_yearly_summary_pdf(request):
     doc.build(elements)
     buffer.seek(0)
 
-    filename = f"Yearly_Summary_{request.user.username}_{timezone.now().year}.pdf"
+    filename = f"Yearly_Summary_{request.user.username}_{now().year}.pdf"
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
 
+# ----------------------------------------------------------------------
+# 🧾 All Payments (admin)
+# ----------------------------------------------------------------------
 @user_passes_test(lambda u: u.is_superuser)
 def all_payments_admin(request):
     payments = Payment.objects.select_related("user").order_by("-created_at")
     total_volume = payments.aggregate(Sum("amount"))["amount__sum"] or 0
 
-    return render(request, "billing/all_payments_admin.html", {
-        "payments": payments,
-        "total_volume": total_volume / 100,
-    })
+    return render(
+        request,
+        "billing/all_payments_admin.html",
+        {
+            "payments": payments,
+            "total_volume": total_volume / 100,
+        },
+    )
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -564,7 +557,6 @@ def stripe_webhook(request):
     Handles Stripe webhook events (mainly payment_intent.succeeded).
     Creates PaymentHistory entries and links them to Bookings for refund traceability.
     """
-
     from django.contrib.auth import get_user_model
 
     payload = request.body
@@ -581,13 +573,12 @@ def stripe_webhook(request):
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
         amount = Decimal(intent.get("amount_received", 0)) / Decimal("100")
-        md = intent.get("metadata", {}) or {}
+        metadata = intent.get("metadata", {}) or {}
 
-        user_id = md.get("user_id")
-        service_address = (md.get("service_address") or "").strip()
+        user_id = metadata.get("user_id")
+        service_address = (metadata.get("service_address") or "").strip()
         stripe_payment_id = intent.get("id")
 
-        # ✅ Resolve user & booking
         User = get_user_model()
         user = User.objects.filter(id=user_id).first()
 
@@ -595,11 +586,13 @@ def stripe_webhook(request):
             Booking.objects.filter(
                 user=user,
                 service_address__iexact=service_address,
-            ).order_by("-created_at").first()
-            if user else None
+            )
+            .order_by("-created_at")
+            .first()
+            if user
+            else None
         )
 
-        # ✅ Create PaymentHistory and link booking if found
         payment = PaymentHistory.objects.create(
             user=user,
             booking=booking,
@@ -613,7 +606,6 @@ def stripe_webhook(request):
             notes="Initial booking payment (via webhook)",
         )
 
-        # ✅ Back-link the booking for future refunds
         if booking:
             booking.primary_payment_record = payment
             booking.save(update_fields=["primary_payment_record"])
@@ -629,21 +621,19 @@ def stripe_webhook(request):
 
     return HttpResponse(status=200)
 
-# =========================================================
-#  CART VIEWS
-# =========================================================
 
-
+# =========================================================
+# CART VIEWS
+# =========================================================
+@login_required_json
 @require_POST
 def cart_add(request):
     """
     Adds a booking item to the cart.
     Clears cart if address in session differs from existing cart.
     """
-
     cart = _get_or_create_cart(request)
 
-    # 🔒 Ensure the session's address is locked to this cart
     service_address = request.session.get("service_address")
     cart_address = cart.address_key or ""
 
@@ -654,7 +644,7 @@ def cart_add(request):
         messages.warning(
             request,
             "Your previous cart was cleared because you selected a different service address. "
-            "Each session is tied to one address only."
+            "Each session is tied to one address only.",
         )
 
     employee_id = request.POST.get("employee_id")
@@ -665,15 +655,13 @@ def cart_add(request):
     if not all([employee_id, service_id, slot_id, date_str]):
         return JsonResponse({"ok": False, "error": "Missing parameters."}, status=400)
 
-    # ⏰ Parse date
-
     try:
         date_obj = dt.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         return JsonResponse({"ok": False, "error": "Bad date format."}, status=400)
 
-    # 🔍 Lookup related models
     from scheduling.models import Employee, ServiceCategory, TimeSlot
+
     try:
         employee = Employee.objects.get(pk=employee_id)
         service = ServiceCategory.objects.get(pk=service_id)
@@ -681,21 +669,20 @@ def cart_add(request):
     except (Employee.DoesNotExist, ServiceCategory.DoesNotExist, TimeSlot.DoesNotExist):
         return JsonResponse({"ok": False, "error": "Invalid reference."}, status=404)
 
-    # 💲 Compute pre-tax price (2h per slot)
     base_rate = Decimal(str(SERVICE_PRICES.get(service.name, 25.00)))
     hours = Decimal("2")
     unit_price_pre_tax = (base_rate * hours).quantize(Decimal("0.01"))
 
-    # --- Prevent mixing addresses within one session ---
     current_service_addr = request.session.get("service_address", "")
-    if cart.address_key and normalize_address(cart.address_key) != normalize_address(current_service_addr):
+    if cart.address_key and normalize_address(cart.address_key) != normalize_address(
+        current_service_addr
+    ):
         cart.items.all().delete()
         cart.address_key = current_service_addr
         cart.save(update_fields=["address_key"])
         print(
             f"⚠️ Cart cleared due to new service address: {current_service_addr}")
 
-    # 🧾 Add or update the cart item
     item, created = CartItem.objects.get_or_create(
         cart=cart,
         employee=employee,
@@ -708,21 +695,23 @@ def cart_add(request):
         item.unit_price = unit_price_pre_tax
         item.save(update_fields=["unit_price"])
 
-    # 🔄 Render updated cart partial
     html = render_to_string("billing/_cart.html",
                             {"cart": cart}, request=request)
     summary_text = f"({cart.items.count()}) - (${cart.total:.2f})"
 
-    return JsonResponse({
-        "ok": True,
-        "html": html,
-        "count": cart.items.count(),
-        "subtotal": f"{cart.subtotal:.2f}",
-        "total": f"{cart.total:.2f}",
-        "summary_text": summary_text,
-    })
+    return JsonResponse(
+        {
+            "ok": True,
+            "html": html,
+            "count": cart.items.count(),
+            "subtotal": f"{cart.subtotal:.2f}",
+            "total": f"{cart.total:.2f}",
+            "summary_text": summary_text,
+        }
+    )
 
 
+@login_required_json
 @require_POST
 def cart_remove(request):
     cart = _get_or_create_cart(request)
@@ -731,16 +720,19 @@ def cart_remove(request):
         item = cart.items.get(pk=item_id)
     except CartItem.DoesNotExist:
         return JsonResponse({"ok": False, "error": "Not found."}, status=404)
+
     item.delete()
-    html = render_to_string("billing/_cart.html",
-                            {"cart": cart}, request=request)
-    return JsonResponse({"ok": True,
-                         "html": render_to_string("billing/_cart.html", {"cart": cart}, request=request),
-                         "total": str(cart.total),
-                         "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"})
+    return JsonResponse(
+        {
+            "ok": True,
+            "html": render_to_string("billing/_cart.html", {"cart": cart}, request=request),
+            "total": str(cart.total),
+            "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})",
+        }
+    )
 
 
-@login_required
+@login_required_json
 @require_POST
 def remove_selected_from_cart(request):
     """
@@ -760,49 +752,42 @@ def remove_selected_from_cart(request):
     if not items.exists():
         return JsonResponse({"ok": False, "error": "No matching items found."})
 
-    # --- Remove associated bookings if they exist ---
     removed_count = 0
     for item in items:
         Booking.objects.filter(cart_item=item).delete()
         removed_count += 1
     items.delete()
 
-    # --- Recalculate totals and rebuild cart HTML ---
     cart.refresh_from_db()
 
     html = render_to_string("billing/_cart.html",
                             {"cart": cart}, request=request)
-    summary_text = f"{cart.items.count} item{'s' if cart.items.count != 1 else ''} in cart"
+    summary_text = f"{cart.items.count()} item{'s' if cart.items.count() != 1 else ''} in cart"
 
     messages.success(request, f"Removed {removed_count} service(s) from cart.")
     return JsonResponse({"ok": True, "html": html, "summary_text": summary_text})
 
 
 @login_required
+@verified_email_required
 def live_invoice_view(request, booking_id):
     """
     Loads the current live invoice for a given booking_id.
     Shows the existing services, cancellations, and additions
     before adjustments are finalized.
     """
-
     booking = get_object_or_404(Booking, pk=booking_id)
 
-    # Related payments for this user + service address
     payments = PaymentHistory.objects.filter(
         user=request.user,
-        service_address=booking.service_address
+        service_address=booking.service_address,
     ).order_by("-created_at")
 
-    # Initialize variables safely
     chain = None
-    root = None
 
     if payments.exists():
-        # Try to find the root; fallback to most recent payment
         root = payments.filter(parent__isnull=True).first() or payments.first()
 
-        # Defensive check before computing
         if hasattr(root, "compute_sections"):
             original_total, add_total, cancel_total, net_total = root.compute_sections()
             chain = {
@@ -811,26 +796,30 @@ def live_invoice_view(request, booking_id):
                 "add_total": add_total,
                 "cancel_total": cancel_total,
                 "net_total": net_total,
-                "added": [a for a in root.adjustments.all() if a.amount > 0],
-                "cancelled": [a for a in root.adjustments.all() if a.amount < 0],
+                "added": [adj for adj in root.adjustments.all() if adj.amount > 0],
+                "cancelled": [adj for adj in root.adjustments.all() if adj.amount < 0],
             }
         else:
             print(f"⚠️ root object has no compute_sections: {root}")
     else:
         print(f"⚠️ No PaymentHistory found for {booking.service_address}")
 
-    return render(request, "billing/live_invoice.html", {
-        "booking": booking,
-        "chain": chain,
-    })
+    return render(
+        request,
+        "billing/live_invoice.html",
+        {
+            "booking": booking,
+            "chain": chain,
+        },
+    )
 
 
 @login_required
+@verified_email_required
 def live_invoice_view_address(request, address):
     """
     Interactive 'live invoice' view showing all service items, refund eligibility,
     and running totals for a specific property address.
-    Divides items into Original bookings, Cancellations (refunds), and Added services.
     """
     from urllib.parse import unquote
     from django.utils import timezone
@@ -838,43 +827,42 @@ def live_invoice_view_address(request, address):
 
     address = unquote(address)
 
-    # ✅ Fetch all bookings for this address and user
     bookings = Booking.objects.filter(
         user=request.user,
-        service_address__iexact=address
+        service_address__iexact=address,
     ).order_by("date", "time_slot__label")
 
-    # ✅ Fetch all related payments
     payments = PaymentHistory.objects.filter(
         user=request.user,
-        service_address__iexact=address
+        service_address__iexact=address,
     ).order_by("created_at")
 
-    # ✅ Sectionize bookings
     bookings_original = bookings.filter(status="Booked")
     bookings_cancelled = bookings.filter(status="Cancelled")
-    # Heuristic for "added" (later-created bookings that aren’t cancellations)
+
     latest_payment = payments.last()
     if latest_payment:
         bookings_added = bookings.filter(
-            created_at__gt=latest_payment.created_at, status="Booked")
+            created_at__gt=latest_payment.created_at,
+            status="Booked",
+        )
     else:
         bookings_added = Booking.objects.none()
 
-    # ✅ Compute refund eligibility and completion status
-    today = timezone.now().date()
-
-    def annotate_booking(b):
+    def annotate_booking(booking):
         status, refund_pct = get_refund_policy(
-            datetime.combine(b.date, datetime.min.time(),
-                             tzinfo=timezone.get_current_timezone())
+            dt.combine(
+                booking.date,
+                dt.min.time(),
+                tzinfo=timezone.get_current_timezone(),
+            )
         )
         return {
-            "id": b.id,
-            "date": b.date,
-            "service": str(b.service_category),
-            "time_slot": getattr(b.time_slot, "label", ""),
-            "price": float(getattr(b, "unit_price", 0)),
+            "id": booking.id,
+            "date": booking.date,
+            "service": str(booking.service_category),
+            "time_slot": getattr(booking.time_slot, "label", ""),
+            "price": float(getattr(booking, "unit_price", 0)),
             "status": status,
             "refund_pct": refund_pct,
             "is_completed": status == "Locked",
@@ -884,22 +872,26 @@ def live_invoice_view_address(request, address):
     bookings_cancelled = [annotate_booking(b) for b in bookings_cancelled]
     bookings_added = [annotate_booking(b) for b in bookings_added]
 
-    # ✅ Totals
-    paid_total = sum(p.amount for p in payments if p.amount > 0)
-    refund_total = abs(sum(p.amount for p in payments if p.amount < 0))
+    paid_total = sum(
+        payment.amount for payment in payments if payment.amount > 0)
+    refund_total = abs(
+        sum(payment.amount for payment in payments if payment.amount < 0))
     net_total = paid_total - refund_total
 
-    # ✅ Render structured context
-    return render(request, "billing/live_invoice.html", {
-        "address": address,
-        "bookings_original": bookings_original,
-        "bookings_cancelled": bookings_cancelled,
-        "bookings_added": bookings_added,
-        "payments": payments,
-        "paid_total": paid_total,
-        "refund_total": refund_total,
-        "net_total": net_total,
-    })
+    return render(
+        request,
+        "billing/live_invoice.html",
+        {
+            "address": address,
+            "bookings_original": bookings_original,
+            "bookings_cancelled": bookings_cancelled,
+            "bookings_added": bookings_added,
+            "payments": payments,
+            "paid_total": paid_total,
+            "refund_total": refund_total,
+            "net_total": net_total,
+        },
+    )
 
 
 @login_required
@@ -910,7 +902,6 @@ def cancel_selected_services(request):
     Cancels selected bookings, issues Stripe refunds (if available),
     records refund entries in PaymentHistory, and updates booking statuses.
     """
-
     stripe.api_key = settings.STRIPE_SECRET_KEY
     selected_ids = request.POST.getlist("selected_bookings")
 
@@ -918,14 +909,14 @@ def cancel_selected_services(request):
         messages.warning(request, "No services selected for cancellation.")
         return redirect("billing:payment_history")
 
-    for bid in selected_ids:
+    for booking_id in selected_ids:
         try:
-            booking = Booking.objects.get(id=bid, user=request.user)
+            booking = Booking.objects.get(id=booking_id, user=request.user)
         except Booking.DoesNotExist:
-            print(f"⚠️ Booking {bid} not found for {request.user.username}")
+            print(
+                f"⚠️ Booking {booking_id} not found for {request.user.username}")
             continue
 
-        # ✅ Find root payment record (either direct or via address fallback)
         root_payment = (
             PaymentHistory.objects.filter(
                 user=request.user,
@@ -936,18 +927,19 @@ def cancel_selected_services(request):
                 user=request.user,
                 service_address__iexact=booking.service_address,
                 parent__isnull=True,
-            ).order_by("-created_at").first()
+            )
+            .order_by("-created_at")
+            .first()
         )
 
         if not root_payment:
-            print(f"⚠️ No payment record found for booking {bid}")
+            print(f"⚠️ No payment record found for booking {booking_id}")
             continue
 
         refund_amt = booking.total_amount or Decimal("0.00")
         refund_status = "Cancelled"
 
         try:
-            # ✅ Stripe refund attempt
             if root_payment.stripe_payment_id:
                 stripe.Refund.create(
                     payment_intent=root_payment.stripe_payment_id,
@@ -959,7 +951,6 @@ def cancel_selected_services(request):
                 print(
                     "⚠️ Missing Stripe payment ID; recorded as manual cancellation only.")
 
-            # ✅ Record refund entry
             refund_entry = PaymentHistory.objects.create(
                 user=request.user,
                 parent=root_payment,
@@ -975,32 +966,30 @@ def cancel_selected_services(request):
                 service_address=booking.service_address,
             )
 
-            # ✅ Update booking status and log
             booking.status = "Cancelled"
             booking.save(update_fields=["status"])
             print(
                 f"✅ Booking {booking.id} cancelled — Refund record #{refund_entry.id}")
 
-            # ✅ Send refund confirmation email
             try:
                 from billing.utils import send_refund_confirmation_email
-                send_refund_confirmation_email(
-                    request.user, refund_entry)
+
+                send_refund_confirmation_email(request.user, refund_entry)
             except Exception as e:
                 print(f"⚠️ Refund email failed: {e}")
 
         except Exception as e:
-            print(f"❌ Refund failed for booking {bid}: {e}")
+            print(f"❌ Refund failed for booking {booking_id}: {e}")
             messages.error(
                 request, f"Refund failed for {booking.service_address}")
 
     messages.success(
         request, "Selected services have been cancelled and refunded.")
-
     return redirect(reverse("billing:payment_history") + f"?t={now().timestamp()}")
 
 
 @login_required
+@verified_email_required
 @require_POST
 def add_service_adjustment(request):
     """
@@ -1010,9 +999,6 @@ def add_service_adjustment(request):
     - Always recorded in PaymentHistory and linked to the booking
     - Works in Stripe sandbox mode (no live account needed)
     """
-
-    from django.db import transaction
-
     booking_id = request.POST.get("booking_id")
     delta_amount = Decimal(request.POST.get("delta_amount") or "0.00")
     note = (request.POST.get("note") or "Service adjustment").strip()
@@ -1032,7 +1018,6 @@ def add_service_adjustment(request):
 
     try:
         if delta_amount > 0:
-            # Simulated additional charge
             payment_intent = stripe.PaymentIntent.create(
                 amount=int(delta_amount * 100),
                 currency="usd",
@@ -1041,10 +1026,9 @@ def add_service_adjustment(request):
             )
             stripe_charge = payment_intent.id
         else:
-            # Simulated refund (sandbox)
             last_payment = (
-                PaymentHistory.objects
-                .filter(linked_bookings=booking, amount__gt=0)
+                PaymentHistory.objects.filter(
+                    linked_bookings=booking, amount__gt=0)
                 .order_by("-created_at")
                 .first()
             )
@@ -1057,7 +1041,6 @@ def add_service_adjustment(request):
     except stripe.error.StripeError as e:
         stripe_error = str(e)
 
-    # --- Record adjustment ---
     with transaction.atomic():
         adj_entry = PaymentHistory.objects.create(
             user=request.user,
@@ -1111,8 +1094,7 @@ def submit_adjustment(request):
     except Exception as e:
         return JsonResponse({"ok": False, "error": f"Invalid selection: {e}"})
 
-    # Create child adjustment
-    child = PaymentHistory.objects.create(
+    PaymentHistory.objects.create(
         user=request.user,
         parent=parent,
         service_address=booking.service_address,
@@ -1123,7 +1105,6 @@ def submit_adjustment(request):
     )
     parent.refresh_from_db()
 
-    # Determine payment direction
     if delta > 0:
         message = f"Additional service (${delta}) added. Proceed to checkout."
         next_step = reverse("billing:checkout")
@@ -1132,32 +1113,38 @@ def submit_adjustment(request):
         next_step = reverse("billing:payment_history")
     else:
         message = "No change."
+        next_step = reverse("billing:payment_history")
 
-    return JsonResponse({
-        "ok": True,
-        "message": message,
-        "redirect": next_step,
-    })
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": message,
+            "redirect": next_step,
+        }
+    )
 
 
+@login_required_json
 @require_POST
 def cart_clear(request):
     cart = _get_or_create_cart(request)
     cart.items.all().delete()
-    html = render_to_string("billing/_cart.html",
-                            {"cart": cart}, request=request)
-    return JsonResponse({"ok": True,
-                         "html": render_to_string("billing/_cart.html", {"cart": cart}, request=request),
-                         "count": 0,
-                         "total": "0.00",
-                         "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})"
-                         })
+    return JsonResponse(
+        {
+            "ok": True,
+            "html": render_to_string("billing/_cart.html", {"cart": cart}, request=request),
+            "count": 0,
+            "total": "0.00",
+            "summary_text": f"({cart.items.count()}) – (${cart.total:.2f})",
+        }
+    )
 
 
+@login_required
 def cart_detail(request):
     """Optional full-page cart view (non-AJAX)."""
     cart = _get_or_create_cart(request)
-    get_token(request)  # ensure CSRF cookie
+    get_token(request)
     return render(request, "billing/_cart.html", {"cart": cart})
 
 
@@ -1187,7 +1174,6 @@ def payment_success(request):
             or "Unknown"
         ).strip()
 
-        # ✅ Create root payment record
         payment_record = PaymentHistory.objects.create(
             user=request.user,
             amount=cart.total,
@@ -1215,26 +1201,21 @@ def payment_success(request):
             )
             created_bookings.append(booking)
 
-        # ✅ M2M link remains for grouping
         if created_bookings:
             payment_record.linked_bookings.add(*created_bookings)
             payment_record.save()
 
-        # ✅ Clear cart
         cart.items.all().delete()
         cart.delete()
         request.session.pop("cart_id", None)
 
-        # ✅ Send email receipt
         try:
             send_payment_receipt_email(
-                request.user, payment_record, created_bookings, request
-            )
+                request.user, payment_record, created_bookings, request)
             print(f"📧 Sent receipt to {request.user.email}")
         except Exception as e:
             print(f"⚠️ Payment receipt email failed: {e}")
 
-        # ✅ Success redirect so page refreshes properly
         messages.success(
             request, "Payment successful! Your booking has been confirmed.")
         return redirect("billing:payment_history")
@@ -1266,29 +1247,29 @@ def payment_history(request):
             models.Q(id=root.id) | models.Q(parent=root)
         ).order_by("created_at")
 
-        related_bookings = Booking.objects.filter(
-            primary_payment_record=root
-        ).select_related(
-            "service_category",
-            "time_slot",
-            "employee",
-        ).order_by("date", "time_slot__label")
+        related_bookings = (
+            Booking.objects.filter(primary_payment_record=root)
+            .select_related("service_category", "time_slot", "employee")
+            .order_by("date", "time_slot__label")
+        )
 
         original_total, add_total, cancel_total, net_total = root.compute_sections()
 
-        cards.append({
-            "address": root.service_address,
-            "stripe_payment_id": root.stripe_payment_id or "N/A",
-            "root": root,
-            "entries": related_entries,
-            "bookings": related_bookings,
-            "original_total": original_total,
-            "add_total": add_total,
-            "cancel_total": cancel_total,
-            "net_total": net_total,
-            "added": root.adjustments.filter(amount__gt=0),
-            "cancelled": root.adjustments.filter(amount__lt=0),
-        })
+        cards.append(
+            {
+                "address": root.service_address,
+                "stripe_payment_id": root.stripe_payment_id or "N/A",
+                "root": root,
+                "entries": related_entries,
+                "bookings": related_bookings,
+                "original_total": original_total,
+                "add_total": add_total,
+                "cancel_total": cancel_total,
+                "net_total": net_total,
+                "added": root.adjustments.filter(amount__gt=0),
+                "cancelled": root.adjustments.filter(amount__lt=0),
+            }
+        )
 
     print(
         f"DEBUG: Found {len(cards)} grouped property cards for {user.username}")
