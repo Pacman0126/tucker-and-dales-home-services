@@ -4,7 +4,7 @@ from . import views
 app_name = "billing"
 
 urlpatterns = [
-    # 💳 Checkout & Payments
+    # Checkout & Payments
     path("adjustment/add/", views.add_service_adjustment,
          name="add_service_adjustment"),
     path("checkout/", views.checkout, name="checkout"),
@@ -20,23 +20,22 @@ urlpatterns = [
          views.live_invoice_view, name="live_invoice_view"),
     path("invoice/<path:address>/", views.live_invoice_view_address,
          name="live_invoice_view_address"),
-
-
     path("submit-adjustment/", views.submit_adjustment, name="submit_adjustment"),
     path("summary/pdf/", views.download_yearly_summary_pdf,
          name="download_yearly_summary_pdf"),
-
     path("receipt/pdf/<int:pk>/", views.download_receipt_pdf,
          name="download_receipt_pdf"),
 
-    # 🛒 Cart
+    # Cart
     path("cart/add/", views.cart_add, name="cart_add"),
     path("cart/remove/", views.cart_remove, name="cart_remove"),
     path("cart/remove-selected/", views.remove_selected_from_cart,
          name="remove_selected_from_cart"),
+    path("cart/remove-selected/", views.remove_selected_from_cart,
+         name="cart_remove_selected"),  # optional alias
     path("cart/clear/", views.cart_clear, name="cart_clear"),
 
-    # 🧾 Admin & Stripe Webhooks
+    # Admin & Stripe Webhooks
     path("admin/all-payments/", views.all_payments_admin,
          name="all_payments_admin"),
     path("admin/refund/<int:pk>/", views.refund_payment, name="refund_payment"),

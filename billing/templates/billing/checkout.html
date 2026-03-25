@@ -12,8 +12,7 @@
 
     <div class="card-body">
       {% if cart and cart.items.exists %}
-      <form id="cart-update-form" method="post">
-        {% csrf_token %}
+        <!-- Cart table + remove-selected controls -->
         <div class="table-responsive">
           <table class="table align-middle table-hover">
             <thead>
@@ -39,7 +38,6 @@
           </table>
         </div>
 
-        <!-- Totals -->
         <div class="border-top pt-3 mt-2">
           <div class="d-flex justify-content-between">
             <span>Subtotal:</span>
@@ -55,11 +53,10 @@
           </div>
         </div>
 
-        <!-- Buttons -->
         <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
           <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="selectAll">
-            <label for="selectAll" class="form-check-label small">Select All</label>
+            <input type="checkbox" class="form-check-input" id="selectAllBottom">
+            <label for="selectAllBottom" class="form-check-label small">Select All</label>
           </div>
 
           <div class="d-flex gap-2 ms-auto">
@@ -71,18 +68,21 @@
               <i class="bi bi-arrow-left-circle"></i> Back to Search
             </a>
 
-            <button type="button" class="btn btn-success" id="proceed-checkout">
-              <i class="bi bi-credit-card"></i> Proceed to Payment
-            </button>
+            <!-- Separate, standalone Stripe form -->
+            <form method="post" action="{% url 'billing:create_checkout_session' %}" class="d-inline m-0">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-credit-card"></i> Proceed to Payment
+              </button>
+            </form>
           </div>
         </div>
-      </form>
 
       {% else %}
       <div class="alert alert-info text-center mb-0">
         Your cart is empty.
         <div class="mt-3">
-          <a href="{% url 'scheduling:search_timeslot' %}" class="btn btn-outline-success">
+          <a href="{% url 'scheduling:search_by_time_slot' %}" class="btn btn-outline-success">
             <i class="bi bi-search"></i> Go to Search
           </a>
         </div>
@@ -93,39 +93,70 @@
 </div>
 
 <script>
-(function(){
-  const csrftoken=document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1]||"";
+(function () {
+  const csrftoken =
+    document.cookie.split("; ").find(r => r.startsWith("csrftoken="))?.split("=")[1] || "";
 
-  // ✅ Select All
-  document.addEventListener("change", e=>{
-    if(e.target.id==="selectAll"){
-      document.querySelectorAll('input[name="selected_items"]').forEach(cb=>cb.checked=e.target.checked);
-    }
+  function syncSelectAll(sourceChecked) {
+    document.querySelectorAll('input[name="selected_items"]').forEach(cb => {
+      cb.checked = sourceChecked;
+    });
+    const top = document.getElementById("selectAll");
+    const bottom = document.getElementById("selectAllBottom");
+    if (top) top.checked = sourceChecked;
+    if (bottom) bottom.checked = sourceChecked;
+  }
+
+  document.getElementById("selectAll")?.addEventListener("change", e => {
+    syncSelectAll(e.target.checked);
   });
 
-  // ✅ Remove selected items
-  document.getElementById("remove-selected")?.addEventListener("click", async ()=>{
-    const selected=[...document.querySelectorAll('input[name="selected_items"]:checked')].map(cb=>cb.value);
-    if(!selected.length){ alert("Select at least one item to remove."); return; }
+  document.getElementById("selectAllBottom")?.addEventListener("change", e => {
+    syncSelectAll(e.target.checked);
+  });
 
-    if(!confirm("Remove selected items from cart?")) return;
+  document.getElementById("remove-selected")?.addEventListener("click", async () => {
+    const selected = [...document.querySelectorAll('input[name="selected_items"]:checked')]
+      .map(cb => cb.value);
 
-    for(const id of selected){
-      await fetch("{% url 'billing:cart_remove' %}",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/x-www-form-urlencoded;charset=UTF-8",
-          "X-CSRFToken":csrftoken
-        },
-        body:new URLSearchParams({ item_id:id })
-      });
+    if (!selected.length) {
+      alert("Select at least one item to remove.");
+      return;
     }
+
+    if (!confirm("Remove selected items from cart?")) return;
+
+    const resp = await fetch("{% url 'billing:remove_selected_from_cart' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        "X-CSRFToken": csrftoken,
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json"
+      },
+      body: new URLSearchParams(
+        selected.flatMap(id => [["selected_items", id]])
+      )
+    });
+
+    if (resp.status === 401) {
+      const result = await resp.json();
+      alert(result.error || "Please log in to continue.");
+      window.location.href = result.redirect_url || "{% url 'account_login' %}";
+      return;
+    }
+
+    if (!resp.ok) {
+      let errorMessage = "Failed to remove selected items.";
+      try {
+        const result = await resp.json();
+        errorMessage = result.error || errorMessage;
+      } catch (_) {}
+      alert(errorMessage);
+      return;
+    }
+
     location.reload();
-  });
-
-  // ✅ Proceed to checkout Stripe flow
-  document.getElementById("proceed-checkout")?.addEventListener("click",()=>{
-    window.location.href="{% url 'billing:create_checkout_session' %}";
   });
 })();
 </script>

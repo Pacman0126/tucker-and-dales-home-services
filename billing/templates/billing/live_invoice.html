@@ -115,7 +115,7 @@
             <td>{{ b.service }}</td>
             <td>{{ b.time_slot }}</td>
             <td><span class="badge bg-danger">Cancelled</span></td>
-            <td class="text-end">-${{ b.price|floatformat:2 }}</td>
+            <td class="text-end">-${{ b.refund_amount|floatformat:2 }}</td>
           </tr>
           {% endfor %}
         </tbody>

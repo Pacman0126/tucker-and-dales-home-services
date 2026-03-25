@@ -218,6 +218,10 @@ def create_checkout_session(request):
     total = cart.total
     service_address = request.session.get("service_address", "")
 
+    # Keep the session aligned with what payment_success expects.
+    request.session["cart_id"] = cart.pk
+    request.session.modified = True
+
     success_url = (
         request.build_absolute_uri(reverse("billing:payment_success"))
         + "?session_id={CHECKOUT_SESSION_ID}"
@@ -582,6 +586,16 @@ def stripe_webhook(request):
         User = get_user_model()
         user = User.objects.filter(id=user_id).first()
 
+        # Idempotency: Stripe may retry webhooks.
+        existing_payment = PaymentHistory.objects.filter(
+            stripe_payment_id=stripe_payment_id,
+            parent__isnull=True,
+        ).first()
+        if existing_payment:
+            print(
+                f"ℹ️ Webhook skipped duplicate PaymentHistory for {stripe_payment_id}")
+            return HttpResponse(status=200)
+
         booking = (
             Booking.objects.filter(
                 user=user,
@@ -607,7 +621,7 @@ def stripe_webhook(request):
         )
 
         if booking:
-            booking.primary_payment_record = payment
+            booking.primary_payment_record_id = payment.id
             booking.save(update_fields=["primary_payment_record"])
 
         print(
@@ -736,36 +750,42 @@ def cart_remove(request):
 @require_POST
 def remove_selected_from_cart(request):
     """
-    Removes selected cart items and any linked scheduling records.
-    Triggered by 'Remove Selected' button in _cart.html.
+    Removes selected cart items from the user's current cart.
+    Cart items are pre-payment only, so this should not touch Booking rows.
     """
     selected_ids = request.POST.getlist("selected_items")
 
     if not selected_ids:
-        return JsonResponse({"ok": False, "error": "No items selected."})
+        return JsonResponse({"ok": False, "error": "No items selected."}, status=400)
 
     cart = Cart.objects.filter(user=request.user).first()
     if not cart:
-        return JsonResponse({"ok": False, "error": "Cart not found."})
+        return JsonResponse({"ok": False, "error": "Cart not found."}, status=404)
 
     items = CartItem.objects.filter(id__in=selected_ids, cart=cart)
     if not items.exists():
-        return JsonResponse({"ok": False, "error": "No matching items found."})
+        return JsonResponse({"ok": False, "error": "No matching items found."}, status=404)
 
-    removed_count = 0
-    for item in items:
-        Booking.objects.filter(cart_item=item).delete()
-        removed_count += 1
+    removed_count = items.count()
     items.delete()
 
     cart.refresh_from_db()
 
     html = render_to_string("billing/_cart.html",
                             {"cart": cart}, request=request)
-    summary_text = f"{cart.items.count()} item{'s' if cart.items.count() != 1 else ''} in cart"
+    summary_text = f"({cart.items.count()}) – (${cart.total:.2f})"
 
     messages.success(request, f"Removed {removed_count} service(s) from cart.")
-    return JsonResponse({"ok": True, "html": html, "summary_text": summary_text})
+    return JsonResponse(
+        {
+            "ok": True,
+            "html": html,
+            "count": cart.items.count(),
+            "subtotal": f"{cart.subtotal:.2f}",
+            "total": f"{cart.total:.2f}",
+            "summary_text": summary_text,
+        }
+    )
 
 
 @login_required
@@ -849,21 +869,61 @@ def live_invoice_view_address(request, address):
     else:
         bookings_added = Booking.objects.none()
 
-    def annotate_booking(booking):
-        status, refund_pct = get_refund_policy(
-            dt.combine(
-                booking.date,
-                dt.min.time(),
-                tzinfo=timezone.get_current_timezone(),
+    def get_booking_dt(booking):
+        """
+        Build the real booking datetime using the slot start time when possible.
+        Falls back to midnight if parsing fails.
+        """
+        try:
+            slot_label = getattr(booking.time_slot, "label", "") or ""
+            start_str = slot_label.split("–")[0].split("-")[0].strip()
+            start_time = dt.strptime(start_str, "%H:%M").time()
+            return timezone.make_aware(
+                dt.combine(booking.date, start_time),
+                timezone.get_current_timezone(),
             )
+        except Exception:
+            return timezone.make_aware(
+                dt.combine(booking.date, dt.min.time()),
+                timezone.get_current_timezone(),
+            )
+
+    def get_refund_amount_for_booking(booking):
+        """
+        Find the latest negative PaymentHistory adjustment linked to this booking.
+        Returns a positive display amount like 30.00, or 0.00 if none exists.
+        """
+        refund_entry = (
+            PaymentHistory.objects.filter(
+                user=request.user,
+                booking=booking,
+                amount__lt=0,
+            )
+            .order_by("-created_at")
+            .first()
         )
+        if refund_entry:
+            return abs(refund_entry.amount)
+        return Decimal("0.00")
+
+    def annotate_booking(booking):
+        booking_dt = get_booking_dt(booking)
+        status, refund_pct = get_refund_policy(booking_dt)
+
+        refund_amount = (
+            get_refund_amount_for_booking(booking)
+            if booking.status == "Cancelled"
+            else Decimal("0.00")
+        )
+
         return {
             "id": booking.id,
             "date": booking.date,
             "service": str(booking.service_category),
             "time_slot": getattr(booking.time_slot, "label", ""),
             "price": float(getattr(booking, "unit_price", 0)),
-            "status": status,
+            "refund_amount": float(refund_amount),
+            "status": status if booking.status != "Cancelled" else "Cancelled",
             "refund_pct": refund_pct,
             "is_completed": status == "Locked",
         }
@@ -873,9 +933,11 @@ def live_invoice_view_address(request, address):
     bookings_added = [annotate_booking(b) for b in bookings_added]
 
     paid_total = sum(
-        payment.amount for payment in payments if payment.amount > 0)
+        payment.amount for payment in payments if payment.amount > 0
+    )
     refund_total = abs(
-        sum(payment.amount for payment in payments if payment.amount < 0))
+        sum(payment.amount for payment in payments if payment.amount < 0)
+    )
     net_total = paid_total - refund_total
 
     return render(
@@ -899,23 +961,54 @@ def live_invoice_view_address(request, address):
 @require_POST
 def cancel_selected_services(request):
     """
-    Cancels selected bookings, issues Stripe refunds (if available),
-    records refund entries in PaymentHistory, and updates booking statuses.
+    Cancels selected bookings, applies the refund policy,
+    issues Stripe refunds when applicable, records child PaymentHistory entries,
+    and updates booking statuses.
     """
     stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    from billing.utils import get_refund_policy
+    from django.utils import timezone
+
     selected_ids = request.POST.getlist("selected_bookings")
 
     if not selected_ids:
         messages.warning(request, "No services selected for cancellation.")
         return redirect("billing:payment_history")
 
+    cancelled_count = 0
+    refunded_count = 0
+    locked_count = 0
+
     for booking_id in selected_ids:
         try:
-            booking = Booking.objects.get(id=booking_id, user=request.user)
+            booking = Booking.objects.select_related("time_slot").get(
+                id=booking_id,
+                user=request.user,
+            )
         except Booking.DoesNotExist:
             print(
                 f"⚠️ Booking {booking_id} not found for {request.user.username}")
             continue
+
+        # Build booking datetime from booking.date + timeslot start time
+        booking_dt = None
+        try:
+            slot_label = getattr(booking.time_slot, "label", "") or ""
+            start_str = slot_label.split("–")[0].split("-")[0].strip()
+            start_time = dt.strptime(start_str, "%H:%M").time()
+            booking_dt = timezone.make_aware(
+                dt.combine(booking.date, start_time),
+                timezone.get_current_timezone(),
+            )
+        except Exception:
+            # Fallback: use date-only policy if timeslot parsing fails
+            booking_dt = timezone.make_aware(
+                dt.combine(booking.date, dt.min.time()),
+                timezone.get_current_timezone(),
+            )
+
+        refund_label, refund_pct = get_refund_policy(booking_dt)
 
         root_payment = (
             PaymentHistory.objects.filter(
@@ -927,29 +1020,60 @@ def cancel_selected_services(request):
                 user=request.user,
                 service_address__iexact=booking.service_address,
                 parent__isnull=True,
-            )
-            .order_by("-created_at")
-            .first()
+            ).order_by("-created_at").first()
         )
 
         if not root_payment:
             print(f"⚠️ No payment record found for booking {booking_id}")
             continue
 
-        refund_amt = booking.total_amount or Decimal("0.00")
+        original_amt = booking.total_amount or Decimal("0.00")
+        refund_amt = (
+            original_amt * Decimal(refund_pct) / Decimal("100")
+        ).quantize(Decimal("0.01"))
+        penalty_amt = (original_amt - refund_amt).quantize(Decimal("0.01"))
+
+        # Locked = no refund and do not cancel
+        if refund_pct == 0:
+            print(
+                f"⛔ Booking {booking.id} is locked; no cancellation allowed.")
+            locked_count += 1
+            messages.warning(
+                request,
+                f"{booking.service_category} on {booking.date} can no longer be cancelled.",
+            )
+            continue
+
         refund_status = "Cancelled"
 
         try:
-            if root_payment.stripe_payment_id:
+            # Only talk to Stripe if there is money to refund
+            if refund_amt > 0 and root_payment.stripe_payment_id:
                 stripe.Refund.create(
                     payment_intent=root_payment.stripe_payment_id,
                     amount=int(refund_amt * 100),
                 )
                 refund_status = "Refunded"
-                print(f"💸 Stripe refund successful for ${refund_amt}")
+                refunded_count += 1
+                print(
+                    f"💸 Stripe refund successful for booking {booking.id}: "
+                    f"${refund_amt} ({refund_pct}% refund)"
+                )
             else:
                 print(
-                    "⚠️ Missing Stripe payment ID; recorded as manual cancellation only.")
+                    f"⚠️ No Stripe refund issued for booking {booking.id}. "
+                    f"refund_amt={refund_amt}, stripe_payment_id={root_payment.stripe_payment_id}"
+                )
+
+            if refund_pct == 100:
+                note = "Service cancelled and fully refunded"
+            elif refund_pct == 50:
+                note = (
+                    "Late cancellation inside 72 hours: 50% refunded, "
+                    f"50% penalty retained (${penalty_amt:.2f})"
+                )
+            else:
+                note = "Service cancelled"
 
             refund_entry = PaymentHistory.objects.create(
                 user=request.user,
@@ -958,22 +1082,21 @@ def cancel_selected_services(request):
                 amount=-refund_amt,
                 adjustments_total_amt=Decimal("0.00"),
                 status=refund_status,
-                notes=(
-                    "Service cancelled and refunded"
-                    if refund_status == "Refunded"
-                    else "Service cancelled"
-                ),
+                notes=note,
                 service_address=booking.service_address,
             )
 
             booking.status = "Cancelled"
             booking.save(update_fields=["status"])
+            cancelled_count += 1
+
             print(
-                f"✅ Booking {booking.id} cancelled — Refund record #{refund_entry.id}")
+                f"✅ Booking {booking.id} cancelled — "
+                f"Refund record #{refund_entry.id} (${refund_amt:.2f}, {refund_pct}%)"
+            )
 
             try:
                 from billing.utils import send_refund_confirmation_email
-
                 send_refund_confirmation_email(request.user, refund_entry)
             except Exception as e:
                 print(f"⚠️ Refund email failed: {e}")
@@ -981,10 +1104,23 @@ def cancel_selected_services(request):
         except Exception as e:
             print(f"❌ Refund failed for booking {booking_id}: {e}")
             messages.error(
-                request, f"Refund failed for {booking.service_address}")
+                request,
+                f"Refund failed for {booking.service_category} on {booking.date}.",
+            )
 
-    messages.success(
-        request, "Selected services have been cancelled and refunded.")
+    if cancelled_count:
+        messages.success(
+            request,
+            f"{cancelled_count} service(s) cancelled. "
+            f"{refunded_count} refund(s) processed."
+        )
+
+    if locked_count:
+        messages.warning(
+            request,
+            f"{locked_count} service(s) were inside the non-cancellable window."
+        )
+
     return redirect(reverse("billing:payment_history") + f"?t={now().timestamp()}")
 
 
@@ -1152,17 +1288,16 @@ def cart_detail(request):
 @verified_email_required
 def payment_success(request):
     """
-    Handle successful Stripe payment:
-    - Create PaymentHistory record
-    - Persist all CartItems as Bookings
-    - Link each booking to this PaymentHistory
-    - Clear the cart
-    - Send confirmation email
-    - Render success page
+    Finalizes a successful Stripe checkout:
+    - creates a root PaymentHistory record
+    - converts CartItems into Bookings
+    - links bookings back to the payment record
+    - clears the cart
+    - emails a receipt
     """
     try:
         cart_id = request.session.get("cart_id")
-        cart = Cart.objects.filter(pk=cart_id, user=request.user).first()
+        cart = Cart.objects.filter(id=cart_id, user=request.user).first()
 
         if not cart or not cart.items.exists():
             messages.error(request, "Your cart is empty or expired.")
@@ -1192,6 +1327,7 @@ def payment_success(request):
                 user=request.user,
                 service_address=service_address,
                 service_category=item.service_category,
+                employee=item.employee,   # ✅ carry employee across
                 date=item.date,
                 time_slot=item.time_slot,
                 unit_price=item.unit_price,
@@ -1211,13 +1347,15 @@ def payment_success(request):
 
         try:
             send_payment_receipt_email(
-                request.user, payment_record, created_bookings, request)
+                request.user, payment_record, created_bookings, request
+            )
             print(f"📧 Sent receipt to {request.user.email}")
         except Exception as e:
             print(f"⚠️ Payment receipt email failed: {e}")
 
         messages.success(
-            request, "Payment successful! Your booking has been confirmed.")
+            request, "Payment successful! Your booking has been confirmed."
+        )
         return redirect("billing:payment_history")
 
     except Exception as e:

@@ -34,3 +34,39 @@ def cart_context(request):
         pass  # Ignore errors if cart/session not initialized
 
     return {"cart_summary": cart_data}
+
+
+def cart_badge(request):
+    """
+    Global cart summary for navbar badge / booking summary.
+    Keeps badge consistent across all pages and search modes.
+    """
+    cart = None
+
+    if request.user.is_authenticated:
+        cart = (
+            Cart.objects.filter(user=request.user)
+            .prefetch_related("items")
+            .order_by("-updated_at")
+            .first()
+        )
+    else:
+        session_key = request.session.session_key
+        if session_key:
+            cart = (
+                Cart.objects.filter(session_key=session_key)
+                .prefetch_related("items")
+                .order_by("-updated_at")
+                .first()
+            )
+
+    if not cart:
+        return {
+            "cart_item_count": 0,
+            "cart_total": Decimal("0.00"),
+        }
+
+    return {
+        "cart_item_count": cart.items.count(),
+        "cart_total": cart.total,
+    }
