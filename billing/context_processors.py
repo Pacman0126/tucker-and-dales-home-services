@@ -38,27 +38,16 @@ def cart_context(request):
 
 def cart_badge(request):
     """
-    Global cart summary for navbar badge / booking summary.
-    Keeps badge consistent across all pages and search modes.
+    Global navbar cart summary.
+    Uses the same cart resolution logic as the booking flow.
     """
-    cart = None
-
-    if request.user.is_authenticated:
-        cart = (
-            Cart.objects.filter(user=request.user)
-            .prefetch_related("items")
-            .order_by("-updated_at")
-            .first()
-        )
-    else:
-        session_key = request.session.session_key
-        if session_key:
-            cart = (
-                Cart.objects.filter(session_key=session_key)
-                .prefetch_related("items")
-                .order_by("-updated_at")
-                .first()
-            )
+    try:
+        cart = _get_or_create_cart(request)
+    except Exception:
+        return {
+            "cart_item_count": 0,
+            "cart_total": Decimal("0.00"),
+        }
 
     if not cart:
         return {
