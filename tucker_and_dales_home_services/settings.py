@@ -31,10 +31,20 @@ SITE_ID = env.int("SITE_ID", default=1)
 SECRET_KEY = env("SECRET_KEY", default="dev-insecure-secret-key-change-me")
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list(
-    "ALLOWED_HOSTS",
-    default=["127.0.0.1", "localhost"],
-)
+# ALLOWED_HOSTS = env.list(
+#     "ALLOWED_HOSTS",
+#     default=["127.0.0.1", "localhost"],
+# )
+
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = [
+        "127.0.0.1",
+        "localhost",
+        ".herokuapp.com",
+        "tucker-and-dales-home-services-51862a9ae5a8.herokuapp.com",
+    ]
 
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS",
