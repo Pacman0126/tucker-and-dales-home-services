@@ -57,7 +57,7 @@ def custom_404(request, exception):
 
 
 def custom_500(request):
-    return HttpResponse("CUSTOM 500 WORKING", status=500)
+    return render(request, "errors/500.html", status=500)
 
 
 def custom_logout(request):
@@ -83,3 +83,7 @@ def newsletter_send_now(request):
     from django.core.management import call_command
     call_command("send_monthly_newsletter")
     return HttpResponse("Triggered newsletter send.")
+
+
+def test_500(request):
+    raise Exception("Deliberate test 500")

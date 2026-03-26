@@ -207,7 +207,7 @@
     } else if (clearBtn) {
       endpoint = "{% url 'billing:cart_clear' %}";
     } else if (bulkBtn) {
-      endpoint = "{% url 'billing:remove_selected_from_cart' %}";
+      endpoint = "{% url 'billing:cart_remove_selected' %}";
       const selected = Array.from(document.querySelectorAll('input[name="selected_items"]:checked'))
                             .map(cb => cb.value);
       if (!selected.length) {

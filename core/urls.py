@@ -9,4 +9,6 @@ urlpatterns = [
     path("newsletter/send-now/", views.newsletter_send_now,
          name="newsletter_send_now"),
     path("", views.home, name="home"),
+
+    path("test-500/", views.test_500, name="test_500"),
 ]

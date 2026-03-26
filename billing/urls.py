@@ -30,8 +30,6 @@ urlpatterns = [
     path("cart/add/", views.cart_add, name="cart_add"),
     path("cart/remove/", views.cart_remove, name="cart_remove"),
     path("cart/remove-selected/", views.remove_selected_from_cart,
-         name="remove_selected_from_cart"),
-    path("cart/remove-selected/", views.remove_selected_from_cart,
          name="cart_remove_selected"),  # optional alias
     path("cart/clear/", views.cart_clear, name="cart_clear"),
 

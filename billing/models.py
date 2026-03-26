@@ -33,7 +33,7 @@ class Payment(models.Model):
     )
 
     amount = models.IntegerField(help_text="Amount in cents")
-    currency = models.CharField(max_length=10, default="usd")
+    currency = models.CharField(max_length=10, default="USD")
 
     stripe_payment_intent_id = models.CharField(
         max_length=255, blank=True, null=True, db_index=True

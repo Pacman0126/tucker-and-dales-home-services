@@ -126,7 +126,7 @@
 
     if (!confirm("Remove selected items from cart?")) return;
 
-    const resp = await fetch("{% url 'billing:remove_selected_from_cart' %}", {
+    const resp = await fetch("{% url 'billing:cart_remove_selected' %}", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",

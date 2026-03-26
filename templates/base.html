@@ -124,6 +124,16 @@
 
           {% elif user.is_authenticated %}
             <li class="nav-item">
+              <span class="nav-link text-white-50 pe-lg-2">
+                Welcome,
+                {% if user.first_name or user.last_name %}
+                  {{ user.first_name }}{% if user.first_name and user.last_name %} {% endif %}{{ user.last_name }}
+                {% else %}
+                  {{ user.username }}
+                {% endif %}
+              </span>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="{% url 'scheduling:search_by_date' %}">Book a Service</a>
             </li>
             <li class="nav-item">
@@ -215,7 +225,12 @@
 
             {% elif user.is_authenticated %}
               <li class="dropdown-header text-secondary small fw-semibold px-3">
-                {{ user.username }}
+                Welcome,
+                {% if user.first_name or user.last_name %}
+                  {{ user.first_name }}{% if user.first_name and user.last_name %} {% endif %}{{ user.last_name }}
+                {% else %}
+                  {{ user.username }}
+                {% endif %}
               </li>
               <li>
                 <a class="dropdown-item" href="{% url 'customers:complete_profile' %}">
