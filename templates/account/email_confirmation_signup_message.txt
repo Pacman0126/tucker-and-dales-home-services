@@ -1,0 +1,16 @@
+Confirm your email address
+
+Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+Thanks for creating your account with Tucker & Dale’s Home Services.
+
+Please confirm your email address to finish setting up your account and access your dashboard.
+
+Confirm your email address:
+{{ activate_url }}
+
+— The Tucker & Dale’s Team
+no-reply@tuckeranddales.com
+
+You are receiving this email because an account was created using this email address.
+If this was not you, you can safely ignore this message.
