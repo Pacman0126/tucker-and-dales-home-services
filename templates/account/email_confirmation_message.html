@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Confirm your email address</title>
+</head>
+<body style="margin:0; padding:20px; background-color:#f7f7f7; font-family:Arial, sans-serif; color:#333;">
+  <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <div style="padding:24px;">
+      <h2 style="margin-top:0; color:#333;">Confirm your email address</h2>
+
+      <p>Hi{% if user.first_name %} {{ user.first_name }}{% endif %},</p>
+
+      <p>
+        Thanks for creating your account with <strong>Tucker &amp; Dale’s Home Services</strong>.
+      </p>
+
+      <p>
+        Please confirm your email address to finish setting up your account and access your dashboard.
+      </p>
+
+      <p style="margin:24px 0;">
+        <a href="{{ activate_url }}"
+           style="display:inline-block; background-color:#1c7ed6; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:bold;">
+          Confirm Email Address
+        </a>
+      </p>
+
+      <p>
+        If the button above does not work, copy and paste this link into your browser:
+      </p>
+
+      <p style="word-break:break-all; color:#1c7ed6;">
+        {{ activate_url }}
+      </p>
+
+      <p style="margin-top:30px; color:#555;">
+        — The Tucker &amp; Dale’s Team<br />
+        <a href="mailto:no-reply@tuckeranddales.com" style="color:#1c7ed6; text-decoration:none;">
+          no-reply@tuckeranddales.com
+        </a>
+      </p>
+
+      <hr style="margin-top:30px; border:none; border-top:1px solid #ddd;" />
+
+      <p style="font-size:0.85em; color:#777; line-height:1.5;">
+        You are receiving this email because an account was created using this email address.
+        If this was not you, you can safely ignore this message.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

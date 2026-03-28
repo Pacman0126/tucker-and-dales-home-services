@@ -1,15 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;">
-    <h2>You're on the list 🎉</h2>
-    <p>Hi {{ user.first_name|default:user.username }},</p>
-    <p>
-      Thanks for joining the Tucker &amp; Dale’s Monthly Newsletter.
-      You’ll receive the first issue on <strong>{{ first_issue_date }}</strong>.
-    </p>
-    <p>Expect specials, discounts, and seasonal coupon codes.</p>
-    <p style="font-size:12px;color:#666;">
-      Prefer not to get these? <a href="{{ unsubscribe_url }}">Unsubscribe</a>
-    </p>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <title>You're subscribed to Tucker & Dale’s Monthly Newsletter</title>
+</head>
+<body style="margin:0; padding:20px; background-color:#f7f7f7; font-family:Arial, sans-serif; color:#333;">
+  <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <div style="padding:24px;">
+      <h2 style="margin-top:0; color:#333;">You're on the list 🎉</h2>
+
+      <p>Hi {{ user.first_name|default:user.username }},</p>
+
+      <p>
+        Thanks for joining the <strong>Tucker &amp; Dale’s Monthly Newsletter</strong>.
+      </p>
+
+      <p>
+        You’ll receive your first issue on <strong>{{ first_issue_date }}</strong>.
+      </p>
+
+      <p>
+        Expect seasonal specials, discounts, service reminders, and occasional coupon codes.
+      </p>
+
+      <p style="margin:24px 0;">
+        <a href="{{ unsubscribe_url }}"
+           style="display:inline-block; background-color:#dc3545; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:6px; font-weight:bold;">
+          Unsubscribe
+        </a>
+      </p>
+
+      <p style="margin-top:30px; color:#555;">
+        — The Tucker &amp; Dale’s Team<br />
+        <a href="mailto:no-reply@tuckeranddales.com" style="color:#1c7ed6; text-decoration:none;">
+          no-reply@tuckeranddales.com
+        </a>
+      </p>
+
+      <hr style="margin-top:30px; border:none; border-top:1px solid #ddd;" />
+
+      <p style="font-size:0.85em; color:#777; line-height:1.5;">
+        You are receiving this email because you signed up for updates from Tucker &amp; Dale’s Home Services.
+        If you no longer want to receive these emails, you can unsubscribe at any time using the button above.
+      </p>
+    </div>
+  </div>
+</body>
 </html>

@@ -1,10 +1,18 @@
-You're on the list!
+You're subscribed to Tucker & Dale’s Monthly Newsletter
 
 Hi {{ user.first_name|default:user.username }},
 
 Thanks for joining the Tucker & Dale’s Monthly Newsletter.
-You’ll receive the first issue on {{ first_issue_date }}.
 
-Expect specials, discounts, and seasonal coupon codes.
+Your first issue will arrive on {{ first_issue_date }}.
 
-Unsubscribe: {{ unsubscribe_url }}
+Expect seasonal specials, discounts, service reminders, and occasional coupon codes.
+
+Unsubscribe:
+{{ unsubscribe_url }}
+
+— The Tucker & Dale’s Team
+no-reply@tuckeranddales.com
+
+You are receiving this email because you signed up for updates from Tucker & Dale’s Home Services.
+If you no longer want to receive these emails, you can unsubscribe at any time using the link above.
