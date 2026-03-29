@@ -42,7 +42,7 @@ from billing.utils import send_payment_receipt_email
 
 from core.decorators import verified_email_required, login_required_json
 from scheduling.models import Booking
-from .utils import _get_or_create_cart, normalize_address
+from .utils import _get_or_create_cart, normalize_address, get_refund_policy
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
