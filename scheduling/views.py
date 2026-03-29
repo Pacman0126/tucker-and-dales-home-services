@@ -193,7 +193,7 @@ def search_by_time_slot(request):
 
         # --- Build 28-day × category grid ---
         today = datetime.date.today()
-        days = [today + datetime.timedelta(days=i) for i in range(14)]
+        days = [today + datetime.timedelta(days=i) for i in range(7)]
         categories = ServiceCategory.objects.all()
 
         results = {
