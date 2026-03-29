@@ -285,6 +285,7 @@ let map = null;
 let directionsService = null;
 let renderers = [];
 let markers = [];
+let pulseTimers = [];
 let lastBounds = null;
 let mapReady = false;
 
@@ -310,7 +311,10 @@ async function initMapWhenReady() {
 }
 
 function routeColor(i) {
-  const colors = ["#FF5722", "#03A9F4", "#4CAF50", "#FFC107", "#9C27B0", "#009688", "#E91E63", "#795548"];
+  const colors = [
+    "#FF5722", "#03A9F4", "#4CAF50", "#FFC107",
+    "#9C27B0", "#009688", "#E91E63", "#795548"
+  ];
   return colors[i % colors.length];
 }
 
@@ -321,10 +325,62 @@ function clearMapArtifacts() {
   markers.forEach(m => m.setMap(null));
   markers = [];
 
+  pulseTimers.forEach(t => clearInterval(t));
+  pulseTimers = [];
+
   lastBounds = new google.maps.LatLngBounds();
 
   const legend = document.getElementById("routeList");
   if (legend) legend.innerHTML = "";
+}
+
+function createPulsingDestinationMarker(endLoc, color, title) {
+  const starPath =
+    "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z";
+
+  const endMarker = new google.maps.Marker({
+    position: endLoc,
+    map,
+    icon: {
+      path: starPath,
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: "#fff",
+      strokeWeight: 1.5,
+      scale: 1.6
+    },
+    title: title,
+    zIndex: 999,
+  });
+
+  markers.push(endMarker);
+
+  let scale = 1.6;
+  let growing = true;
+
+  const pulse = setInterval(() => {
+    if (!endMarker.getMap()) {
+      clearInterval(pulse);
+      return;
+    }
+
+    scale += growing ? 0.08 : -0.08;
+
+    if (scale >= 2.2) growing = false;
+    if (scale <= 1.4) growing = true;
+
+    endMarker.setIcon({
+      path: starPath,
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: "#fff",
+      strokeWeight: 1.5,
+      scale: scale
+    });
+  }, 80);
+
+  pulseTimers.push(pulse);
+  return endMarker;
 }
 
 function buildGroupedRoutes(sourceId) {
@@ -389,23 +445,13 @@ function buildGroupedRoutes(sourceId) {
               },
               title: `${names.join(", ")} — Start`,
             });
+            markers.push(startMarker);
 
-            const endMarker = new google.maps.Marker({
-              position: endLoc,
-              map,
-              icon: {
-                path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z",
-                fillColor: color,
-                fillOpacity: 1,
-                strokeColor: "#fff",
-                strokeWeight: 1.5,
-                scale: 1.4
-              },
-              title: `${names.join(", ")} — Destination`,
-              zIndex: 999,
-            });
-
-            markers.push(startMarker, endMarker);
+            createPulsingDestinationMarker(
+              endLoc,
+              color,
+              `${names.join(", ")} — Destination`
+            );
 
             lastBounds.extend(startLoc);
             lastBounds.extend(endLoc);
@@ -446,6 +492,10 @@ document.addEventListener("DOMContentLoaded", () => {
         map.fitBounds(lastBounds);
       }
     }
+  });
+
+  modal.addEventListener("hidden.bs.modal", () => {
+    clearMapArtifacts();
   });
 });
 </script>
