@@ -211,6 +211,12 @@ def create_checkout_session(request):
     """
     Initiates a Stripe Checkout session for the active cart.
     Saves all totals and cart metadata for Stripe webhooks.
+
+    Important:
+    - Metadata is written BOTH to the Checkout Session and to
+      payment_intent_data.metadata.
+    - The webhook reads metadata from the PaymentIntent, so the
+      payment_intent_data block is required for reliable user/linking.
     """
     from billing.utils import get_active_cart_for_request
 
@@ -236,6 +242,16 @@ def create_checkout_session(request):
     )
     cancel_url = request.build_absolute_uri(reverse("billing:checkout"))
 
+    metadata = {
+        "subtotal": f"{subtotal:.2f}",
+        "tax": f"{tax:.2f}",
+        "total": f"{total:.2f}",
+        "service_address": service_address,
+        "cart_id": str(cart.pk),
+        "user_id": str(request.user.id),
+        "username": request.user.username,
+    }
+
     try:
         checkout_session = stripe.checkout.Session.create(
             mode="payment",
@@ -252,14 +268,9 @@ def create_checkout_session(request):
             ],
             success_url=success_url,
             cancel_url=cancel_url,
-            metadata={
-                "subtotal": f"{subtotal:.2f}",
-                "tax": f"{tax:.2f}",
-                "total": f"{total:.2f}",
-                "service_address": service_address,
-                "cart_id": str(cart.pk),
-                "user_id": str(request.user.id),
-                "username": request.user.username,
+            metadata=metadata,
+            payment_intent_data={
+                "metadata": metadata,
             },
         )
 
@@ -997,19 +1008,21 @@ def live_invoice_view_address(request, address):
 @require_POST
 def cancel_selected_services(request):
     """
-    Cancels selected bookings, applies the refund policy,
-    issues Stripe refunds when applicable, records child PaymentHistory entries,
-    and updates booking statuses.
+    Cancels selected bookings from the live invoice / payment history flow.
+
+    Fixes:
+    - Uses the booking's own primary_payment_record first
+    - Does NOT fall back to "latest payment for this address"
+    - Prevents refunding more than the charge tied to that booking
+    - Keeps user-facing messages and refund confirmation email behavior
     """
     stripe.api_key = settings.STRIPE_SECRET_KEY
-
-    from billing.utils import get_refund_policy
-    from django.utils import timezone
 
     selected_ids = request.POST.getlist("selected_bookings")
 
     if not selected_ids:
-        messages.warning(request, "No services selected for cancellation.")
+        messages.warning(
+            request, "No services were selected for cancellation.")
         return redirect("billing:payment_history")
 
     cancelled_count = 0
@@ -1018,7 +1031,11 @@ def cancel_selected_services(request):
 
     for booking_id in selected_ids:
         try:
-            booking = Booking.objects.select_related("time_slot").get(
+            booking = Booking.objects.select_related(
+                "time_slot",
+                "primary_payment_record",
+                "service_category",
+            ).get(
                 id=booking_id,
                 user=request.user,
             )
@@ -1038,7 +1055,6 @@ def cancel_selected_services(request):
                 timezone.get_current_timezone(),
             )
         except Exception:
-            # Fallback: use date-only policy if timeslot parsing fails
             booking_dt = timezone.make_aware(
                 dt.combine(booking.date, dt.min.time()),
                 timezone.get_current_timezone(),
@@ -1046,21 +1062,44 @@ def cancel_selected_services(request):
 
         refund_label, refund_pct = get_refund_policy(booking_dt)
 
-        root_payment = (
-            PaymentHistory.objects.filter(
-                user=request.user,
-                booking=booking,
-                parent__isnull=True,
-            ).first()
-            or PaymentHistory.objects.filter(
-                user=request.user,
-                service_address__iexact=booking.service_address,
-                parent__isnull=True,
-            ).order_by("-created_at").first()
-        )
+        # ✅ Use the booking's own payment mapping first.
+        root_payment = booking.primary_payment_record
 
+        # Fallback 1: explicitly linked root payment for THIS booking
         if not root_payment:
-            print(f"⚠️ No payment record found for booking {booking_id}")
+            root_payment = (
+                PaymentHistory.objects.filter(
+                    user=request.user,
+                    linked_bookings=booking,
+                    parent__isnull=True,
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+        # Fallback 2: legacy direct booking link only
+        if not root_payment:
+            root_payment = (
+                PaymentHistory.objects.filter(
+                    user=request.user,
+                    booking=booking,
+                    parent__isnull=True,
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+        # ❌ Intentionally NO address-level fallback here.
+        if not root_payment:
+            print(
+                f"⚠️ No root payment record found for booking {booking_id} "
+                f"(address fallback intentionally disabled)"
+            )
+            messages.error(
+                request,
+                f"Could not determine the original payment for "
+                f"{booking.service_category} on {booking.date}.",
+            )
             continue
 
         original_amt = booking.total_amount or Decimal("0.00")
@@ -1083,6 +1122,22 @@ def cancel_selected_services(request):
         refund_status = "Cancelled"
 
         try:
+            # Defensive guard: never attempt to refund more than the charge
+            charge_amount = root_payment.amount or Decimal("0.00")
+            if refund_amt > charge_amount:
+                print(
+                    f"⚠️ Refund amount exceeds charge for booking {booking.id}: "
+                    f"refund_amt={refund_amt}, charge_amount={charge_amount}, "
+                    f"root_payment_id={root_payment.id}, "
+                    f"stripe_payment_id={root_payment.stripe_payment_id}"
+                )
+                messages.error(
+                    request,
+                    f"Refund failed for {booking.service_category} on {booking.date}: "
+                    "refund exceeds original charge."
+                )
+                continue
+
             # Only talk to Stripe if there is money to refund
             if refund_amt > 0 and root_payment.stripe_payment_id:
                 stripe.Refund.create(
@@ -1093,12 +1148,13 @@ def cancel_selected_services(request):
                 refunded_count += 1
                 print(
                     f"💸 Stripe refund successful for booking {booking.id}: "
-                    f"${refund_amt} ({refund_pct}% refund)"
+                    f"${refund_amt} ({refund_pct}% refund) via root payment #{root_payment.id}"
                 )
             else:
                 print(
                     f"⚠️ No Stripe refund issued for booking {booking.id}. "
-                    f"refund_amt={refund_amt}, stripe_payment_id={root_payment.stripe_payment_id}"
+                    f"refund_amt={refund_amt}, "
+                    f"stripe_payment_id={root_payment.stripe_payment_id}"
                 )
 
             if refund_pct == 100:
@@ -1128,7 +1184,8 @@ def cancel_selected_services(request):
 
             print(
                 f"✅ Booking {booking.id} cancelled — "
-                f"Refund record #{refund_entry.id} (${refund_amt:.2f}, {refund_pct}%)"
+                f"Refund record #{refund_entry.id} "
+                f"(${refund_amt:.2f}, {refund_pct}%)"
             )
 
             try:
