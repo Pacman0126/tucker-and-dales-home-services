@@ -117,7 +117,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% comment %} {% block extra_js %}
 {{ block.super }}
 <script>
 let map, directionsService;
@@ -273,6 +273,179 @@ document.addEventListener("DOMContentLoaded", async () => {
       }));
       ev.dataTransfer.effectAllowed = "copy";
     });
+  });
+});
+</script>
+{% endblock %} {% endcomment %}
+{% block extra_js %}
+{{ block.super }}
+
+<script>
+let map = null;
+let directionsService = null;
+let renderers = [];
+let markers = [];
+let lastBounds = null;
+let mapReady = false;
+
+async function initMapWhenReady() {
+  if (mapReady && map && directionsService) return;
+
+  if (!window.gmapsReady || !window.google || !window.google.maps) {
+    await new Promise((resolve) => {
+      document.addEventListener("gmaps:ready", resolve, { once: true });
+    });
+  }
+
+  directionsService = new google.maps.DirectionsService();
+
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 10,
+    center: { lat: 32.7767, lng: -96.7970 },
+    mapTypeControl: false,
+    streetViewControl: false,
+  });
+
+  mapReady = true;
+}
+
+function routeColor(i) {
+  const colors = ["#FF5722", "#03A9F4", "#4CAF50", "#FFC107", "#9C27B0", "#009688", "#E91E63", "#795548"];
+  return colors[i % colors.length];
+}
+
+function clearMapArtifacts() {
+  renderers.forEach(r => r.setMap(null));
+  renderers = [];
+
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+
+  lastBounds = new google.maps.LatLngBounds();
+
+  const legend = document.getElementById("routeList");
+  if (legend) legend.innerHTML = "";
+}
+
+function buildGroupedRoutes(sourceId) {
+  const el = document.getElementById(sourceId);
+  if (!el || !map || !directionsService) return;
+
+  const routes = JSON.parse(el.textContent || "[]");
+  if (!routes.length) return;
+
+  clearMapArtifacts();
+
+  const legend = document.getElementById("routeList");
+
+  const grouped = {};
+  routes.forEach(r => {
+    const key = `${r.start}|${r.end}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(r.name);
+  });
+
+  Object.entries(grouped).forEach(([key, names], i) => {
+    const [start, end] = key.split("|");
+    const color = routeColor(i);
+
+    const renderer = new google.maps.DirectionsRenderer({
+      map,
+      suppressMarkers: true,
+      preserveViewport: true,
+      polylineOptions: {
+        strokeColor: color,
+        strokeOpacity: 0.9,
+        strokeWeight: 4
+      },
+    });
+    renderers.push(renderer);
+
+    directionsService.route(
+      {
+        origin: start,
+        destination: end,
+        travelMode: google.maps.TravelMode.DRIVING
+      },
+      (res, status) => {
+        if (status === "OK" && res.routes[0]) {
+          renderer.setDirections(res);
+
+          const leg = res.routes[0].legs[0];
+          if (leg) {
+            const startLoc = leg.start_location;
+            const endLoc = leg.end_location;
+
+            const startMarker = new google.maps.Marker({
+              position: startLoc,
+              map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: color,
+                fillOpacity: 1,
+                strokeWeight: 1.5,
+                strokeColor: "#fff"
+              },
+              title: `${names.join(", ")} — Start`,
+            });
+
+            const endMarker = new google.maps.Marker({
+              position: endLoc,
+              map,
+              icon: {
+                path: "M 0 -8 L 2 -2 L 8 -2 L 3 1 L 5 7 L 0 3 L -5 7 L -3 1 L -8 -2 L -2 -2 Z",
+                fillColor: color,
+                fillOpacity: 1,
+                strokeColor: "#fff",
+                strokeWeight: 1.5,
+                scale: 1.4
+              },
+              title: `${names.join(", ")} — Destination`,
+              zIndex: 999,
+            });
+
+            markers.push(startMarker, endMarker);
+
+            lastBounds.extend(startLoc);
+            lastBounds.extend(endLoc);
+          }
+
+          if (legend) {
+            legend.insertAdjacentHTML(
+              "beforeend",
+              `<li><span class="legend-swatch" style="background:${color}"></span> ${names.join(" + ")}</li>`
+            );
+          }
+        } else {
+          console.warn("Directions request failed:", status, { start, end, names });
+        }
+      }
+    );
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("mapModal");
+  if (!modal) return;
+
+  modal.addEventListener("show.bs.modal", async (e) => {
+    try {
+      await initMapWhenReady();
+      const src = e.relatedTarget?.getAttribute("data-routes-source");
+      if (src) buildGroupedRoutes(src);
+    } catch (err) {
+      console.error("Google Maps failed to initialize:", err);
+    }
+  });
+
+  modal.addEventListener("shown.bs.modal", () => {
+    if (window.google && map) {
+      google.maps.event.trigger(map, "resize");
+      if (lastBounds && !lastBounds.isEmpty()) {
+        map.fitBounds(lastBounds);
+      }
+    }
   });
 });
 </script>
