@@ -405,11 +405,16 @@ def staff_required(user):
 @user_passes_test(staff_required)
 def staff_dashboard(request):
     """
-    Staff-only dashboard.
+    Minimal staff-only dashboard.
 
-    Uses name matching because Employee is not linked to User.
+    Because Employee currently has no direct link to auth.User,
+    this resolves the matching Employee record by comparing:
+    - user's full name
+    - username
+
+    Shows upcoming booked jobs assigned to that employee, plus
+    customer name and phone (if a CustomerProfile exists).
     """
-
     today = timezone.localdate()
 
     full_name = (request.user.get_full_name() or "").strip()
@@ -434,6 +439,8 @@ def staff_dashboard(request):
                 "service_category",
                 "time_slot",
                 "employee",
+                "user",
+                "user__customer_profile",
             )
             .filter(
                 employee=employee,
@@ -445,7 +452,9 @@ def staff_dashboard(request):
     else:
         messages.warning(
             request,
-            "No Employee record matches this staff login."
+            "No Employee record matches this staff login. "
+            "For this minimal staff dashboard, set Employee.name to match "
+            "the staff user's full name or username."
         )
 
     return render(
@@ -454,5 +463,6 @@ def staff_dashboard(request):
         {
             "employee": employee,
             "bookings": bookings,
+            "today": today,
         },
     )

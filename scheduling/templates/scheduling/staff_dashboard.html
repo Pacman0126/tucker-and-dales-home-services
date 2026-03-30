@@ -5,28 +5,44 @@
 
 {% block content %}
 <div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h3 class="mb-1 fw-semibold">
+        <i class="bi bi-calendar-week me-2"></i>My Schedule
+      </h3>
+      <p class="text-muted mb-0">Upcoming assigned bookings</p>
+    </div>
+
+    <a href="{% url 'core:home' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-house-door me-1"></i> Back to Home
+    </a>
+  </div>
+
   <div class="card shadow-sm">
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
       <div>
-        <h5 class="mb-0 fw-semibold">🧰 Staff Dashboard</h5>
-        <small class="text-muted">Upcoming assigned bookings</small>
+        {% if employee %}
+          <strong>{{ employee.name }}</strong>
+        {% else %}
+          <strong>Staff Dashboard</strong>
+        {% endif %}
       </div>
 
       {% if employee %}
-        <span class="badge bg-success">{{ employee.name }}</span>
+        <span class="badge bg-success">Staff</span>
       {% else %}
         <span class="badge bg-warning text-dark">No Employee Link</span>
       {% endif %}
     </div>
 
     <div class="card-body">
-      {% if messages %}
+      {% comment %} {% if messages %}
         {% for message in messages %}
           <div class="alert alert-{{ message.tags|default:'info' }} mb-3">
             {{ message }}
           </div>
         {% endfor %}
-      {% endif %}
+      {% endif %} {% endcomment %}
 
       {% if employee %}
         {% if bookings %}
@@ -37,6 +53,8 @@
                   <th>Date</th>
                   <th>Time</th>
                   <th>Service</th>
+                  <th>Customer</th>
+                  <th>Phone</th>
                   <th>Address</th>
                   <th>Status</th>
                 </tr>
@@ -47,6 +65,24 @@
                     <td class="text-nowrap">{{ booking.date }}</td>
                     <td class="text-nowrap">{{ booking.time_slot.label }}</td>
                     <td>{{ booking.service_category.name }}</td>
+                    <td>
+                      {% if booking.user %}
+                        {% if booking.user.get_full_name %}
+                          {{ booking.user.get_full_name|default:booking.user.username }}
+                        {% else %}
+                          {{ booking.user.username }}
+                        {% endif %}
+                      {% else %}
+                        <span class="text-muted">Anonymous</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-nowrap">
+                      {% if booking.user and booking.user.customer_profile and booking.user.customer_profile.phone %}
+                        {{ booking.user.customer_profile.phone }}
+                      {% else %}
+                        <span class="text-muted">Not provided</span>
+                      {% endif %}
+                    </td>
                     <td>{{ booking.service_address }}</td>
                     <td>
                       <span class="badge bg-primary">{{ booking.status }}</span>
