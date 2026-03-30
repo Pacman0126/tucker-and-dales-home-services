@@ -4,6 +4,9 @@ from datetime import datetime as dt
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
+from django.contrib.admin.views.decorators import staff_member_required
+
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
@@ -11,6 +14,9 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+from .models import Booking
 
 from billing.utils import _get_or_create_cart
 
@@ -389,3 +395,35 @@ def search_by_time_slot(request):
         "active_week": active_week,
     }
     return render(request, "scheduling/search_by_time_slot.html", context)
+
+
+def staff_required(user):
+    return user.is_authenticated and user.is_staff and not user.is_superuser
+
+
+@login_required
+@user_passes_test(staff_required)
+def staff_dashboard(request):
+    """
+    Staff-only dashboard:
+    Shows upcoming bookings assigned to the logged-in employee.
+    """
+
+    today = timezone.now().date()
+
+    bookings = (
+        Booking.objects
+        .select_related("employee", "service_category", "time_slot")
+        .filter(
+            employee__user=request.user,
+            date__gte=today,
+            status__in=["confirmed", "pending"]
+        )
+        .order_by("date", "time_slot__start_time")
+    )
+
+    context = {
+        "bookings": bookings,
+    }
+
+    return render(request, "scheduling/staff_dashboard.html", context)
