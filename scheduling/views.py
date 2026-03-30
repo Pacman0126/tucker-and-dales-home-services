@@ -405,25 +405,54 @@ def staff_required(user):
 @user_passes_test(staff_required)
 def staff_dashboard(request):
     """
-    Staff-only dashboard:
-    Shows upcoming bookings assigned to the logged-in employee.
+    Staff-only dashboard.
+
+    Uses name matching because Employee is not linked to User.
     """
 
-    today = timezone.now().date()
+    today = timezone.localdate()
 
-    bookings = (
-        Booking.objects
-        .select_related("employee", "service_category", "time_slot")
-        .filter(
-            employee__user=request.user,
-            date__gte=today,
-            status__in=["confirmed", "pending"]
+    full_name = (request.user.get_full_name() or "").strip()
+    username = (request.user.username or "").strip()
+
+    employee = None
+
+    if full_name and username:
+        employee = Employee.objects.filter(
+            Q(name__iexact=full_name) | Q(name__iexact=username)
+        ).first()
+    elif full_name:
+        employee = Employee.objects.filter(name__iexact=full_name).first()
+    elif username:
+        employee = Employee.objects.filter(name__iexact=username).first()
+
+    bookings = Booking.objects.none()
+
+    if employee:
+        bookings = (
+            Booking.objects.select_related(
+                "service_category",
+                "time_slot",
+                "employee",
+            )
+            .filter(
+                employee=employee,
+                date__gte=today,
+                status="Booked",
+            )
+            .order_by("date", "time_slot__id", "created_at")
         )
-        .order_by("date", "time_slot__start_time")
+    else:
+        messages.warning(
+            request,
+            "No Employee record matches this staff login."
+        )
+
+    return render(
+        request,
+        "scheduling/staff_dashboard.html",
+        {
+            "employee": employee,
+            "bookings": bookings,
+        },
     )
-
-    context = {
-        "bookings": bookings,
-    }
-
-    return render(request, "scheduling/staff_dashboard.html", context)
