@@ -20,6 +20,47 @@ class TimeSlot(models.Model):
         return self.label
 
 
+# class Employee(models.Model):
+#     name = models.CharField(max_length=100)
+#     home_address = models.CharField(max_length=255)
+#     service_category = models.ForeignKey(
+#         "ServiceCategory", on_delete=models.CASCADE
+#     )
+
+#     def __str__(self):
+#         return self.name
+
+#     def current_location(self, date, time_slot):
+#         """
+#         Returns the jobsite address if this employee is already assigned
+#         to a booking at the given date/slot. Otherwise falls back to home.
+#         """
+#         assignment = self.jobassignment_set.filter(
+#             booking__date=date,
+#             booking__time_slot=time_slot,
+#         ).first()
+
+#         if assignment:
+#             return assignment.jobsite_address
+#         return self.home_address
+
+#     def next_location(self, date, time_slot):
+#         """
+#         Returns the next jobsite address *after* this slot on the same day.
+#         If none, returns None.
+#         """
+#         next_assignment = (
+#             self.jobassignment_set.filter(
+#                 booking__date=date,
+#                 booking__time_slot__id__gt=time_slot.id,  # any later slot that day
+#             )
+#             .order_by("booking__time_slot__id")
+#             .first()
+#         )
+
+#         if next_assignment:
+#             return next_assignment.jobsite_address
+#         return None
 class Employee(models.Model):
     name = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
@@ -32,9 +73,17 @@ class Employee(models.Model):
 
     def current_location(self, date, time_slot):
         """
-        Returns the jobsite address if this employee is already assigned
-        to a booking at the given date/slot. Otherwise falls back to home.
+        Returns the employee's current origin address for this date/slot.
+
+        Optimization:
+        - If availability.py has already attached a precomputed cache dict
+          to this employee instance, use that instead of hitting the DB.
+        - Otherwise fall back to the original DB query behavior.
         """
+        cache_map = getattr(self, "_current_location_cache", None)
+        if cache_map is not None:
+            return cache_map.get((date, time_slot.id), self.home_address)
+
         assignment = self.jobassignment_set.filter(
             booking__date=date,
             booking__time_slot=time_slot,
@@ -46,13 +95,21 @@ class Employee(models.Model):
 
     def next_location(self, date, time_slot):
         """
-        Returns the next jobsite address *after* this slot on the same day.
-        If none, returns None.
+        Returns the next jobsite address after this slot on the same day.
+
+        Optimization:
+        - If availability.py has already attached a precomputed cache dict
+          to this employee instance, use that instead of hitting the DB.
+        - Otherwise fall back to the original DB query behavior.
         """
+        cache_map = getattr(self, "_next_location_cache", None)
+        if cache_map is not None:
+            return cache_map.get((date, time_slot.id))
+
         next_assignment = (
             self.jobassignment_set.filter(
                 booking__date=date,
-                booking__time_slot__id__gt=time_slot.id,  # any later slot that day
+                booking__time_slot__id__gt=time_slot.id,
             )
             .order_by("booking__time_slot__id")
             .first()
@@ -167,15 +224,72 @@ class Booking(models.Model):
             return None
 
 
-class JobAssignment(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
-    jobsite_address = models.CharField(max_length=255, blank=True)
+# class JobAssignment(models.Model):
+#     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+#     booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
+#     jobsite_address = models.CharField(max_length=255, blank=True)
 
-    def save(self, *args, **kwargs):
-        if not self.jobsite_address:
-            self.jobsite_address = self.booking.service_address
-        super().save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         if not self.jobsite_address:
+#             self.jobsite_address = self.booking.service_address
+#         super().save(*args, **kwargs)
+
+#     def __str__(self):
+#         return f"{self.employee} → {self.jobsite_address} ({self.booking.time_slot})"
+class Employee(models.Model):
+    name = models.CharField(max_length=100)
+    home_address = models.CharField(max_length=255)
+    service_category = models.ForeignKey(
+        "ServiceCategory", on_delete=models.CASCADE
+    )
 
     def __str__(self):
-        return f"{self.employee} → {self.jobsite_address} ({self.booking.time_slot})"
+        return self.name
+
+    def current_location(self, date, time_slot):
+        """
+        Returns the employee's current origin address for this date/slot.
+
+        Optimization:
+        - If availability.py has already attached a precomputed cache dict
+          to this employee instance, use that instead of hitting the DB.
+        - Otherwise fall back to the original DB query behavior.
+        """
+        cache_map = getattr(self, "_current_location_cache", None)
+        if cache_map is not None:
+            return cache_map.get((date, time_slot.id), self.home_address)
+
+        assignment = self.jobassignment_set.filter(
+            booking__date=date,
+            booking__time_slot=time_slot,
+        ).first()
+
+        if assignment:
+            return assignment.jobsite_address
+        return self.home_address
+
+    def next_location(self, date, time_slot):
+        """
+        Returns the next jobsite address after this slot on the same day.
+
+        Optimization:
+        - If availability.py has already attached a precomputed cache dict
+          to this employee instance, use that instead of hitting the DB.
+        - Otherwise fall back to the original DB query behavior.
+        """
+        cache_map = getattr(self, "_next_location_cache", None)
+        if cache_map is not None:
+            return cache_map.get((date, time_slot.id))
+
+        next_assignment = (
+            self.jobassignment_set.filter(
+                booking__date=date,
+                booking__time_slot__id__gt=time_slot.id,
+            )
+            .order_by("booking__time_slot__id")
+            .first()
+        )
+
+        if next_assignment:
+            return next_assignment.jobsite_address
+        return None

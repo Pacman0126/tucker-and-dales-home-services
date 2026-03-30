@@ -6,8 +6,7 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
-from .models import Employee
-from scheduling.models import JobAssignment
+from .models import Employee, JobAssignment
 
 logger = logging.getLogger(__name__)
 
@@ -119,8 +118,9 @@ def get_available_employees(customer_address, date, time_slot, service_category)
 
     Optimizations:
     - precomputes employee IDs already booked for this date/slot
-    - reduces per-employee DB chatter for the "already booked" check
-    - keeps existing current_location / next_location logic intact
+    - preloads all same-day assignments once
+    - attaches request-local current/next location caches to employees
+    - keeps existing current_location / next_location API intact
     - caches Google route calls
     """
     customer_address = _normalize_addr(customer_address)
@@ -140,7 +140,9 @@ def get_available_employees(customer_address, date, time_slot, service_category)
 
     employee_ids = [emp.id for emp in employees]
 
-    # Precompute employees already booked in this exact slot
+    # -------------------------------------------------
+    # 1) Precompute employees already booked in this exact slot
+    # -------------------------------------------------
     booked_employee_ids = set(
         JobAssignment.objects.filter(
             employee_id__in=employee_ids,
@@ -149,20 +151,66 @@ def get_available_employees(customer_address, date, time_slot, service_category)
         ).values_list("employee_id", flat=True)
     )
 
+    # -------------------------------------------------
+    # 2) Preload all assignments for these employees on this date
+    # -------------------------------------------------
+    assignments = list(
+        JobAssignment.objects.select_related("booking", "booking__time_slot")
+        .filter(
+            employee_id__in=employee_ids,
+            booking__date=date,
+        )
+        .order_by("employee_id", "booking__time_slot__id")
+    )
+
+    assignments_by_employee = {}
+    for assignment in assignments:
+        assignments_by_employee.setdefault(
+            assignment.employee_id, []).append(assignment)
+
+    # -------------------------------------------------
+    # 3) Attach per-employee caches so model methods avoid DB hits
+    # -------------------------------------------------
+    for emp in employees:
+        emp_assignments = assignments_by_employee.get(emp.id, [])
+
+        # current location for the exact slot
+        current_loc = _normalize_addr(
+            emp.home_address) or DEFAULT_FALLBACK_CITY
+        for assignment in emp_assignments:
+            if assignment.booking.time_slot_id == time_slot.id:
+                current_loc = _normalize_addr(assignment.jobsite_address)
+                break
+
+        # next location after the slot
+        next_loc = None
+        for assignment in emp_assignments:
+            if assignment.booking.time_slot_id > time_slot.id:
+                next_loc = _normalize_addr(assignment.jobsite_address)
+                break
+
+        emp._current_location_cache = {
+            (date, time_slot.id): current_loc or DEFAULT_FALLBACK_CITY
+        }
+        emp._next_location_cache = {
+            (date, time_slot.id): next_loc
+        }
+
+    # -------------------------------------------------
+    # 4) Main employee loop
+    # -------------------------------------------------
     for emp in employees:
         # Skip if already booked this slot
         if emp.id in booked_employee_ids:
             continue
 
-        # --- Determine origin and next destination ---
+        # Uses cache-aware model methods if present
         start_loc = emp.current_location(date, time_slot)
         end_loc = emp.next_location(date, time_slot)
 
-        # If no current location, fall back to employee home address
         route_origin = _normalize_addr(start_loc) or _normalize_addr(
             emp.home_address) or DEFAULT_FALLBACK_CITY
 
-        # --- Compute drive times ---
         drive_time_to_customer = calculate_drive_time(
             route_origin, customer_address)
         drive_time_to_next = (
@@ -171,14 +219,12 @@ def get_available_employees(customer_address, date, time_slot, service_category)
             else None
         )
 
-        # --- Feasibility (≤ 30 minutes each way) ---
         feasible = True
         if drive_time_to_customer is None or drive_time_to_customer > MAX_FEASIBLE_DRIVE_MINUTES:
             feasible = False
         if drive_time_to_next is not None and drive_time_to_next > MAX_FEASIBLE_DRIVE_MINUTES:
             feasible = False
 
-        # --- Store for display and visualization ---
         emp.drive_time = (
             f"{drive_time_to_customer} min"
             if drive_time_to_customer is not None
@@ -186,11 +232,12 @@ def get_available_employees(customer_address, date, time_slot, service_category)
         )
         emp.route_origin = route_origin  # used by template “View Routes” modal
 
-        # --- Collect if feasible ---
         if feasible:
             available.append(emp)
 
-    # Verbose log
+    # -------------------------------------------------
+    # 5) Logging
+    # -------------------------------------------------
     if available:
         logger.info("Available employees:")
         for e in available:
@@ -199,7 +246,6 @@ def get_available_employees(customer_address, date, time_slot, service_category)
     else:
         logger.info("No employees available for this slot.")
 
-    # Compact log
     if available:
         logger.info("Available employees:")
         for e in available:
