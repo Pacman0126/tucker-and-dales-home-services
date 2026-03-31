@@ -64,6 +64,90 @@ def _penalty_applies(booking: Booking) -> bool:
 # ----------------------------------------------------------------------
 @login_required
 @verified_email_required
+@require_POST
+def create_checkout_session(request):
+    """
+    Initiates a Stripe Checkout session for the active cart.
+    Saves all totals and cart metadata for Stripe webhooks.
+
+    Defensive validation:
+    - blocks checkout if any cart item is in the past
+    """
+    from billing.utils import get_active_cart_for_request
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    cart = get_active_cart_for_request(request, create_if_missing=False)
+    if not cart or not cart.items.exists():
+        messages.warning(request, "Your cart is empty.")
+        return redirect("billing:checkout")
+
+    if _cart_has_past_dates(cart):
+        messages.error(
+            request,
+            "Past dates cannot be booked. Please remove past-dated services from your cart.",
+        )
+        return redirect("billing:checkout")
+
+    subtotal = cart.subtotal
+    tax = cart.tax
+    total = cart.total
+    service_address = request.session.get(
+        "service_address", "") or cart.address_key or ""
+
+    request.session["cart_id"] = cart.pk
+    request.session.modified = True
+
+    success_url = (
+        request.build_absolute_uri(reverse("billing:payment_success"))
+        + "?session_id={CHECKOUT_SESSION_ID}"
+    )
+    cancel_url = request.build_absolute_uri(reverse("billing:checkout"))
+
+    metadata = {
+        "subtotal": f"{subtotal:.2f}",
+        "tax": f"{tax:.2f}",
+        "total": f"{total:.2f}",
+        "service_address": service_address,
+        "cart_id": str(cart.pk),
+        "user_id": str(request.user.id),
+        "username": request.user.username,
+    }
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            mode="payment",
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {"name": "Home Services Booking"},
+                        "unit_amount": int(total * Decimal("100")),
+                    },
+                    "quantity": 1,
+                }
+            ],
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata=metadata,
+            payment_intent_data={
+                "metadata": metadata,
+            },
+        )
+
+        request.session["last_checkout_session_id"] = checkout_session.id
+        request.session.modified = True
+        return redirect(checkout_session.url, code=303)
+
+    except Exception as e:
+        print("Stripe create session error:", e)
+        messages.error(request, f"Could not start checkout: {e}")
+        return redirect("billing:checkout")
+
+
+@login_required
+@verified_email_required
 def checkout(request):
     """
     Displays the user's active cart summary and recalculates totals before
@@ -693,6 +777,9 @@ def cart_add(request):
     """
     Adds a booking item to the cart.
     Clears cart if address in session differs from existing cart.
+
+    Defensive validation:
+    - blocks adding past-dated services to the cart
     """
     cart = _get_or_create_cart(request)
 
@@ -722,6 +809,13 @@ def cart_add(request):
     except ValueError:
         return JsonResponse({"ok": False, "error": "Bad date format."}, status=400)
 
+    today = timezone.localdate()
+    if date_obj < today:
+        return JsonResponse(
+            {"ok": False, "error": "Past dates cannot be booked."},
+            status=400,
+        )
+
     from scheduling.models import Employee, ServiceCategory, TimeSlot
 
     try:
@@ -743,7 +837,8 @@ def cart_add(request):
         cart.address_key = current_service_addr
         cart.save(update_fields=["address_key"])
         print(
-            f"⚠️ Cart cleared due to new service address: {current_service_addr}")
+            f"⚠️ Cart cleared due to new service address: {current_service_addr}"
+        )
 
     item, created = CartItem.objects.get_or_create(
         cart=cart,
@@ -1406,6 +1501,9 @@ def payment_success(request):
     - clears the paid cart
     - removes stale carts for this user so navbar/cart badge stays in sync
     - sends the receipt email only once on first real finalization
+
+    Defensive validation:
+    - blocks finalization if any cart item is in the past
     """
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -1456,6 +1554,13 @@ def payment_success(request):
             return redirect("billing:payment_history")
 
         messages.error(request, "Your cart is empty or expired.")
+        return redirect("billing:checkout")
+
+    if _cart_has_past_dates(cart):
+        messages.error(
+            request,
+            "Past dates cannot be booked. Please rebuild your cart with present or future dates only.",
+        )
         return redirect("billing:checkout")
 
     service_address = (
@@ -1528,7 +1633,16 @@ def payment_success(request):
             )
         )
 
+        today = timezone.localdate()
+
         for item in cart.items.all():
+            if item.date < today:
+                messages.error(
+                    request,
+                    "Past dates cannot be booked. Please rebuild your cart and try again.",
+                )
+                return redirect("billing:checkout")
+
             booking_key = (
                 item.service_category_id,
                 item.employee_id,
@@ -1558,14 +1672,12 @@ def payment_success(request):
             payment_record.linked_bookings.add(*created_bookings)
             payment_record.save()
 
-        # Clear the paid cart itself.
         paid_cart_id = cart.id
         paid_address_key = (cart.address_key or "").strip()
 
         cart.items.all().delete()
         cart.delete()
 
-        # Also remove stale carts for this user so badge/navbar cannot read old leftovers.
         stale_carts = Cart.objects.filter(
             user=request.user).exclude(id=paid_cart_id)
 
