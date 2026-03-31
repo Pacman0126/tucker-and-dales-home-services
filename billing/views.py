@@ -1505,53 +1505,51 @@ def payment_success(request):
     """
     Finalizes a successful Stripe checkout safely and idempotently.
 
-    What this does:
-    - validates the Stripe Checkout Session from ?session_id=
-    - confirms the payment is actually paid
-    - reuses an existing root PaymentHistory if webhook already created it
-    - creates Bookings only if they do not already exist for this payment
-    - links bookings to the root payment record
-    - clears the paid cart
-    - removes stale carts for this user so navbar/cart badge stays in sync
-    - sends the receipt email only once on first real finalization
-
     Defensive validation:
-    - blocks finalization if any cart item is in the past
+    - blocks missing/invalid session_id
+    - blocks re-processing the same payment if cart is already gone
+    - blocks past-dated cart items
+    - blocks duplicate booking creation across ALL active bookings,
+      not just bookings already linked to the current payment record
     """
-    stripe.api_key = settings.STRIPE_SECRET_KEY
+    from billing.utils import get_active_cart_for_request
 
     session_id = request.GET.get("session_id")
-    expected_session_id = request.session.get("last_checkout_session_id")
-
     if not session_id:
         messages.error(request, "Missing Stripe session ID.")
-        return redirect("billing:checkout")
-
-    if expected_session_id and session_id != expected_session_id:
-        messages.error(request, "Checkout session mismatch.")
         return redirect("billing:checkout")
 
     try:
         checkout_session = stripe.checkout.Session.retrieve(session_id)
     except Exception as e:
-        print(f"❌ Stripe session retrieval failed: {e}")
+        print(f"❌ Stripe session retrieval error: {e}")
         messages.error(request, "Could not verify your payment session.")
         return redirect("billing:checkout")
 
-    if checkout_session.get("payment_status") != "paid":
-        messages.error(request, "Payment has not been completed.")
+    payment_status = getattr(checkout_session, "payment_status", None)
+    if payment_status != "paid":
+        messages.error(
+            request,
+            "Payment was not completed successfully.",
+        )
         return redirect("billing:checkout")
 
-    payment_intent_id = checkout_session.get("payment_intent")
-    metadata = checkout_session.get("metadata", {}) or {}
+    metadata = getattr(checkout_session, "metadata", {}) or {}
+    payment_intent_id = getattr(checkout_session, "payment_intent", None)
 
-    if not payment_intent_id:
-        messages.error(request, "Missing Stripe payment reference.")
-        return redirect("billing:checkout")
-
+    cart = None
     cart_id = metadata.get("cart_id") or request.session.get("cart_id")
-    cart = Cart.objects.filter(id=cart_id, user=request.user).first()
 
+    if cart_id:
+        cart = Cart.objects.filter(
+            id=cart_id,
+            user=request.user,
+        ).prefetch_related("items").first()
+
+    if not cart:
+        cart = get_active_cart_for_request(request, create_if_missing=False)
+
+    # Idempotent path: if cart is gone but payment already exists, do not fail.
     if not cart or not cart.items.exists():
         existing_payment = PaymentHistory.objects.filter(
             user=request.user,
@@ -1638,7 +1636,9 @@ def payment_success(request):
                 payment_record.save(update_fields=fields_to_update)
 
         existing_booking_keys = set(
-            Booking.objects.filter(primary_payment_record=payment_record).values_list(
+            Booking.objects.filter(
+                primary_payment_record=payment_record
+            ).values_list(
                 "service_category_id",
                 "employee_id",
                 "date",
@@ -1663,8 +1663,29 @@ def payment_success(request):
                 item.time_slot_id,
             )
 
+            # Idempotent guard for this same payment record
             if booking_key in existing_booking_keys:
                 continue
+
+            # FINAL SERVER-SIDE DUPLICATE / SLOT-CONFLICT GUARD
+            # Checks ALL active bookings, not just current payment_record.
+            conflicting_booking = Booking.objects.filter(
+                employee_id=item.employee_id,
+                date=item.date,
+                time_slot_id=item.time_slot_id,
+            ).exclude(
+                status__iexact="Cancelled"
+            ).first()
+
+            if conflicting_booking:
+                messages.error(
+                    request,
+                    (
+                        f"Sorry, {item.employee} is no longer available for "
+                        f"{item.date} at {item.time_slot}. Please search again."
+                    ),
+                )
+                return redirect("scheduling:search_by_date")
 
             booking = Booking.objects.create(
                 user=request.user,
@@ -1692,7 +1713,8 @@ def payment_success(request):
         cart.delete()
 
         stale_carts = Cart.objects.filter(
-            user=request.user).exclude(id=paid_cart_id)
+            user=request.user
+        ).exclude(id=paid_cart_id)
 
         if paid_address_key:
             stale_carts = stale_carts.filter(
@@ -1713,7 +1735,8 @@ def payment_success(request):
             try:
                 all_bookings = list(
                     Booking.objects.filter(
-                        primary_payment_record=payment_record)
+                        primary_payment_record=payment_record
+                    )
                     .select_related("service_category", "time_slot", "employee")
                     .order_by("date", "time_slot__label")
                 )
