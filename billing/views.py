@@ -593,8 +593,17 @@ def refund_payment(request, pk):
 @require_POST
 def stripe_webhook(request):
     """
-    Handles Stripe webhook events (mainly payment_intent.succeeded).
-    Creates PaymentHistory entries and links them to Bookings for refund traceability.
+    Handles Stripe webhook events safely and idempotently.
+
+    Important design rule:
+    - Webhook records the root PaymentHistory only.
+    - Webhook does NOT guess or relink Bookings by address.
+    - Booking creation/linking is finalized by payment_success(), which has
+      the validated checkout session + cart context.
+
+    Why:
+    - Prevents a cancelled booking from being reused and attached to a new
+      payment simply because it shares the same service address.
     """
     from django.contrib.auth import get_user_model
 
@@ -604,69 +613,73 @@ def stripe_webhook(request):
 
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret)
-    except (ValueError, stripe.error.SignatureVerificationError) as e:
+            payload,
+            sig_header,
+            endpoint_secret,
+        )
+    except ValueError as e:
+        print(f"❌ Webhook payload error: {e}")
+        return HttpResponseBadRequest("Invalid payload")
+    except stripe.error.SignatureVerificationError as e:
         print(f"❌ Webhook signature error: {e}")
-        return HttpResponseBadRequest("Invalid payload or signature")
+        return HttpResponseBadRequest("Invalid signature")
 
-    if event["type"] == "payment_intent.succeeded":
-        intent = event["data"]["object"]
-        amount = Decimal(intent.get("amount_received", 0)) / Decimal("100")
-        metadata = intent.get("metadata", {}) or {}
+    event_type = event.get("type")
 
-        user_id = metadata.get("user_id")
-        service_address = (metadata.get("service_address") or "").strip()
-        stripe_payment_id = intent.get("id")
+    if event_type != "payment_intent.succeeded":
+        print(f"ℹ️ Webhook event received: {event_type} (ignored)")
+        return HttpResponse(status=200)
 
-        User = get_user_model()
-        user = User.objects.filter(id=user_id).first()
+    intent = event["data"]["object"]
+    stripe_payment_id = intent.get("id")
+    amount = Decimal(intent.get("amount_received", 0)) / Decimal("100")
+    metadata = intent.get("metadata", {}) or {}
 
-        # Idempotency: Stripe may retry webhooks.
-        existing_payment = PaymentHistory.objects.filter(
-            stripe_payment_id=stripe_payment_id,
-            parent__isnull=True,
-        ).first()
-        if existing_payment:
-            print(
-                f"ℹ️ Webhook skipped duplicate PaymentHistory for {stripe_payment_id}")
-            return HttpResponse(status=200)
+    user_id = metadata.get("user_id")
+    service_address = (metadata.get("service_address") or "").strip()
+    cart_id = metadata.get("cart_id")
 
-        booking = (
-            Booking.objects.filter(
-                user=user,
-                service_address__iexact=service_address,
-            )
-            .order_by("-created_at")
-            .first()
-            if user
-            else None
-        )
+    User = get_user_model()
+    user = User.objects.filter(id=user_id).first() if user_id else None
 
-        payment = PaymentHistory.objects.create(
-            user=user,
-            booking=booking,
-            amount=amount,
-            adjustments_total_amt=Decimal("0.00"),
-            status="Paid",
-            payment_type="Stripe Webhook Payment",
-            stripe_payment_id=stripe_payment_id,
-            service_address=service_address,
-            raw_data=event,
-            notes="Initial booking payment (via webhook)",
-        )
+    # Idempotency: Stripe may retry delivery of the same event/payment intent.
+    existing_payment = PaymentHistory.objects.filter(
+        stripe_payment_id=stripe_payment_id,
+        parent__isnull=True,
+    ).first()
 
-        if booking:
-            Booking.objects.filter(pk=booking.pk).update(
-                primary_payment_record_id=payment.id
-            )
+    if existing_payment:
         print(
-            f"💾 [Webhook] PaymentHistory #{payment.id} for user "
-            f"{user.username if user else 'Unknown'} — booking "
-            f"{booking.id if booking else 'None'} (${amount})"
+            f"ℹ️ Webhook skipped duplicate PaymentHistory for {stripe_payment_id}"
         )
+        return HttpResponse(status=200)
 
-    else:
-        print(f"ℹ️ Webhook event received: {event['type']} (ignored)")
+    payment = PaymentHistory.objects.create(
+        user=user,
+        amount=amount,
+        adjustments_total_amt=Decimal("0.00"),
+        currency="USD",
+        status="Paid",
+        payment_type="Stripe Webhook Payment",
+        stripe_payment_id=stripe_payment_id,
+        service_address=service_address or "Unknown",
+        raw_data=event,
+        notes=(
+            "Initial booking payment (via webhook)"
+            if not cart_id
+            else f"Initial booking payment (via webhook, cart_id={cart_id})"
+        ),
+    )
+
+    print(
+        f"💾 [Webhook] PaymentHistory #{payment.id} recorded for user "
+        f"{user.username if user else 'Unknown'} "
+        f"(stripe_payment_id={stripe_payment_id}, amount=${amount})"
+    )
+
+    # Do NOT attach/reassign bookings here.
+    # payment_success() is the only place that should create/link Bookings
+    # using the validated checkout session + cart contents.
 
     return HttpResponse(status=200)
 
