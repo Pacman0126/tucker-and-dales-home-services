@@ -59,91 +59,100 @@ def _penalty_applies(booking: Booking) -> bool:
     return hours < PENALTY_WINDOW_HOURS
 
 
+def _cart_has_past_dates(cart) -> bool:
+    """
+    Return True if any cart item is dated before today.
+    """
+    if not cart:
+        return False
+    today = timezone.localdate()
+    return cart.items.filter(date__lt=today).exists()
+
 # ----------------------------------------------------------------------
 # 🏁 Simple Checkout Page
 # ----------------------------------------------------------------------
-@login_required
-@verified_email_required
-@require_POST
-def create_checkout_session(request):
-    """
-    Initiates a Stripe Checkout session for the active cart.
-    Saves all totals and cart metadata for Stripe webhooks.
+# @login_required
+# @verified_email_required
+# @require_POST
+# def create_checkout_session(request):
+#     """
+#     Initiates a Stripe Checkout session for the active cart.
+#     Saves all totals and cart metadata for Stripe webhooks.
 
-    Defensive validation:
-    - blocks checkout if any cart item is in the past
-    """
-    from billing.utils import get_active_cart_for_request
+#     Defensive validation:
+#     - blocks checkout if any cart item is in the past
+#     """
+#     from billing.utils import get_active_cart_for_request
 
-    stripe.api_key = settings.STRIPE_SECRET_KEY
+#     stripe.api_key = settings.STRIPE_SECRET_KEY
 
-    cart = get_active_cart_for_request(request, create_if_missing=False)
-    if not cart or not cart.items.exists():
-        messages.warning(request, "Your cart is empty.")
-        return redirect("billing:checkout")
+#     cart = get_active_cart_for_request(request, create_if_missing=False)
+#     if not cart or not cart.items.exists():
+#         messages.warning(request, "Your cart is empty.")
+#         return redirect("billing:checkout")
 
-    if _cart_has_past_dates(cart):
-        messages.error(
-            request,
-            "Past dates cannot be booked. Please remove past-dated services from your cart.",
-        )
-        return redirect("billing:checkout")
+#     if _cart_has_past_dates(cart):
+#         messages.error(
+#             request,
+#             "Past dates cannot be booked. Please remove past-dated services from your cart.",
+#         )
+#         return redirect("billing:checkout")
 
-    subtotal = cart.subtotal
-    tax = cart.tax
-    total = cart.total
-    service_address = request.session.get(
-        "service_address", "") or cart.address_key or ""
+#     subtotal = cart.subtotal
+#     tax = cart.tax
+#     total = cart.total
+#     service_address = request.session.get(
+#         "service_address", "") or cart.address_key or ""
 
-    request.session["cart_id"] = cart.pk
-    request.session.modified = True
+#     request.session["cart_id"] = cart.pk
+#     request.session.modified = True
 
-    success_url = (
-        request.build_absolute_uri(reverse("billing:payment_success"))
-        + "?session_id={CHECKOUT_SESSION_ID}"
-    )
-    cancel_url = request.build_absolute_uri(reverse("billing:checkout"))
+#     success_url = (
+#         request.build_absolute_uri(reverse("billing:payment_success"))
+#         + "?session_id={CHECKOUT_SESSION_ID}"
+#     )
+#     cancel_url = request.build_absolute_uri(reverse("billing:checkout"))
 
-    metadata = {
-        "subtotal": f"{subtotal:.2f}",
-        "tax": f"{tax:.2f}",
-        "total": f"{total:.2f}",
-        "service_address": service_address,
-        "cart_id": str(cart.pk),
-        "user_id": str(request.user.id),
-        "username": request.user.username,
-    }
+#     metadata = {
+#         "subtotal": f"{subtotal:.2f}",
+#         "tax": f"{tax:.2f}",
+#         "total": f"{total:.2f}",
+#         "service_address": service_address,
+#         "cart_id": str(cart.pk),
+#         "user_id": str(request.user.id),
+#         "username": request.user.username,
+#     }
 
-    try:
-        checkout_session = stripe.checkout.Session.create(
-            mode="payment",
-            payment_method_types=["card"],
-            line_items=[
-                {
-                    "price_data": {
-                        "currency": "usd",
-                        "product_data": {"name": "Home Services Booking"},
-                        "unit_amount": int(total * Decimal("100")),
-                    },
-                    "quantity": 1,
-                }
-            ],
-            success_url=success_url,
-            cancel_url=cancel_url,
-            metadata=metadata,
-            payment_intent_data={
-                "metadata": metadata,
-            },
-        )
+#     try:
+#         checkout_session = stripe.checkout.Session.create(
+#             mode="payment",
+#             payment_method_types=["card"],
+#             line_items=[
+#                 {
+#                     "price_data": {
+#                         "currency": "usd",
+#                         "product_data": {"name": "Home Services Booking"},
+#                         "unit_amount": int(total * Decimal("100")),
+#                     },
+#                     "quantity": 1,
+#                 }
+#             ],
+#             success_url=success_url,
+#             cancel_url=cancel_url,
+#             metadata=metadata,
+#             payment_intent_data={
+#                 "metadata": metadata,
+#             },
+#         )
 
-        request.session["last_checkout_session_id"] = checkout_session.id
-        request.session.modified = True
-        return redirect(checkout_session.url, code=303)
+#         request.session["last_checkout_session_id"] = checkout_session.id
+#         request.session.modified = True
+#         return redirect(checkout_session.url, code=303)
 
-    except Exception as e:
-        print("Stripe create session error:", e)
-        messages.error(request, f"Could not start checkout: {e}")
-        return redirect("billing:checkout")
+#     except Exception as e:
+#         print("Stripe create session error:", e)
+#         messages.error(request, f"Could not start checkout: {e}")
+#         return redirect("billing:checkout")
 
 
 @login_required
@@ -297,11 +306,8 @@ def create_checkout_session(request):
     Initiates a Stripe Checkout session for the active cart.
     Saves all totals and cart metadata for Stripe webhooks.
 
-    Important:
-    - Metadata is written BOTH to the Checkout Session and to
-      payment_intent_data.metadata.
-    - The webhook reads metadata from the PaymentIntent, so the
-      payment_intent_data block is required for reliable user/linking.
+    Defensive validation:
+    - blocks checkout if any cart item is in the past
     """
     from billing.utils import get_active_cart_for_request
 
@@ -310,6 +316,13 @@ def create_checkout_session(request):
     cart = get_active_cart_for_request(request, create_if_missing=False)
     if not cart or not cart.items.exists():
         messages.warning(request, "Your cart is empty.")
+        return redirect("billing:checkout")
+
+    if _cart_has_past_dates(cart):
+        messages.error(
+            request,
+            "Past dates cannot be booked. Please remove past-dated services from your cart.",
+        )
         return redirect("billing:checkout")
 
     subtotal = cart.subtotal
