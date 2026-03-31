@@ -6,7 +6,7 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
-from .models import Employee, JobAssignment
+from .models import Booking, Employee, JobAssignment
 
 logger = logging.getLogger(__name__)
 
@@ -117,11 +117,18 @@ def get_available_employees(customer_address, date, time_slot, service_category)
     Always computes drive time, even for idle employees.
 
     Optimizations:
-    - precomputes employee IDs already booked for this date/slot
+    - precomputes employee IDs already blocked for this date/slot
     - preloads all same-day assignments once
     - attaches request-local current/next location caches to employees
     - keeps existing current_location / next_location API intact
     - caches Google route calls
+
+    Important booking integrity rule:
+    - An employee is NOT available if they already have:
+      1) a JobAssignment for this exact date/slot, OR
+      2) a live Booking for this exact date/slot
+
+    This prevents already-paid slots from reappearing in fresh searches.
     """
     customer_address = _normalize_addr(customer_address)
 
@@ -141,14 +148,27 @@ def get_available_employees(customer_address, date, time_slot, service_category)
     employee_ids = [emp.id for emp in employees]
 
     # -------------------------------------------------
-    # 1) Precompute employees already booked in this exact slot
+    # 1) Precompute employees already blocked in this exact slot
     # -------------------------------------------------
+    # Source A: employees already assigned to a booking in this slot
     booked_employee_ids = set(
         JobAssignment.objects.filter(
             employee_id__in=employee_ids,
             booking__date=date,
             booking__time_slot=time_slot,
         ).values_list("employee_id", flat=True)
+    )
+
+    # Source B: employees already sold/booked in this slot, even if a
+    # JobAssignment record has not yet been created.
+    booked_employee_ids.update(
+        Booking.objects.filter(
+            employee_id__in=employee_ids,
+            date=date,
+            time_slot=time_slot,
+        )
+        .exclude(status__iexact="Cancelled")
+        .values_list("employee_id", flat=True)
     )
 
     # -------------------------------------------------
@@ -200,7 +220,7 @@ def get_available_employees(customer_address, date, time_slot, service_category)
     # 4) Main employee loop
     # -------------------------------------------------
     for emp in employees:
-        # Skip if already booked this slot
+        # Skip if already booked/blocked for this exact slot
         if emp.id in booked_employee_ids:
             continue
 
@@ -208,11 +228,15 @@ def get_available_employees(customer_address, date, time_slot, service_category)
         start_loc = emp.current_location(date, time_slot)
         end_loc = emp.next_location(date, time_slot)
 
-        route_origin = _normalize_addr(start_loc) or _normalize_addr(
-            emp.home_address) or DEFAULT_FALLBACK_CITY
+        route_origin = (
+            _normalize_addr(start_loc)
+            or _normalize_addr(emp.home_address)
+            or DEFAULT_FALLBACK_CITY
+        )
 
         drive_time_to_customer = calculate_drive_time(
-            route_origin, customer_address)
+            route_origin, customer_address
+        )
         drive_time_to_next = (
             calculate_drive_time(customer_address, end_loc)
             if _normalize_addr(end_loc)
@@ -220,9 +244,15 @@ def get_available_employees(customer_address, date, time_slot, service_category)
         )
 
         feasible = True
-        if drive_time_to_customer is None or drive_time_to_customer > MAX_FEASIBLE_DRIVE_MINUTES:
+        if (
+            drive_time_to_customer is None
+            or drive_time_to_customer > MAX_FEASIBLE_DRIVE_MINUTES
+        ):
             feasible = False
-        if drive_time_to_next is not None and drive_time_to_next > MAX_FEASIBLE_DRIVE_MINUTES:
+        if (
+            drive_time_to_next is not None
+            and drive_time_to_next > MAX_FEASIBLE_DRIVE_MINUTES
+        ):
             feasible = False
 
         emp.drive_time = (
@@ -242,7 +272,8 @@ def get_available_employees(customer_address, date, time_slot, service_category)
         logger.info("Available employees:")
         for e in available:
             logger.info(
-                f"  - {e.name:<25} | {e.drive_time:<6} | {e.route_origin}")
+                f"  - {e.name:<25} | {e.drive_time:<6} | {e.route_origin}"
+            )
     else:
         logger.info("No employees available for this slot.")
 
