@@ -1803,47 +1803,112 @@ def payment_success(request):
 @verified_email_required
 def payment_history(request):
     """
-    Groups all PaymentHistory records by root transaction and includes
-    the actual booked service dates tied to that payment.
+    Render one property card per unique service address.
+
+    Inside each property card, group data by root payment transaction so the
+    user can clearly see which scheduled services belong to which payment chain.
     """
     user = request.user
 
-    roots = (
+    roots = list(
         PaymentHistory.objects.filter(user=user, parent__isnull=True)
+        .select_related("user")
         .order_by("-created_at")
     )
 
-    cards = []
+    grouped = {}
 
     for root in roots:
-        related_entries = PaymentHistory.objects.filter(
-            models.Q(id=root.id) | models.Q(parent=root)
-        ).order_by("created_at")
+        raw_address = (root.service_address or "Unknown").strip() or "Unknown"
+        address_key = normalize_address(raw_address) or raw_address.lower()
 
-        related_bookings = (
-            Booking.objects.filter(primary_payment_record=root)
-            .select_related("service_category", "time_slot", "employee")
-            .order_by("date", "time_slot__label")
-        )
+        if address_key not in grouped:
+            grouped[address_key] = {
+                "address": raw_address,
+                "roots": [],
+                "latest_created_at": root.created_at,
+            }
 
-        original_total, add_total, cancel_total, net_total = root.compute_sections()
+        grouped[address_key]["roots"].append(root)
+
+        if root.created_at > grouped[address_key]["latest_created_at"]:
+            grouped[address_key]["latest_created_at"] = root.created_at
+
+    cards = []
+
+    for _, group in grouped.items():
+        address = group["address"]
+        transactions = []
+
+        original_total = Decimal("0.00")
+        add_total = Decimal("0.00")
+        cancel_total = Decimal("0.00")
+
+        for root in sorted(group["roots"], key=lambda r: r.created_at, reverse=True):
+            entries = list(
+                PaymentHistory.objects.filter(
+                    models.Q(id=root.id) | models.Q(parent=root)
+                ).order_by("created_at")
+            )
+
+            bookings = list(
+                Booking.objects.filter(primary_payment_record=root)
+                .select_related("service_category", "time_slot", "employee")
+                .order_by("date", "time_slot__label")
+            )
+
+            r_original, r_add, r_cancel, r_net = root.compute_sections()
+            original_total += r_original
+            add_total += r_add
+            cancel_total += r_cancel
+
+            transaction_id = root.stripe_payment_id or f"payment-{root.id}"
+            short_transaction_id = (
+                transaction_id[:18] + "..."
+                if len(transaction_id) > 18
+                else transaction_id
+            )
+
+            transactions.append(
+                {
+                    "root": root,
+                    "transaction_id": transaction_id,
+                    "short_transaction_id": short_transaction_id,
+                    "payment_date": root.created_at,
+                    "entries": entries,
+                    "bookings": bookings,
+                    "original_total": r_original,
+                    "add_total": r_add,
+                    "cancel_total": r_cancel,
+                    "net_total": r_net,
+                }
+            )
+
+        net_total = original_total + add_total + cancel_total
 
         cards.append(
             {
-                "address": root.service_address,
-                "stripe_payment_id": root.stripe_payment_id or "N/A",
-                "root": root,
-                "entries": related_entries,
-                "bookings": related_bookings,
+                "address": address,
+                "transactions": transactions,
                 "original_total": original_total,
                 "add_total": add_total,
                 "cancel_total": cancel_total,
                 "net_total": net_total,
-                "added": root.adjustments.filter(amount__gt=0),
-                "cancelled": root.adjustments.filter(amount__lt=0),
+                "latest_created_at": group["latest_created_at"],
             }
         )
 
+    cards.sort(
+        key=lambda c: (c["latest_created_at"], c["address"].lower()),
+        reverse=True,
+    )
+
     print(
-        f"DEBUG: Found {len(cards)} grouped property cards for {user.username}")
-    return render(request, "billing/payment_history.html", {"cards": cards})
+        f"DEBUG: Found {len(cards)} consolidated property cards for {user.username}"
+    )
+
+    return render(
+        request,
+        "billing/payment_history.html",
+        {"cards": cards},
+    )
