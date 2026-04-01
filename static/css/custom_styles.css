@@ -1070,3 +1070,222 @@ body > .container.py-5 {
   }
 }
 
+/* ------------------------------------------------------ */
+/* 📱 Responsive data tables → stacked cards on small screens */
+/* ------------------------------------------------------ */
+
+@media (max-width: 991.98px) {
+  .responsive-stack-table {
+    border: 0;
+  }
+
+  .responsive-stack-table thead {
+    display: none;
+  }
+
+  .responsive-stack-table tbody,
+  .responsive-stack-table tr,
+  .responsive-stack-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-stack-table tr {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    margin-bottom: 0.9rem;
+    padding: 0.65rem 0.85rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  .responsive-stack-table td {
+    border: 0 !important;
+    padding: 0.38rem 0 !important;
+    text-align: left !important;
+    white-space: normal;
+  }
+
+  .responsive-stack-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #6c757d;
+    margin-bottom: 0.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .responsive-stack-table td.text-end {
+    text-align: left !important;
+  }
+
+  .responsive-stack-table td.text-end::before {
+    text-align: left !important;
+  }
+
+  .responsive-stack-table .form-check,
+  .responsive-stack-table input[type="checkbox"] {
+    margin-top: 0.2rem;
+  }
+}
+
+/* Checkout actions: stack more cleanly on narrow screens */
+@media (max-width: 575.98px) {
+  .checkout-actions {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .checkout-actions .btn,
+  .checkout-actions form,
+  .checkout-actions form .btn {
+    width: 100%;
+  }
+
+  .checkout-actions .ms-auto {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .checkout-actions .d-flex.gap-2 {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .responsive-stack-table td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+}
+
+.responsive-stack-table .badge {
+  white-space: normal;
+}
+
+.responsive-stack-table td[data-label="Time Slot"] {
+  white-space: normal;
+}
+
+
+@media (max-width: 991.98px) {
+  .responsive-stack-table tr {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .responsive-stack-table td {
+    font-size: 0.92rem;
+    line-height: 1.25;
+    padding: 0.28rem 0 !important;
+    min-width: 0;
+  }
+
+  .responsive-stack-table td::before {
+    font-size: 0.68rem;
+    line-height: 1.1;
+    margin-bottom: 0.08rem;
+  }
+
+  .responsive-stack-table .badge {
+    font-size: 0.72rem;
+    line-height: 1.1;
+    padding: 0.35em 0.55em;
+  }
+
+  .responsive-stack-table input[type="checkbox"] {
+    transform: scale(0.95);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .live-invoice-actions,
+  .live-invoice-actions > div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .live-invoice-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .card-body,
+  .table-responsive {
+    min-width: 0;
+  }
+}
+
+/* ------------------------------------------------------ */
+/* 📱 Live Invoice mobile card layout */
+/* ------------------------------------------------------ */
+/* ------------------------------------------------------ */
+/* 📱 Live Invoice vertical mobile cards */
+/* ------------------------------------------------------ */
+
+.invoice-mobile-card {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.85rem;
+  padding: 0.9rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.invoice-mobile-card-success {
+  border-left: 4px solid #198754;
+}
+
+.invoice-mobile-card-warning {
+  border-left: 4px solid #ffc107;
+}
+
+.invoice-mobile-card-locked {
+  border-left: 4px solid #6c757d;
+}
+
+.invoice-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.invoice-row .label {
+  color: #6c757d;
+  flex: 0 0 auto;
+}
+
+.invoice-row .value {
+  text-align: right;
+  font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 767.98px) {
+  .live-invoice-actions,
+  .live-invoice-actions > div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .live-invoice-actions .btn {
+    width: 100%;
+  }
+}
+
