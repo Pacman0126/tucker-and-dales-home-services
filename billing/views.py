@@ -306,16 +306,17 @@ def create_checkout_session(request):
     Initiates a Stripe Checkout session for the active cart.
     Saves totals and cart metadata for Stripe webhooks.
 
+    Data sources:
+    - service_address: booking/jobsite address
+    - billing_address: CustomerProfile/session-backed billing address
+    - customer email/phone: authenticated user + CustomerProfile fallback
+
     Defensive validation:
     - blocks checkout if cart is empty
     - blocks checkout if any cart item is in the past
-
-    Address design:
-    - service_address stays tied to the booked jobsite
-    - billing address remains separate and may differ
-    - Stripe Checkout email is prefilled from the authenticated user
     """
     from billing.utils import get_active_cart_for_request
+    from customers.models import CustomerProfile
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -335,17 +336,27 @@ def create_checkout_session(request):
     tax = cart.tax
     total = cart.total
 
-    # Service/jobsite address used for booking fulfillment and payment linkage
     service_address = (
         request.session.get("service_address", "") or cart.address_key or ""
     ).strip()
 
-    # Billing address remains conceptually separate from service address.
-    # Keep it in metadata only as optional context; do not use it to replace
-    # the service address used for booking/payment history grouping.
-    billing_address = (
-        request.session.get("billing_address", "") or ""
-    ).strip()
+    profile = CustomerProfile.objects.filter(user=request.user).first()
+
+    # Email: prefer Django auth user email, then CustomerProfile email.
+    customer_email = (request.user.email or "").strip()
+    if not customer_email and profile:
+        customer_email = (profile.email or "").strip()
+
+    # Phone: useful as metadata for admin/support traceability.
+    customer_phone = ""
+    if profile:
+        customer_phone = (profile.phone or "").strip()
+
+    # Billing address should remain separate from service/jobsite address.
+    billing_address = (request.session.get(
+        "billing_address", "") or "").strip()
+    if not billing_address and profile and profile.has_valid_billing_address():
+        billing_address = profile.full_billing_address
 
     request.session["cart_id"] = cart.pk
     request.session.modified = True
@@ -362,18 +373,18 @@ def create_checkout_session(request):
         "total": f"{total:.2f}",
         "service_address": service_address,
         "billing_address": billing_address,
+        "customer_phone": customer_phone,
         "cart_id": str(cart.pk),
         "user_id": str(request.user.id),
         "username": request.user.username,
     }
 
     try:
-        checkout_session = stripe.checkout.Session.create(
-            mode="payment",
-            payment_method_types=["card"],
-            customer_email=(request.user.email or None),
-            billing_address_collection="required",
-            line_items=[
+        session_kwargs = {
+            "mode": "payment",
+            "payment_method_types": ["card"],
+            "billing_address_collection": "required",
+            "line_items": [
                 {
                     "price_data": {
                         "currency": "usd",
@@ -383,13 +394,18 @@ def create_checkout_session(request):
                     "quantity": 1,
                 }
             ],
-            success_url=success_url,
-            cancel_url=cancel_url,
-            metadata=metadata,
-            payment_intent_data={
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "metadata": metadata,
+            "payment_intent_data": {
                 "metadata": metadata,
             },
-        )
+        }
+
+        if customer_email:
+            session_kwargs["customer_email"] = customer_email
+
+        checkout_session = stripe.checkout.Session.create(**session_kwargs)
 
         request.session["last_checkout_session_id"] = checkout_session.id
         request.session.modified = True
