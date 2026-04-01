@@ -61,22 +61,42 @@
 
               {% if employees %}
                 <!-- 🧩 Employee pills -->
-                <div class="d-flex flex-wrap gap-2 mb-3">
+                <div class="employee-results-wrap mb-3">
                   {% for emp in employees %}
-                    <button
-                      type="button"
-                      class="btn btn-outline-success rounded-pill draggable-emp"
-                      draggable="true"
-                      data-employee-id="{{ emp.id }}"
-                      data-service-id="{{ emp.service_category_id }}"
-                      data-time-slot-id="{{ emp.time_slot_id }}"
-                      data-date="{{ day|date:'Y-m-d' }}"
-                      data-empname="{{ emp.name }}"
-                      data-start="{{ emp.route_origin|default:emp.home_address|escapejs }}"
-                      data-end="{{ request.GET.customer_address|escapejs }}">
-                      {{ emp.name }}
-                      <span class="text-muted small">({{ emp.drive_time }})</span>
-                    </button>
+                    <div class="employee-result-item">
+                      <!-- Desktop / large screens: drag pill -->
+                      <button
+                        type="button"
+                        class="btn btn-outline-success rounded-pill draggable-emp d-none d-lg-inline-flex"
+                        draggable="true"
+                        data-employee-id="{{ emp.id }}"
+                        data-service-id="{{ emp.service_category_id }}"
+                        data-time-slot-id="{{ emp.time_slot_id }}"
+                        data-date="{{ day|date:'Y-m-d' }}"
+                        data-empname="{{ emp.name }}"
+                        data-start="{{ emp.route_origin|default:emp.home_address|escapejs }}"
+                        data-end="{{ request.GET.customer_address|escapejs }}">
+                        {{ emp.name }}
+                        <span class="text-muted small ms-1">({{ emp.drive_time }})</span>
+                      </button>
+
+                      <!-- Mobile / tablet: tap-safe row with Add to Cart -->
+                      <div class="employee-mobile-card d-lg-none">
+                        <div class="employee-mobile-meta">
+                          <span class="fw-semibold">{{ emp.name }}</span>
+                          <span class="text-muted small">({{ emp.drive_time }})</span>
+                        </div>
+                        <button
+                          type="button"
+                          class="btn btn-success btn-sm rounded-pill mobile-add-to-cart"
+                          data-employee-id="{{ emp.id }}"
+                          data-service-category-id="{{ emp.service_category_id }}"
+                          data-time-slot-id="{{ emp.time_slot_id }}"
+                          data-date="{{ day|date:'Y-m-d' }}">
+                          <i class="bi bi-cart-plus me-1"></i>Add to Cart
+                        </button>
+                      </div>
+                    </div>
                   {% endfor %}
                 </div>
 
@@ -474,6 +494,103 @@ document.addEventListener("DOMContentLoaded", () => {
   modal.addEventListener("hidden.bs.modal", () => {
     clearMapArtifacts();
   });
+});
+</script>
+
+<script>
+function getCsrfToken() {
+  return document.cookie
+    .split("; ")
+    .find(row => row.startsWith("csrftoken="))
+    ?.split("=")[1];
+}
+
+async function addBookingToCart(payload) {
+  const csrftoken = getCsrfToken();
+
+  try {
+    const resp = await fetch("{% url 'billing:cart_add' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        "X-CSRFToken": csrftoken,
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json"
+      },
+      body: new URLSearchParams(payload)
+    });
+
+    if (resp.status === 401) {
+      const result = await resp.json();
+      alert(result.error || "Please log in or register to add services to your cart.");
+      window.location.href = result.redirect_url || "{% url 'account_login' %}";
+      return;
+    }
+
+    let result = {};
+    try {
+      result = await resp.json();
+    } catch (err) {
+      result = {};
+    }
+
+    if (!resp.ok || !result.ok) {
+      alert(result.error || "Failed to add item to cart.");
+      return;
+    }
+
+    const bookingSummary = document.getElementById("booking-summary");
+    const cartCount = document.getElementById("cart-count");
+    const navCartHtml = document.getElementById("nav-cart-dropdown-content");
+
+    const count = parseInt(result.item_count ?? result.count ?? 0, 10);
+    const total = parseFloat(result.total ?? 0).toFixed(2);
+
+    if (bookingSummary) {
+      bookingSummary.textContent = `(${count}) – ($${total})`;
+    }
+
+    if (cartCount) {
+      cartCount.textContent = count;
+    }
+
+    if (navCartHtml && result.html) {
+      navCartHtml.innerHTML = result.html;
+    }
+
+    alert("Added to cart.");
+  } catch (err) {
+    console.error("🚨 Cart add error:", err);
+    alert("Network error while adding item.");
+  }
+}
+
+document.addEventListener("click", async (ev) => {
+  const btn = ev.target.closest(".mobile-add-to-cart");
+  if (!btn) return;
+
+  const payload = {
+    employee_id: btn.dataset.employeeId,
+    service_category_id: btn.dataset.serviceCategoryId,
+    time_slot_id: btn.dataset.timeSlotId,
+    date: btn.dataset.date
+  };
+
+  if (!payload.employee_id || !payload.service_category_id || !payload.time_slot_id || !payload.date) {
+    alert("Missing required booking data.");
+    return;
+  }
+
+  btn.disabled = true;
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Adding...';
+
+  try {
+    await addBookingToCart(payload);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
 });
 </script>
 {% endblock %}

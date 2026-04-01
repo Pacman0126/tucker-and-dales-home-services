@@ -1001,4 +1001,72 @@ body > .container.py-5 {
   justify-content: center;
 }
 
+/* ------------------------------------------------------ */
+/* 🛒 Mobile / Tablet Add-to-Cart fallback for search results */
+/* ------------------------------------------------------ */
+
+.employee-results-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.employee-result-item {
+  display: inline-flex;
+}
+
+/* Mobile + tablet card */
+.employee-mobile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #dfe3e8;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.employee-mobile-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.employee-mobile-meta .fw-semibold {
+  color: #212529;
+  line-height: 1.2;
+}
+
+.employee-mobile-meta .text-muted {
+  line-height: 1.1;
+}
+
+/* Make mobile/tablet results stack nicely */
+@media (max-width: 991.98px) {
+  .employee-results-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .employee-result-item {
+    display: block;
+    width: 100%;
+  }
+
+  .employee-mobile-card .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+/* Desktop keeps pill-based drag interaction */
+@media (min-width: 992px) {
+  .employee-result-item {
+    display: inline-flex;
+  }
+}
 
