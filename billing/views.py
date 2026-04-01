@@ -304,10 +304,16 @@ def checkout_summary(request):
 def create_checkout_session(request):
     """
     Initiates a Stripe Checkout session for the active cart.
-    Saves all totals and cart metadata for Stripe webhooks.
+    Saves totals and cart metadata for Stripe webhooks.
 
     Defensive validation:
+    - blocks checkout if cart is empty
     - blocks checkout if any cart item is in the past
+
+    Address design:
+    - service_address stays tied to the booked jobsite
+    - billing address remains separate and may differ
+    - Stripe Checkout email is prefilled from the authenticated user
     """
     from billing.utils import get_active_cart_for_request
 
@@ -328,8 +334,18 @@ def create_checkout_session(request):
     subtotal = cart.subtotal
     tax = cart.tax
     total = cart.total
-    service_address = request.session.get(
-        "service_address", "") or cart.address_key or ""
+
+    # Service/jobsite address used for booking fulfillment and payment linkage
+    service_address = (
+        request.session.get("service_address", "") or cart.address_key or ""
+    ).strip()
+
+    # Billing address remains conceptually separate from service address.
+    # Keep it in metadata only as optional context; do not use it to replace
+    # the service address used for booking/payment history grouping.
+    billing_address = (
+        request.session.get("billing_address", "") or ""
+    ).strip()
 
     request.session["cart_id"] = cart.pk
     request.session.modified = True
@@ -345,6 +361,7 @@ def create_checkout_session(request):
         "tax": f"{tax:.2f}",
         "total": f"{total:.2f}",
         "service_address": service_address,
+        "billing_address": billing_address,
         "cart_id": str(cart.pk),
         "user_id": str(request.user.id),
         "username": request.user.username,
@@ -354,6 +371,8 @@ def create_checkout_session(request):
         checkout_session = stripe.checkout.Session.create(
             mode="payment",
             payment_method_types=["card"],
+            customer_email=(request.user.email or None),
+            billing_address_collection="required",
             line_items=[
                 {
                     "price_data": {
