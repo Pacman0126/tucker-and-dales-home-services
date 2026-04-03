@@ -60,14 +60,16 @@
               </div>
 
               {% if employees %}
+
                 <!-- 🧩 Employee pills -->
-                <div class="employee-results-wrap mb-3">
+                <!-- 🧩 Employee pills -->
+                <div class="employee-results-wrap d-flex flex-wrap gap-2 mb-3">
                   {% for emp in employees %}
                     <div class="employee-result-item">
                       <!-- Desktop / large screens: drag pill -->
                       <button
                         type="button"
-                        class="btn btn-outline-success rounded-pill draggable-emp d-none d-lg-inline-flex"
+                        class="btn btn-outline-success rounded-pill draggable-emp d-none d-lg-inline-flex align-items-center"
                         draggable="true"
                         data-employee-id="{{ emp.id }}"
                         data-service-id="{{ emp.service_category_id }}"
@@ -135,12 +137,22 @@
 </div>
 
 <!-- 🗺️ Shared Routes Modal -->
-<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
+<div class="modal fade" id="mapModal" tabindex="-1"
+     role="dialog"
+     aria-labelledby="mapModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title fw-semibold" id="mapModalLabel">Employee Routes</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title fw-semibold" id="mapModalLabel">
+          Employee Routes
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close">
+        </button>
       </div>
 
       <div class="modal-body bg-light">
@@ -150,7 +162,11 @@
               <div class="row g-3 align-items-stretch">
                 <!-- 🗺️ Map -->
                 <div class="col-12 col-md-7">
-                  <div id="map" class="border rounded shadow-sm" style="height:520px; width:100%;"></div>
+                  <div
+                    id="map"
+                    class="border rounded shadow-sm"
+                    style="height: 520px; width: 100%;">
+                  </div>
                 </div>
 
                 <!-- 📋 Legend -->
@@ -166,6 +182,7 @@
         </div>
       </div>
     </div>
+  </div>
 </div>
 {% endblock %}
 

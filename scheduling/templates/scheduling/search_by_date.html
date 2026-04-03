@@ -34,14 +34,15 @@
               </div>
 
               {% if employees %}
+
                 <!-- 🧩 Draggable Employee Pills -->
-                <div class="employee-results-wrap mb-3">
+                <div class="employee-results-wrap d-flex flex-wrap gap-2 mb-3">
                   {% for emp in employees %}
                     <div class="employee-result-item">
                       <!-- Desktop / large screens: drag pill -->
                       <button
                         type="button"
-                        class="btn btn-outline-success rounded-pill draggable-emp d-none d-lg-inline-flex"
+                        class="btn btn-outline-success rounded-pill draggable-emp d-none d-lg-inline-flex align-items-center"
                         draggable="true"
                         data-employee-id="{{ emp.id }}"
                         data-service-id="{{ category.id }}"
@@ -103,7 +104,10 @@
 </div>
 
 <!-- 🗺️ Shared Routes Modal -->
-<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+<div class="modal fade" id="mapModal" tabindex="-1"
+     role="dialog"
+     aria-labelledby="mapModalLabel"
+     aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
