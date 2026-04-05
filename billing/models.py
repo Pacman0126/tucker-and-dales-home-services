@@ -1,6 +1,5 @@
 from django.utils import timezone
 from decimal import Decimal
-from datetime import datetime as dt
 from typing import TYPE_CHECKING
 from django.utils.timezone import now
 from django.core.mail import send_mail
