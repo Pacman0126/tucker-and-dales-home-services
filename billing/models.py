@@ -390,9 +390,8 @@ class PaymentHistory(models.Model):
                 subject = f"Tucker & Dale’s — {self.status} Notification"
                 message = (
                     f"Hello {self.user.username},\n\n"
-                    (f"This is a confirmation "
-                     f"of a recent {self.status.lower()} "
-                     )
+                    f"This is a confirmation "
+                    f"of a recent {self.status.lower()} "
                     f"related to your booking at:\n\n"
                     f"{self.service_address or '(No address specified)'}\n\n"
                     f"Amount: ${abs(self.amount):.2f}\n"

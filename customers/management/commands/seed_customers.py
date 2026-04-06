@@ -139,8 +139,10 @@ class Command(BaseCommand):
         if purge_extra_users and extra_users:
             self.stdout.write(
                 self.style.WARNING(
-                    (f"{'Would delete' if dry_run else 'Deleting'} {len(extra_users)} "
-                     "extra non-superuser account(s) beyond the preserved pool...")
+                    (f"{'Would delete' if dry_run else 'Deleting'}"
+                     f"{len(extra_users)} "
+                     "extra non-superuser account(s) "
+                     "beyond the preserved pool...")
                 )
             )
             if not dry_run:
@@ -233,10 +235,9 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                (f"{'Would restore' if dry_run else 'Restored'} {created_count} "
-                 "CustomerProfile row(s)"
-                 )
-
+                f"{'Would restore' if dry_run else 'Restored'} "
+                f"{created_count} "
+                "CustomerProfile row(s)"
                 f"for preserved users."
             )
         )
@@ -244,8 +245,8 @@ class Command(BaseCommand):
         if extra_users and not purge_extra_users:
             self.stdout.write(
                 self.style.WARNING(
-                    (f"Note: {len(extra_users)} extra non-superuser "
-                     "account(s) were left untouched because ")
+                    f"Note: {len(extra_users)} extra non-superuser "
+                    "account(s) were left untouched because "
                     f"--purge-extra-users was not used."
                 )
             )

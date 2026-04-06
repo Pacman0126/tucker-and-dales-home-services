@@ -768,8 +768,8 @@ def cart_add(request):
         cart.save(update_fields=["address_key", "updated_at"])
         messages.warning(
             request,
-            ("Your previous cart was cleared because you selected a "
-             "different service address. ")
+            "Your previous cart was cleared because you selected a "
+            "different service address. "
             "Each session is tied to one address only.",
         )
 
@@ -946,8 +946,8 @@ def live_invoice_view(request, booking_id):
         root = payments.filter(parent__isnull=True).first() or payments.first()
 
         if hasattr(root, "compute_sections"):
-            (original_total, add_total, cancel_total,
-             net_total=root.compute_sections())
+            original_total, add_total, cancel_total, net_total = (
+                root.compute_sections())
             chain = {
                 "root": root,
                 "original_total": original_total,

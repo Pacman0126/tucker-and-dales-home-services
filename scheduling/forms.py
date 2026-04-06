@@ -31,8 +31,8 @@ class SearchByDateForm(forms.Form):
         elif user and user.is_authenticated:
             rc = getattr(user, "registered_customer_profile", None)
             if rc and getattr(rc, "billing_street_address", None):
-                (self.fields["customer_address"]
-                 .initial=rc.billing_street_address)
+                self.fields["customer_address"].initial = (
+                    rc.billing_street_address)
 
 
 class SearchByTimeSlotForm(forms.Form):
@@ -60,5 +60,5 @@ class SearchByTimeSlotForm(forms.Form):
         elif user and user.is_authenticated:
             rc = getattr(user, "registered_customer_profile", None)
             if rc and getattr(rc, "billing_street_address", None):
-                (self.fields["customer_address"]
-                 .initial=rc.billing_street_address)
+                self.fields["customer_address"].initial = (
+                    rc.billing_street_address)
