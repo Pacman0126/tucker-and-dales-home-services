@@ -111,7 +111,8 @@ def calculate_drive_time(addr1, addr2):
 # -----------------------------------------------------
 # 🔹 3. Main availability logic
 # -----------------------------------------------------
-def get_available_employees(customer_address, date, time_slot, service_category):
+def get_available_employees(customer_address, date, time_slot,
+                            service_category):
     """
     Returns employees in a given category who can take this job slot.
     Always computes drive time, even for idle employees.
@@ -138,7 +139,8 @@ def get_available_employees(customer_address, date, time_slot, service_category)
     available = []
 
     logger.info(
-        f"🔎 Checking {service_category} availability for {date} [{time_slot.label}]"
+        (f"🔎 Checking {service_category} availability for "
+         f"{date} [{time_slot.label}]")
     )
 
     if not employees:

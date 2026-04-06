@@ -3,7 +3,8 @@ from django import forms
 
 
 class CheckoutForm(forms.Form):
-    """Checkout form collecting billing address info (prefilled if logged in)."""
+    """Checkout form collecting billing
+    address info (prefilled if logged in)."""
 
     billing_name = forms.CharField(
         label="Full Name",
@@ -50,9 +51,11 @@ class CheckoutForm(forms.Form):
             return
 
         # Prefill values safely
-        self.fields["billing_name"].initial = f"{rc.first_name} {rc.last_name}".strip(
-        )
-        self.fields["billing_street_address"].initial = rc.billing_street_address or ""
+        self.fields["billing_name"].initial = (
+            f"{rc.first_name} {rc.last_name}".strip(
+            ))
+        self.fields["billing_street_address"].initial = (
+            rc.billing_street_address or "")
         self.fields["billing_city"].initial = rc.billing_city or ""
         self.fields["billing_state"].initial = rc.billing_state or ""
         self.fields["billing_zipcode"].initial = rc.billing_zipcode or ""

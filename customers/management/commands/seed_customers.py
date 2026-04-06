@@ -16,10 +16,13 @@ fake = Faker()
 # a short country/locale code (e.g. "US").
 REGION_MAP = {
     "Dallas": ["752", "75001", "75006"],
-    "Plano / Richardson / Allen / Garland": ["75024", "75025", "75081", "75082", "75040", "75044"],
-    "Frisco / McKinney / The Colony": ["75033", "75034", "75035", "75070", "75056"],
+    "Plano / Richardson / Allen / Garland": ["75024", "75025", "75081",
+                                             "75082", "75040", "75044"],
+    "Frisco / McKinney / The Colony": ["75033", "75034", "75035",
+                                       "75070", "75056"],
     "Irving / Las Colinas / Coppell": ["75038", "75039", "75063", "75062"],
-    "Carrollton / Lewisville / Flower Mound": ["75006", "75007", "75028", "75067"],
+    "Carrollton / Lewisville / Flower Mound": ["75006", "75007", ""
+                                               "75028", "75067"],
     "Fort Worth / Arlington / Grand Prairie": ["761", "760", "75052"],
     "Denton / North Suburbs": ["762"],
 }
@@ -65,7 +68,8 @@ def parse_address(address: str) -> dict:
 
 class Command(BaseCommand):
     help = (
-        "Restore/backfill CustomerProfile rows for existing preserved non-superuser demo users "
+        "Restore/backfill CustomerProfile rows for existing preserved "
+        "non-superuser demo users "
         "using real_dfw_addresses.py. This command does NOT recreate users."
     )
 
@@ -74,12 +78,14 @@ class Command(BaseCommand):
             "--limit",
             type=int,
             default=len(REAL_DFW_ADDRESSES),
-            help="How many preserved non-superuser users to backfill. Defaults to the number of real DFW addresses.",
+            help=("How many preserved non-superuser users to backfill. "
+                  "Defaults to the number of real DFW addresses."),
         )
         parser.add_argument(
             "--purge-extra-users",
             action="store_true",
-            help="Delete non-superuser users beyond the selected preserved pool after dry-run is verified.",
+            help=("Delete non-superuser users beyond the selected "
+                  "preserved pool after dry-run is verified."),
         )
         parser.add_argument(
             "--dry-run",
@@ -126,13 +132,15 @@ class Command(BaseCommand):
             self.stdout.write("First preserved users by id order:")
             for user in preserved_users[:preview_count]:
                 self.stdout.write(
-                    f"  id={user.id} | username={user.username} | email={user.email}"
+                    (f"id={user.id} | username={user.username} | "
+                     f"email={user.email}")
                 )
 
         if purge_extra_users and extra_users:
             self.stdout.write(
                 self.style.WARNING(
-                    f"{'Would delete' if dry_run else 'Deleting'} {len(extra_users)} extra non-superuser account(s) beyond the preserved pool..."
+                    (f"{'Would delete' if dry_run else 'Deleting'} {len(extra_users)} "
+                     "extra non-superuser account(s) beyond the preserved pool...")
                 )
             )
             if not dry_run:
@@ -153,7 +161,8 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.WARNING(
-                f"{'Would remove' if dry_run else 'Removing'} {existing_profile_count} existing profile(s) "
+                f"{'Would remove' if dry_run else 'Removing'} "
+                f"{existing_profile_count} existing profile(s) "
                 f"for preserved users..."
             )
         )
@@ -200,8 +209,10 @@ class Command(BaseCommand):
                 created_count += 1
                 if created_count <= 10:
                     self.stdout.write(
-                        f"[DRY RUN] Would restore profile for {user.username} | "
-                        f"{parsed['street']}, {parsed['city']}, {parsed['state']} {parsed['zipcode']} | "
+                        "[DRY RUN] Would restore "
+                        f" profile for {user.username} | "
+                        f"{parsed['street']}, {parsed['city']}, "
+                        f"{parsed['state']} {parsed['zipcode']} | "
                         f"service_area={service_area}"
                     )
                 continue
@@ -212,7 +223,8 @@ class Command(BaseCommand):
             if created_count <= 10:
                 self.stdout.write(
                     f"✅ Restored {user.username} | "
-                    f"{parsed['street']}, {parsed['city']}, {parsed['state']} {parsed['zipcode']} | "
+                    f"{parsed['street']}, {parsed['city']}, "
+                    f"{parsed['state']} {parsed['zipcode']} | "
                     f"service_area={service_area}"
                 )
             elif created_count % 25 == 0:
@@ -221,7 +233,10 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"{'Would restore' if dry_run else 'Restored'} {created_count} CustomerProfile row(s) "
+                (f"{'Would restore' if dry_run else 'Restored'} {created_count} "
+                 "CustomerProfile row(s)"
+                 )
+
                 f"for preserved users."
             )
         )
@@ -229,7 +244,8 @@ class Command(BaseCommand):
         if extra_users and not purge_extra_users:
             self.stdout.write(
                 self.style.WARNING(
-                    f"Note: {len(extra_users)} extra non-superuser account(s) were left untouched because "
+                    (f"Note: {len(extra_users)} extra non-superuser "
+                     "account(s) were left untouched because ")
                     f"--purge-extra-users was not used."
                 )
             )

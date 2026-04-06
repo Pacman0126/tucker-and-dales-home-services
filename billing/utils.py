@@ -60,7 +60,7 @@ def unlock_service_address(request) -> None:
     request.session.pop("service_address", None)
     request.session.pop("address_locked", None)
     request.session.pop("cart_id", None)
-    request.session.modified = Tru
+    request.session.modified = True
 
 
 def normalize_address(address: Optional[str]) -> str:
@@ -80,7 +80,8 @@ def _get_or_create_cart(request) -> Cart:
     - If session carries a cart_id -> return that cart (and ensure ownership).
     - Else, if user is authenticated -> return latest cart with the session's
       service address_key (if set) or the most recent cart; create if none.
-    - Else (anonymous) -> return/create a session cart keyed by session_key + address_key.
+    - Else (anonymous) -> return/create a session cart keyed by session_key
+    + address_key.
     """
     return get_active_cart_for_request(request, create_if_missing=True)
 
@@ -93,7 +94,6 @@ def get_or_create_cart(request_or_user):
     Public wrapper that can safely be imported from other apps.
     Works with either a request or a user instance.
     """
-    from billing.models import Cart
 
     if hasattr(request_or_user, "user"):  # got a request
         request = request_or_user
@@ -112,14 +112,19 @@ def get_or_create_cart(request_or_user):
     return cart
 
 
-def get_active_cart_for_request(request, *, create_if_missing: bool = True) -> Optional[Cart]:
+def get_active_cart_for_request(
+        request,
+        *,
+        create_if_missing: bool = True,
+) -> Optional[Cart]:
     """
     Single source of truth for selecting the active cart.
     1) Honor session["cart_id"] if present.
     2) Otherwise, use (user, address_key) if authenticated.
     3) Otherwise, use (session_key, address_key) for guests.
 
-    This never silently switches address_key. The address is the session’s boss.
+    This never silently switches address_key.
+    The address is the session’s boss.
     """
     address_key = normalize_address(request.session.get("service_address"))
     cart_id = request.session.get("cart_id")
@@ -128,8 +133,10 @@ def get_active_cart_for_request(request, *, create_if_missing: bool = True) -> O
     if cart_id:
         try:
             cart = Cart.objects.select_related().get(pk=cart_id)
-            # Guard: if this cart belongs to another user, take ownership on login
-            if request.user.is_authenticated and cart.user_id != request.user.id:
+            # Guard: if this cart belongs to another
+            # user, take ownership on login
+            if (request.user.is_authenticated
+                    and cart.user_id != request.user.id):
                 cart.user = request.user
                 cart.session_key = request.session.session_key
                 cart.save(update_fields=["user", "session_key", "updated_at"])
@@ -156,7 +163,8 @@ def get_active_cart_for_request(request, *, create_if_missing: bool = True) -> O
         cart = qs.order_by("-updated_at").first()
         if cart:
             # If the cart has no address yet and the session does, apply it.
-            if address_key and normalize_address(cart.address_key) != address_key:
+            if (address_key
+                    and normalize_address(cart.address_key) != address_key):
                 cart.address_key = address_key
                 cart.save(update_fields=["address_key", "updated_at"])
             request.session["cart_id"] = cart.pk
@@ -186,7 +194,8 @@ def get_active_cart_for_request(request, *, create_if_missing: bool = True) -> O
 
 def merge_session_cart(old_session_key: str, user) -> Optional[Cart]:
     """
-    Merge all carts that were created for the old_session_key into the user’s active cart.
+    Merge all carts that were created for the old_session_key
+    into the user’s active cart.
     We prefer to keep the address_key from the current session (if present).
     """
     if not old_session_key or not user:
@@ -204,7 +213,8 @@ def merge_session_cart(old_session_key: str, user) -> Optional[Cart]:
         "service_address") if hasattr(user, "_request") else None)
     if target_address:
         main = Cart.objects.filter(
-            user=user, address_key=target_address).order_by("-updated_at").first()
+            user=user,
+            address_key=target_address).order_by("-updated_at").first()
         if not main:
             main = Cart.objects.create(user=user, address_key=target_address)
     else:
@@ -238,7 +248,8 @@ def get_refund_policy(booking_datetime):
         booking_dt = booking_datetime
     else:
         booking_dt = datetime.combine(
-            booking_datetime, datetime.min.time(), tzinfo=timezone.get_current_timezone())
+            booking_datetime, datetime.min.time(),
+            tzinfo=timezone.get_current_timezone())
 
     delta = booking_dt - now
     hours_until = delta.total_seconds() / 3600

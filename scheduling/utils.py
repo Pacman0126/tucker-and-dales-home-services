@@ -48,5 +48,6 @@ def clear_locked_address(request, with_message=True):
     if with_message:
         messages.info(
             request,
-            "Your previous cart was cleared — you can now book under a new address."
+            ("Your previous cart was cleared — "
+             "you can now book under a new address.")
         )

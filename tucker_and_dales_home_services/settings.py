@@ -301,9 +301,13 @@ LOCAL_NO_MANIFEST = env.bool("LOCAL_NO_MANIFEST", default=False)
 # Use simple storage for local work, even when DEBUG=False,
 # so missing manifest entries do not crash the whole site.
 if DEBUG or LOCAL_NO_MANIFEST:
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    STATICFILES_STORAGE = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
 else:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    STATICFILES_STORAGE = (
+        "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    )
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

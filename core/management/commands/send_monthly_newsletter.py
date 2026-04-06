@@ -5,12 +5,12 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from datetime import date, timedelta
 from core.models import NewsletterSubscription, first_day_next_month
 
 
 class Command(BaseCommand):
-    help = "Send monthly newsletter to subscribed users whose next_send_on is today (1st of the month)."
+    help = ("Send monthly newsletter to subscribed users "
+            "whose next_send_on is today (1st of the month).")
 
     def handle(self, *args, **options):
         today = timezone.localdate()
@@ -26,7 +26,11 @@ class Command(BaseCommand):
             ctx = {
                 "user": user,
                 "send_date": today.strftime("%Y-%m-%d"),
-                "unsubscribe_url": f"{settings.SITE_BASE_URL}/newsletter/unsubscribe/{sub.token}/",
+                "unsubscribe_url": (
+                    f"{settings.SITE_BASE_URL}/"
+                    f"/newsletter/unsubscribe/{sub.token}/"
+                ),
+
             }
             subject = "🗞️ Your Tucker & Dale’s Monthly Newsletter"
             html_body = render_to_string("emails/newsletter_monthly.html", ctx)

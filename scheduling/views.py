@@ -1,43 +1,25 @@
-from decimal import Decimal
+
 import datetime
-from datetime import datetime as dt
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
-from django.contrib.admin.views.decorators import staff_member_required
-
 from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
-from django.middleware.csrf import get_token
-from django.contrib.auth.decorators import login_required, user_passes_test
-
+from billing.utils import _get_or_create_cart
+from billing.models import Cart
+from scheduling.utils import get_locked_address, lock_service_address
 from .models import Booking
 
-from billing.utils import _get_or_create_cart
-
-from billing.constants import SERVICE_PRICES, SALES_TAX_RATE
-
-
-from customers.models import CustomerProfile
 from .models import (
     Employee,
 )
-
-from billing.models import Cart
 
 from .forms import SearchByDateForm, SearchByTimeSlotForm
 from .models import TimeSlot, ServiceCategory
 from .availability import get_available_employees
 
-from scheduling.forms import SearchByTimeSlotForm, SearchByDateForm
-from scheduling.models import TimeSlot, ServiceCategory
-
-from scheduling.utils import get_locked_address, lock_service_address
 
 # ============================================================
 # 🔹 Search by Date
@@ -68,14 +50,17 @@ def unlock_address(request):
 
         # AJAX response
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({"ok": True, "message": "Cart cleared and address unlocked."})
+            return JsonResponse({"ok": True, "message":
+                                 "Cart cleared and address unlocked."}
+                                )
 
         # Fallback redirect
         messages.info(
             request, "✅ Cart cleared — you can now book for a new address.")
         return redirect("scheduling:search_by_date")
 
-    return JsonResponse({"ok": False, "error": "Invalid request method."}, status=405)
+    return JsonResponse({"ok": False, "error": "Invalid request method."},
+                        status=405)
 
 
 def search_by_date(request):
@@ -110,11 +95,14 @@ def search_by_date(request):
             )
 
         # --- Enforce lock ---
-        if locked_address and customer_address.lower() != locked_address.lower():
+        if (locked_address and customer_address.lower() !=
+                locked_address.lower()):
             messages.warning(
-                request,
-                f"Service address is locked for this session: {locked_address}. "
-                "Start a new booking session to change it."
+                request, (
+                    "Service address is locked for this session: "
+                    f"{locked_address}. "
+                    "Start a new booking session to change it."
+                )
             )
             customer_address = locked_address
 
@@ -136,7 +124,9 @@ def search_by_date(request):
         }
 
         print(
-            f"✅ DEBUG: SearchByDate → Date={date}, Address={locked_address}, Results={len(results)} slots")
+            (f"✅ DEBUG: SearchByDate → Date={date}, "
+             f"Address={locked_address}, Results={len(results)} slots")
+        )
 
     else:
         print(f"❌ DEBUG: Invalid SearchByDateForm → {form.errors}")
@@ -156,97 +146,6 @@ def search_by_date(request):
     return render(request, "scheduling/search_by_date.html", context)
 
 
-# def search_by_time_slot(request):
-#     """
-#     Allows searching by time slot across the next 28 days.
-#     - Respects and enforces locked service address.
-#     - Automatically falls back to locked session address if field is missing.
-#     """
-
-#     # --- 1️⃣ Retrieve locked service address (if any) ---
-#     locked_address, address_locked = get_locked_address(request)
-#     form = SearchByTimeSlotForm(
-#         request.GET or None, user=request.user, locked_address=locked_address)
-
-#     print(f"🔍 DEBUG FORM DATA: {form.data}")
-#     results = None
-
-#     # --- 3️⃣ Process search if valid ---
-#     if form.is_valid():
-#         slot = form.cleaned_data["time_slot"]
-#         customer_address = (
-#             form.cleaned_data.get("customer_address", "") or locked_address
-#         ).strip()
-
-#         # --- Lock service address if not already locked ---
-#         if not locked_address and customer_address:
-#             lock_service_address(request, customer_address)
-#             locked_address = customer_address
-#             address_locked = True
-#             messages.info(
-#                 request,
-#                 f"Service address '{locked_address}' locked for this session."
-#             )
-
-#         # --- Enforce locked address ---
-#         if locked_address and customer_address.lower() != locked_address.lower():
-#             messages.warning(
-#                 request,
-#                 f"Service address is locked for this session: {locked_address}. "
-#                 "Start a new booking session to change it."
-#             )
-#             customer_address = locked_address
-
-#         # --- Build 28-day × category grid ---
-#         today = datetime.date.today()
-#         days = [today + datetime.timedelta(days=i) for i in range(14)]
-#         categories = ServiceCategory.objects.all()
-
-#         results = {
-#             day: {
-#                 category.name: [
-#                     {
-#                         "id": emp.id,
-#                         "name": emp.name,
-#                         "home_address": emp.home_address,
-#                         "drive_time": getattr(emp, "drive_time", None),
-#                         "route_origin": getattr(emp, "route_origin", None),
-#                         "service_category_id": category.id,
-#                         "time_slot_id": slot.id,
-#                         "date": day.strftime("%Y-%m-%d"),
-#                     }
-#                     for emp in get_available_employees(
-#                         customer_address=customer_address,
-#                         date=day,
-#                         time_slot=slot,
-#                         service_category=category,
-#                     )
-#                 ]
-#                 for category in categories
-#             }
-#             for day in days
-#         }
-
-#         print(
-#             f"✅ DEBUG: SearchByTimeSlot → Slot={slot}, Address={locked_address}, Days={len(results)}")
-
-#     else:
-#         print(f"❌ DEBUG: Invalid SearchByTimeSlotForm → {form.errors}")
-
-#     # --- 4️⃣ Render template ---
-#     cart = _get_or_create_cart(request)
-#     context = {
-#         "form": form,
-#         "results": results,
-#         "cart": cart,
-#         "time_slots": TimeSlot.objects.all(),
-#         "navbar_mode": "booking",
-#         "GOOGLE_MAPS_BROWSER_KEY": settings.GOOGLE_MAPS_BROWSER_KEY,
-#         "address_locked": address_locked,
-#         "locked_address": locked_address,
-#     }
-
-#     return render(request, "scheduling/search_by_time_slot.html", context)
 def search_by_time_slot(request):
     """
     Allows searching by time slot across a 4-week window, one week at a time.
@@ -300,15 +199,17 @@ def search_by_time_slot(request):
             )
 
         # --- Enforce locked address ---
-        if locked_address and customer_address.lower() != locked_address.lower():
+        if (locked_address and customer_address.lower() !=
+                locked_address.lower()):
             messages.warning(
                 request,
-                f"Service address is locked for this session: {locked_address}. "
-                "Start a new booking session to change it."
+                (f"Service address is locked "
+                 f"for this session: {locked_address}. "
+                 "Start a new booking session to change it.")
             )
             customer_address = locked_address
 
-        # --- Build only the selected 7-day slice out of the full 28-day window ---
+        # - Build only the selected 7-day slice out of the full 28-day window
         today = datetime.date.today()
         start_offset = (selected_week - 1) * days_per_week
         end_offset = start_offset + days_per_week

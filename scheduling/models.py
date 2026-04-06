@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from datetime import datetime
 from django.utils.timezone import now
 from django.db import models
@@ -20,47 +19,6 @@ class TimeSlot(models.Model):
         return self.label
 
 
-# class Employee(models.Model):
-#     name = models.CharField(max_length=100)
-#     home_address = models.CharField(max_length=255)
-#     service_category = models.ForeignKey(
-#         "ServiceCategory", on_delete=models.CASCADE
-#     )
-
-#     def __str__(self):
-#         return self.name
-
-#     def current_location(self, date, time_slot):
-#         """
-#         Returns the jobsite address if this employee is already assigned
-#         to a booking at the given date/slot. Otherwise falls back to home.
-#         """
-#         assignment = self.jobassignment_set.filter(
-#             booking__date=date,
-#             booking__time_slot=time_slot,
-#         ).first()
-
-#         if assignment:
-#             return assignment.jobsite_address
-#         return self.home_address
-
-#     def next_location(self, date, time_slot):
-#         """
-#         Returns the next jobsite address *after* this slot on the same day.
-#         If none, returns None.
-#         """
-#         next_assignment = (
-#             self.jobassignment_set.filter(
-#                 booking__date=date,
-#                 booking__time_slot__id__gt=time_slot.id,  # any later slot that day
-#             )
-#             .order_by("booking__time_slot__id")
-#             .first()
-#         )
-
-#         if next_assignment:
-#             return next_assignment.jobsite_address
-#         return None
 class Employee(models.Model):
     name = models.CharField(max_length=100)
     home_address = models.CharField(max_length=255)
@@ -174,7 +132,8 @@ class Booking(models.Model):
         null=True,
         blank=True,
         related_name="linked_bookings_direct",
-        help_text="Links this booking to its primary payment record for refunds or adjustments."
+        help_text=("Links this booking to its primary payment "
+                   "record for refunds or adjustments.")
     )
 
     class Meta:
@@ -185,7 +144,10 @@ class Booking(models.Model):
         ordering = ["-date", "-created_at"]
 
     def __str__(self):
-        return f"{self.user.username if self.user else 'Anonymous'} — {self.service_category} on {self.date} {self.time_slot}"
+        return (
+            f"{self.user.username if self.user else 'Anonymous'} — "
+            f"{self.service_category} on {self.date} {self.time_slot}"
+        )
 
     # -----------------------
     # 🔧 Helpers
@@ -224,18 +186,6 @@ class Booking(models.Model):
             return None
 
 
-# class JobAssignment(models.Model):
-#     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-#     booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
-#     jobsite_address = models.CharField(max_length=255, blank=True)
-
-#     def save(self, *args, **kwargs):
-#         if not self.jobsite_address:
-#             self.jobsite_address = self.booking.service_address
-#         super().save(*args, **kwargs)
-
-#     def __str__(self):
-#         return f"{self.employee} → {self.jobsite_address} ({self.booking.time_slot})"
 class JobAssignment(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
@@ -253,4 +203,8 @@ class JobAssignment(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.employee} → {self.jobsite_address} ({self.booking.time_slot})"
+        return (
+            f"{self.employee} → {self.jobsite_address} "
+            f"({self.booking.time_slot})"
+
+        )

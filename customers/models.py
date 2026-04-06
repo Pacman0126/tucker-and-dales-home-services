@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.conf import settings
 
 # Create your models here.
@@ -17,7 +16,7 @@ class CustomerProfile(models.Model):
         related_name="customer_profile",
     )
 
-    # ── Contact / identity (optional) ─────────────────────────────────────────────
+    # ── Contact / identity (optional) ──
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(unique=True)
     company = models.CharField(max_length=120, blank=True)
@@ -28,7 +27,7 @@ class CustomerProfile(models.Model):
     )
     timezone = models.CharField(max_length=64, blank=True)
 
-    # ── Billing address (THIS IS WHAT checkout_summary RELIES ON) ────────────────
+    # ── Billing address (THIS IS WHAT checkout_summary RELIES ON) ──
     billing_street_address = models.CharField(max_length=255, blank=True)
     billing_city = models.CharField(max_length=100, blank=True)
     billing_state = models.CharField(max_length=100, blank=True)
@@ -41,7 +40,7 @@ class CustomerProfile(models.Model):
         help_text="Country/region code (e.g., US, DE).",
     )
 
-    # ── (Optional) last-known service address snapshot for UX shortcuts ──────────
+    # ── (Optional) last-known service address snapshot for UX shortcuts ──
     service_street_address = models.CharField(max_length=255, blank=True)
     service_city = models.CharField(max_length=100, blank=True)
     service_state = models.CharField(max_length=100, blank=True)
@@ -59,7 +58,7 @@ class CustomerProfile(models.Model):
     def __str__(self) -> str:
         return f"CustomerProfile<{self.user.username}>"
 
-    # ── Helpers the views/templates call ─────────────────────────────────────────
+    # ── Helpers the views/templates call ──
     def has_valid_billing_address(self) -> bool:
         return all(
             [

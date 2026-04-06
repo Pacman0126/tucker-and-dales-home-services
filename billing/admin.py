@@ -26,15 +26,18 @@ class PaymentAdmin(admin.ModelAdmin):
                     fail += 1
             except Exception as e:
                 self.message_user(
-                    request, f"Refund failed for {payment}: {e}", level=messages.ERROR)
+                    request, f"Refund failed for {payment}: {e}",
+                    level=messages.ERROR)
                 fail += 1
 
         if success:
             self.message_user(
-                request, f"✅ {success} refund(s) completed successfully.", level=messages.SUCCESS)
+                request, f"✅ {success} refund(s) completed successfully.",
+                level=messages.SUCCESS)
         if fail:
             self.message_user(
-                request, f"⚠️ {fail} refund(s) could not be processed.", level=messages.WARNING)
+                request, f"⚠️ {fail} refund(s) could not be processed.",
+                level=messages.WARNING)
 
 
 @admin.register(PaymentHistory)

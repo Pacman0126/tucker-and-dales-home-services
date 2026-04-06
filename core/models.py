@@ -12,7 +12,8 @@ User = get_user_model()
 class Address(models.Model):
     # Optional owner so a user can manage multiple service addresses
     owner = models.ForeignKey(User, null=True, blank=True,
-                              on_delete=models.SET_NULL, related_name="addresses")
+                              on_delete=models.SET_NULL,
+                              related_name="addresses")
     # “Home”, “Rental A”, etc.
     label = models.CharField(max_length=100, blank=True)
     line1 = models.CharField(max_length=128)
@@ -71,4 +72,7 @@ class NewsletterSubscription(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"NewsletterSubscription<{self.user}> unsub={self.unsubscribed}, next={self.next_send_on}"
+        return (
+            f"NewsletterSubscription<{self.user}> "
+            f"unsub={self.unsubscribed}, next={self.next_send_on}"
+        )

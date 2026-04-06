@@ -21,7 +21,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("", include(("core.urls", "core"), namespace="core")),
-    path("billing/", include(("billing.urls", "billing"), namespace="billing")),
+    path("billing/", include(("billing.urls", "billing"),
+                             namespace="billing")),
     path(
         "customers/",
         include(("customers.urls", "customers"), namespace="customers"),

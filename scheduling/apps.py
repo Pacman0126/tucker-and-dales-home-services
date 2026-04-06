@@ -6,4 +6,4 @@ class SchedulingConfig(AppConfig):
     name = "scheduling"
 
     def ready(self):
-        import scheduling.signals
+        import scheduling.signals  # noqa: F401

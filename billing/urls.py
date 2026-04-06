@@ -20,7 +20,8 @@ urlpatterns = [
          views.live_invoice_view, name="live_invoice_view"),
     path("invoice/<path:address>/", views.live_invoice_view_address,
          name="live_invoice_view_address"),
-    path("submit-adjustment/", views.submit_adjustment, name="submit_adjustment"),
+    path("submit-adjustment/", views.submit_adjustment,
+         name="submit_adjustment"),
     path("summary/pdf/", views.download_yearly_summary_pdf,
          name="download_yearly_summary_pdf"),
     path("receipt/pdf/<int:pk>/", views.download_receipt_pdf,
@@ -36,6 +37,7 @@ urlpatterns = [
     # Admin & Stripe Webhooks
     path("admin/all-payments/", views.all_payments_admin,
          name="all_payments_admin"),
-    path("admin/refund/<int:pk>/", views.refund_payment, name="refund_payment"),
+    path("admin/refund/<int:pk>/", views.refund_payment,
+         name="refund_payment"),
     path("webhook/", views.stripe_webhook, name="stripe_webhook"),
 ]

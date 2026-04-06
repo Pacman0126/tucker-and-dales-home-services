@@ -45,7 +45,8 @@ def login_required_json(view_func):
             return JsonResponse(
                 {
                     "ok": False,
-                    "error": "Please register or log in to add services to your cart.",
+                    "error": ("Please register or log in to "
+                              "add services to your cart."),
                     "redirect_url": "/accounts/signup/",
                 },
                 status=401,

@@ -105,7 +105,8 @@ def send_welcome_email(request, user, **kwargs):
         )
         print(
             f"Newsletter send_mail returned {sent_count} for {user.email}; "
-            f"first issue {next_on} ({'created' if created else 'already existed'})"
+            f"first issue {next_on} "
+            f"({'created' if created else 'already existed'})"
         )
     except Exception as e:
         print(f"Newsletter auto-subscribe/notify failed for {user.email}: {e}")

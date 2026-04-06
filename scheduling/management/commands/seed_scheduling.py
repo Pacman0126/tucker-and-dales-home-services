@@ -92,12 +92,14 @@ class Command(BaseCommand):
 
         if not customer_profiles:
             raise ValueError(
-                "No CustomerProfile records found. Restore customer profiles first."
+                ("No CustomerProfile records found. "
+                 "Restore customer profiles first.")
             )
 
         if len(customer_profiles) < 15:
             raise ValueError(
-                f"Need at least 15 CustomerProfiles to draw employees from the user pool. "
+                "Need at least 15 CustomerProfiles to draw "
+                "employees from the user pool. "
                 f"Current count: {len(customer_profiles)}"
             )
 
@@ -173,7 +175,8 @@ class Command(BaseCommand):
 
         msg = (
             f"✅ Bookings + assignments seeded: {total_bookings} bookings, "
-            f"{total_assignments} assignments, 15 employees drawn from restored CustomerProfiles, "
+            f"{total_assignments} assignments, 15 employees drawn "
+            "from restored CustomerProfiles, "
             f"120-day horizon, utilization={SLOT_UTILIZATION:.0%}."
         )
         self.stdout.write(self.style.SUCCESS(msg))

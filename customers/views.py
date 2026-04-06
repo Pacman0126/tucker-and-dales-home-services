@@ -3,17 +3,15 @@ import logging
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import authenticate, get_backends, login
+from django.contrib.auth import get_backends, login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from billing.utils import merge_session_cart
-from customers.forms import LoginOrRegisterForm
 from customers.models import CustomerProfile
 from core.decorators import verified_email_required
 
@@ -102,7 +100,8 @@ def customer_detail(request, pk):
         CustomerProfile.objects.select_related("user"),
         pk=pk,
     )
-    return render(request, "customers/customer_detail.html", {"customer": customer})
+    return render(request, "customers/customer_detail.html",
+                  {"customer": customer})
 
 
 @login_required
@@ -155,18 +154,28 @@ def customer_edit(request, pk):
                 "email": forms.EmailInput(attrs={"class": "form-control"}),
                 "phone": forms.TextInput(attrs={"class": "form-control"}),
                 "company": forms.TextInput(attrs={"class": "form-control"}),
-                "preferred_contact": forms.Select(attrs={"class": "form-select"}),
+                "preferred_contact": forms.Select(
+                    attrs={"class": "form-select"}),
                 "timezone": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_street_address": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_city": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_state": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_zipcode": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_street_address": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "billing_city": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "billing_state": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "billing_zipcode": forms.TextInput(
+                    attrs={"class": "form-control"}),
                 "region": forms.TextInput(attrs={"class": "form-control"}),
-                "service_street_address": forms.TextInput(attrs={"class": "form-control"}),
-                "service_city": forms.TextInput(attrs={"class": "form-control"}),
-                "service_state": forms.TextInput(attrs={"class": "form-control"}),
-                "service_zipcode": forms.TextInput(attrs={"class": "form-control"}),
-                "service_region": forms.TextInput(attrs={"class": "form-control"}),
+                "service_street_address": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "service_city": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "service_state": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "service_zipcode": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "service_region": forms.TextInput(
+                    attrs={"class": "form-control"}),
             }
 
         def clean_email(self):
@@ -240,7 +249,9 @@ def _safe_login(request, user):
     if not hasattr(user, "backend"):
         backends = get_backends()
         if backends:
-            user.backend = f"{backends[0].__module__}.{backends[0].__class__.__name__}"
+            user.backend = (
+                f"{backends[0].__module__}.{backends[0].__class__.__name__}"
+            )
         else:
             # Fallback to settings if somehow empty
             default_backend = getattr(
@@ -272,7 +283,9 @@ def _safe_login(request, user):
 
         if request.session.get("cart_id"):
             print(
-                f"🛒 Linked cart id {request.session['cart_id']} for user '{user.username}'")
+                f"🛒 Linked cart id {request.session['cart_id']} "
+                f"for user '{user.username}'")
+
     except Exception as e:
         print(f"⚠️ Cart merge/link failed: {e}")
 
@@ -281,133 +294,6 @@ def _safe_login(request, user):
         delattr(user, "_request")
 
 
-# ============================================================
-# 🔹 CUSTOMER SELF-REGISTRATION
-# ============================================================
-# def register(request):
-#     """
-#     Hybrid register/login:
-#       - Username+password → login (redirect to profile update if email mismatch)
-#       - Email+password → login (redirect to profile update if username mismatch)
-#       - Username exists but bad password → error
-#       - Otherwise → create new user + profile
-#       - ✅ Preserves ?next= param for post-login redirect
-#     """
-#     if request.method == "POST":
-#         form = LoginOrRegisterForm(request.POST)
-
-#         if form.is_valid():
-#             username = form.cleaned_data["username"].strip()
-#             email = form.cleaned_data["email"].strip().lower()
-#             password1 = form.cleaned_data["password1"]
-
-#             # ✅ Capture intended next destination before any return
-#             next_url = request.GET.get("next") or request.POST.get("next")
-
-#             # ======================================================
-#             # CASE 1 — Username + password match → login
-#             # ======================================================
-#             user = authenticate(request, username=username, password=password1)
-#             if user:
-#                 if user.email.lower() != email:
-#                     messages.warning(
-#                         request,
-#                         f"Your stored email is '{user.email}', but you entered '{email}'. "
-#                         "Please confirm or update your profile."
-#                     )
-#                     _safe_login(request, user)
-#                     request.session["entered_username"] = username
-#                     request.session["next_after_profile"] = next_url or "billing:checkout"
-#                     request.session["checkout_pending"] = True
-#                     return redirect("customers:complete_profile")
-
-#                 _safe_login(request, user)
-
-#                 # ✅ Redirect to intended page if provided
-#                 if next_url:
-#                     return redirect(next_url)
-#                 return _post_login_address_check(request, user)
-
-#             # ======================================================
-#             # CASE 2 — Email + password match (different username)
-#             # ======================================================
-#             user_by_email = User.objects.filter(email__iexact=email).first()
-#             if user_by_email:
-#                 authenticated_user = authenticate(
-#                     request,
-#                     username=user_by_email.username,
-#                     password=password1,
-#                 )
-#                 if authenticated_user:
-#                     if authenticated_user.username.lower() != username.lower():
-#                         messages.warning(
-#                             request,
-#                             f"You’re already registered as '{authenticated_user.username}', "
-#                             f"but you entered '{username}'. "
-#                             "Please verify or update your username."
-#                         )
-#                         _safe_login(request, authenticated_user)
-#                         request.session["entered_username"] = username
-#                         request.session["next_after_profile"] = next_url or "billing:checkout"
-#                         request.session["checkout_pending"] = True
-#                         return redirect("customers:complete_profile")
-
-#                     # ✅ Normal email-based login
-#                     _safe_login(request, authenticated_user)
-#                     if next_url:
-#                         return redirect(next_url)
-#                     return _post_login_address_check(request, authenticated_user)
-
-#                 messages.error(request, "Incorrect password for this email.")
-#                 return render(request, "customers/register.html", {"form": form})
-
-#             # ======================================================
-#             # CASE 3 — Username exists but password incorrect
-#             # ======================================================
-#             if User.objects.filter(username=username).exists():
-#                 messages.error(
-#                     request,
-#                     "That username already exists, but the password entered is incorrect.",
-#                 )
-#                 return render(request, "customers/register.html", {"form": form})
-
-#             # ======================================================
-#             # CASE 4 — Create new user
-#             # ======================================================
-#             with transaction.atomic():
-#                 user = form.save(commit=False)
-#                 user.email = email
-#                 user.first_name = form.cleaned_data.get(
-#                     "first_name", "").strip()
-#                 user.last_name = form.cleaned_data.get("last_name", "").strip()
-#                 user.save()
-
-#                 CustomerProfile.objects.create(
-#                     user=user,
-#                     email=user.email,
-#                 )
-
-#             messages.success(
-#                 request,
-#                 "Registration successful — please complete your profile."
-#             )
-#             _safe_login(request, user)
-#             request.session["next_after_profile"] = next_url or reverse(
-#                 "billing:checkout")
-#             request.session["checkout_pending"] = True
-#             return redirect("customers:complete_profile")
-
-#         # Invalid form
-#         messages.error(request, "Please correct the errors below.")
-#         return render(request, "customers/register.html", {"form": form})
-
-#     # ======================================================
-#     # GET — normal render, preserve ?next in hidden field
-#     # ======================================================
-#     form = LoginOrRegisterForm()
-#     next_url = request.GET.get("next", "")
-#     context = {"form": form, "next": next_url}
-#     return render(request, "customers/register.html", context)
 def register(request):
     """
     Legacy compatibility wrapper.
@@ -422,7 +308,8 @@ def register(request):
 
 def _post_login_address_check(request, user):
     """
-    Ensure user has a valid billing address; preload billing address to session.
+    Ensure user has a valid billing address; preload billing
+    address to session.
     Do NOT overwrite service_address if user started a booking as a guest.
     """
     try:
@@ -431,7 +318,8 @@ def _post_login_address_check(request, user):
         if not rc.has_valid_billing_address():
             messages.warning(
                 request,
-                "Your profile is missing billing address details. Please complete your profile before checkout."
+                ("Your profile is missing billing address details. "
+                 "Please complete your profile before checkout.")
             )
             # signal continuation back to checkout
             request.session["next_after_profile"] = "billing:checkout"
@@ -448,7 +336,9 @@ def _post_login_address_check(request, user):
         return redirect("core:home")
     except CustomerProfile.DoesNotExist:
         messages.warning(
-            request, "No customer profile found. Please complete your profile before checkout.")
+            request,
+            ("No customer profile found. "
+             "Please complete your profile before checkout."))
         request.session["next_after_profile"] = "billing:checkout"
         request.session["checkout_pending"] = True
         request.session.modified = True
@@ -514,12 +404,17 @@ def complete_profile(request):
                 "email": forms.EmailInput(attrs={"class": "form-control"}),
                 "phone": forms.TextInput(attrs={"class": "form-control"}),
                 "company": forms.TextInput(attrs={"class": "form-control"}),
-                "preferred_contact": forms.Select(attrs={"class": "form-select"}),
+                "preferred_contact": forms.Select(
+                    attrs={"class": "form-select"}),
                 "timezone": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_street_address": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_city": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_state": forms.TextInput(attrs={"class": "form-control"}),
-                "billing_zipcode": forms.TextInput(attrs={"class": "form-control"}),
+                "billing_street_address": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "billing_city": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "billing_state": forms.TextInput(
+                    attrs={"class": "form-control"}),
+                "billing_zipcode": forms.TextInput(
+                    attrs={"class": "form-control"}),
                 "region": forms.TextInput(attrs={"class": "form-control"}),
             }
 
@@ -589,7 +484,8 @@ def complete_profile(request):
                 else:
                     next_url = reverse("core:home")
 
-            if "checkout/summary" in next_url or not next_url.endswith("/checkout/"):
+            if ("checkout/summary" in next_url
+                    or not next_url.endswith("/checkout/")):
                 next_url = reverse("billing:checkout")
 
             messages.success(request, "Profile updated successfully.")

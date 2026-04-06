@@ -85,7 +85,8 @@ class Payment(models.Model):
 
 
 class CartManager(models.Manager["Cart"]):
-    """Custom manager with helper for resolving current user's or session's cart."""
+    """Custom manager with helper for resolving
+    current user's or session's cart."""
 
     def get_for_request(self, request: "HttpRequest"):
         """
@@ -139,7 +140,8 @@ class Cart(models.Model):
         blank=True,
         null=True,
         db_index=True,
-        help_text="Normalized address string for session-level cart isolation.",
+        help_text=("Normalized address string for "
+                   "session-level cart isolation."),
     )
 
     created_at = models.DateTimeField(default=now)
@@ -258,7 +260,8 @@ class CartItem(models.Model):
         )
 
     def __str__(self):
-        return f"{self.service_category} | {self.date} {self.time_slot} | {self.employee}"
+        return (f"{self.service_category} | {self.date} {self.time_slot} | "
+                f" | {self.employee}")
 
     @property
     def subtotal(self) -> Decimal:
@@ -297,7 +300,8 @@ class PaymentHistory(models.Model):
         null=True,
         blank=True,
         related_name="adjustments",
-        help_text="Links follow-up payment records (refunds, add-ons, etc.) back to the root payment.",
+        help_text=("Links follow-up payment records "
+                   "(refunds, add-ons, etc.) back to the root payment."),
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -380,12 +384,15 @@ class PaymentHistory(models.Model):
         super().save(*args, **kwargs)
 
         # Send email only when new record created
-        if is_new and self.user and self.status in ["Refunded", "Adjustment", "Cancelled"]:
+        if (is_new and self.user
+                and self.status in ["Refunded", "Adjustment", "Cancelled"]):
             try:
                 subject = f"Tucker & Dale’s — {self.status} Notification"
                 message = (
                     f"Hello {self.user.username},\n\n"
-                    f"This is a confirmation of a recent {self.status.lower()} "
+                    (f"This is a confirmation "
+                     f"of a recent {self.status.lower()} "
+                     )
                     f"related to your booking at:\n\n"
                     f"{self.service_address or '(No address specified)'}\n\n"
                     f"Amount: ${abs(self.amount):.2f}\n"
@@ -401,7 +408,6 @@ class PaymentHistory(models.Model):
                     [self.user.email],
                     fail_silently=True,
                 )
-                print(
-                    f"📧 Auto-email sent to {self.user.email} for {self.status}")
+
             except Exception as e:
                 print(f"❌ Failed to send {self.status} email: {e}")
