@@ -31,10 +31,7 @@ SITE_ID = env.int("SITE_ID", default=1)
 SECRET_KEY = env("SECRET_KEY", default="dev-insecure-secret-key-change-me")
 DEBUG = env.bool("DEBUG", default=False)
 
-# ALLOWED_HOSTS = env.list(
-#     "ALLOWED_HOSTS",
-#     default=["127.0.0.1", "localhost"],
-# )
+CANONICAL_HOST = "www.tuckeranddales.com"
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
@@ -152,6 +149,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "core.middleware.CanonicalHostRedirectMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
