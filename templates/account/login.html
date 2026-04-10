@@ -1,9 +1,7 @@
 {% extends 'base_auth.html' %}
 {% load i18n %}
 {% block title %}Login | Tucker & Dale's{% endblock %}
-{% block meta_description %}
-<meta name="description" content="Log in to your Tucker & Dale's Home Services account to manage bookings, payments, and service history.">
-{% endblock %}
+
 {% block content %}
 <h2 class="fw-bold mb-3">Sign In</h2>
 <form method="post" action="{% url 'account_login' %}">
