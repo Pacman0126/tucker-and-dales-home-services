@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.shortcuts import get_object_or_404, redirect, render
+from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from .models import NewsletterSubscription
@@ -57,6 +58,6 @@ def robots_txt(request):
         "User-agent: *",
         "Disallow: /admin/",
         "Allow: /",
-        "Sitemap: https://tucker-and-dales-home-services-51862a9ae5a8.herokuapp.com/sitemap.xml",
+        f"Sitemap: {settings.SITE_BASE_URL}/sitemap.xml",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")

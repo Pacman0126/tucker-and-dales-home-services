@@ -4,6 +4,7 @@ URL configuration for tucker_and_dales_home_services project.
 
 from django.contrib import admin
 from django.urls import include, path
+from core.views import robots_txt
 
 
 def test_500(request):
@@ -32,6 +33,7 @@ urlpatterns = [
         include(("scheduling.urls", "scheduling"), namespace="scheduling"),
     ),
 
+    path("robots.txt", robots_txt, name="robots_txt"),
     # TEMPORARY: remove after testing custom 500 handling
     path("test-500/", test_500, name="test_500"),
 ]
