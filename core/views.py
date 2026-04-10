@@ -50,3 +50,13 @@ def newsletter_send_now(request):
 
 def test_500(request):
     raise Exception("Deliberate test 500")
+
+
+def robots_txt(request):
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Allow: /",
+        "Sitemap: https://tucker-and-dales-home-services-51862a9ae5a8.herokuapp.com/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
