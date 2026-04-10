@@ -21,6 +21,7 @@ handler500 = "core.views.custom_500"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
+    path("robots.txt", robots_txt, name="robots_txt"),
     path("", include(("core.urls", "core"), namespace="core")),
     path("billing/", include(("billing.urls", "billing"),
                              namespace="billing")),
@@ -33,7 +34,7 @@ urlpatterns = [
         include(("scheduling.urls", "scheduling"), namespace="scheduling"),
     ),
 
-    path("robots.txt", robots_txt, name="robots_txt"),
+
     # TEMPORARY: remove after testing custom 500 handling
     path("test-500/", test_500, name="test_500"),
 ]
