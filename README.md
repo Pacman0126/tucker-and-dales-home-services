@@ -1,30 +1,30 @@
 # Tucker and Dale's Home Services
 
- 📚 Table of Contents
+## 📚 Table of Contents
 
 (ctrl+click links to navigate)
 
-- [Project Overview](#project-overview)
-- [Key Features](#key-features)
-- [User Stories & Agile Mapping](#user-stories--agile-mapping)
+- [Project Overview](#-project-overview)
+- [Key Features](#-key-features)
+- [User Stories & Agile Mapping](#-user-stories--agile-mapping)
 
 - [Application Architecture](#application-architecture)
-- [Entity Relationship Diagrams](#entity-relationship-diagrams)
+- [Entity Relationship Diagrams](#-entity-relationship-diagrams)
 
-- [CRUD & Booking Lifecycle](#crud--booking-lifecycle)
-- [Booking Lifecycle & Defensive Programming](#booking-lifecycle--defensive-programming)
+- [CRUD & Booking Lifecycle](#-crud--booking-lifecycle)
+- [Booking Lifecycle & Defensive Programming](#-booking-lifecycle--defensive-programming)
 
-- [Functional Testing](#vt-10a--functional-testing-authentication--account-workflow)
-  - [VT-10A Authentication](#vt-10a--functional-testing-authentication--account-workflow)
-  - [VT-10B Booking & Checkout](#vt-10b--functional-testing-booking--checkout-workflow)
+- [Functional Testing](#-functional-testing)
+  - [VT-10A Authentication](#-vt-10a--functional-testing-authentication--account-workflow)
+  - [VT-10B Booking & Checkout](#-vt-10b--functional-testing-booking--checkout-workflow)
 
 - [Customers App](#customers-app)
 - [Scheduling App](#scheduling-app)
 
-- [UX & Design](#ux--design)
-- [Authentication & Access Control](#authentication--access-control)
+- [UX & Design](#-ux--design)
+- [Authentication & Access Control](#-authentication--access-control)
 
-- [Deployment](#deployment)
+- [Deployment](#-deployment)
 
 
 ## 📌 Project Overview
@@ -1047,6 +1047,8 @@ The booking system demonstrates:
 
 These tests confirm that the system behaves reliably under both normal and adverse conditions. The results demonstrate robust handling of both expected user flows and edge-case scenarios under real-world conditions.
 
+## 🧪 Functional Testing
+
 ## 🧪 VT-10A — Functional Testing (Authentication & Account Workflow)
 
 Manual functional testing was conducted to verify the authentication and account lifecycle from registration through logout, including email flows, profile updates, admin verification, and access control.
@@ -1364,7 +1366,9 @@ All actions are tied to authenticated identity and validated server-side.
 
 ---
 
-## 🔹 Deployment (Note: This is a standard workflow I've used on other projects. Screenshots reference gambinos. Adjust to this project where relevant.)
+## 🔹 Deployment
+
+(Note: This is a standard workflow I've used on other projects. Screenshots reference gambinos. Adjust to this project where relevant.)
 
 ### Platform
 
