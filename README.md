@@ -1,9 +1,36 @@
 # Tucker and Dale's Home Services
 
+ 📚 Table of Contents
+
+(ctrl+click links to navigate)
+
+- [Project Overview](#project-overview)
+- [Key Features](#key-features)
+- [User Stories & Agile Mapping](#user-stories--agile-mapping)
+
+- [Application Architecture](#application-architecture)
+- [Entity Relationship Diagrams](#entity-relationship-diagrams)
+
+- [CRUD & Booking Lifecycle](#crud--booking-lifecycle)
+- [Booking Lifecycle & Defensive Programming](#booking-lifecycle--defensive-programming)
+
+- [Functional Testing](#vt-10a--functional-testing-authentication--account-workflow)
+  - [VT-10A Authentication](#vt-10a--functional-testing-authentication--account-workflow)
+  - [VT-10B Booking & Checkout](#vt-10b--functional-testing-booking--checkout-workflow)
+
+- [Customers App](#customers-app)
+- [Scheduling App](#scheduling-app)
+
+- [UX & Design](#ux--design)
+- [Authentication & Access Control](#authentication--access-control)
+
+- [Deployment](#deployment)
+
+
 ## 📌 Project Overview
 
 A family owned home services company approached us to help them modernize their business
-or future expansion. They have an existing customer base and 15 employees in the Greater
+for future expansion. They have an existing customer base and 15 employees in the Greater
 Dallas Area, Texas. This application has stored all these in a database with their home
 addresses. A user can browse available employees and services that are within 30 minutes
 drive from their current active jobsite location or the employee's home. All employees within
@@ -79,537 +106,33 @@ Admins can:
 
 ---
 
-# 🔁 CRUD & Booking Lifecycle
+## 🧩 User Stories & Agile Mapping
 
-drag → add → delete → dynamic total recalculation
+This project was developed using an Agile approach, where features were defined through user stories and implemented incrementally.
 
-* Draft services can be deleted pre-checkout
-* Confirmed bookings are not hard-deleted; instead they are cancelled through a controlled refund workflow to preserve billing, audit, and financial integrity
-* Cancellation triggers refund workflow
+User roles include:
+- Customer (booking and checkout)
+- Staff (schedule visibility)
+- Admin (system management)
 
-Delete functionality is implemented for pre-checkout service selections. Users can remove individual or selected draft services from the cart and checkout flow before payment. Confirmed bookings are not hard-deleted; instead, they are cancelled through a controlled refund/cancellation workflow to preserve billing, refund, and audit integrity.
-
-Users can delete draft service selections prior to checkout via the “Delete Selected (Draft) Services” action in both the cart and checkout views. This removes the items from the database and updates pricing totals dynamically. This ensures pricing consistency between frontend state and persisted backend data.
-
-Verified deletion of draft services via cart and checkout views; items are removed from the database and totals update correctly without affecting confirmed bookings.
-
-The system enforces validation and data integrity across the full booking_lifecycle. All state transitions are validated server-side to prevent client-side manipulation or inconsistent booking states.
-Availability is validated before booking by checking employee scheduling constraints and travel time feasibility.
-Invalid actions are prevented, including cancelling already cancelled bookings and modifying bookings outside permitted states. This guards against logical errors that could otherwise corrupt booking and payment records.
-State transitions are controlled (active → cancelled → refunded), ensuring consistent business logic and preventing duplicate or conflicting operations.
-
-Users cannot cancel a booking more than once; cancelled bookings are moved to a refund record and excluded from further modification.
-
-Already-cancelled bookings are removed from the active/actionable table and moved into the cancellations/refunds section, preventing duplicate cancellation attempts through the normal user interface.
-
-The application includes both user-facing and backend error handling. Users receive alerts for invalid draft deletion attempts when no items are selected, while backend payment processing protects against duplicate Stripe webhook retries through an idempotency check on stripe_payment_id, preventing duplicate payment records caused by repeated webhook delivery from Stripe.
-
-## Lifecycle Control
-
-* active → cancelled → refunded
-* No duplicate cancellation allowed
-* Past bookings cannot be modified
-* Booking state integrity enforced
-
-### 🧪 Booking lifecycle & Defensive Programming
-
-This section demonstrates the **end-to-end booking_lifecycle**, including successful flows, edge cases, and defensive programming controls implemented to protect data integrity and user experience.
-
-All scenarios are supported by real execution screenshots from the application.
-
----
-
-### 🔄 Booking lifecycle — Standard Flow
-
-The standard booking workflow was tested from initial selection through payment and persistence.
-
-#### Flow Covered
-
-This flow validates the full transaction pipeline from user interaction through to persistent storage and administrative visibility.
-
-
-- Booking creation
-- Cart population
-- Checkout process
-- Successful payment
-- Persistence to payment history and admin
-
-#### Evidence
-
-- Booking Created — Before ![Booking Created — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/01-booking-created-before.png)
-
-- Booking Created — After ![Booking Created — After](./images/testing_screenshots/PASS_4/booking_lifecycle/02-booking-created-after.png)
-
-- Go to Checkout ![Go to Checkout](./images/testing_screenshots/PASS_4/booking_lifecycle/03-booking-created-go-to-checkout.png)
-
-- Checkout Summary ![Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/04-booking-created-checkout-summary.png)
-
-- Checkout Payment ![Checkout Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/05-booking-created-checkout.png)
-
-- Payment Success — History ![Payment Success — History](./images/testing_screenshots/PASS_4/booking_lifecycle/06-booking-success-payment-history.png)
-- Invoice Generated ![Invoice Generated](./images/testing_screenshots/PASS_4/booking_lifecycle/07-booking-invoice.png)
-
----
-
-## 🔁 Booking Adjustments & Cancellation
-
-The system supports lifecycle updates including cancellation and financial adjustments.
-
-### Evidence
-
-- Invoice After Cancellation ![Invoice After Cancellation](./images/testing_screenshots/PASS_4/booking_lifecycle/08-booking invoice after cancellation.png)
-- Payment History After Cancellation ![Payment History After Cancellation](./images/testing_screenshots/PASS_4/booking_lifecycle/09-booking - payment history after cancellation.png)
-
----
-
-## 🔁 Rebooking Workflow
-
-Rebooking scenarios were tested to ensure system consistency and correct state handling.
-
-### Evidence
-
-- Rebooking — Before ![Rebooking — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/10-rebooking-created-before.png)
-
-- Rebooking — After ![Rebooking — After](./images/testing_screenshots/PASS_4/booking_lifecycle/11-rebooking-created-after.png)
-
-- Rebooking — Checkout Summary ![Rebooking — Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/12-rebooking-created-checkout-summary.png)
-
-- Rebooking — Checkout ![Rebooking — Checkout](./images/testing_screenshots/PASS_4/booking_lifecycle/13-rebooking-created-checkout.png)
-
-- Rebooking — Payment Success ![Rebooking — Payment Success](./images/testing_screenshots/PASS_4/booking_lifecycle/14-rebooking-success-payment-history.png)
-
-- Rebooking — Invoice ![Rebooking — Invoice](./images/testing_screenshots/PASS_4/booking_lifecycle/15-rebooking-invoice.png)
-
----
-
-## 🧑‍💼 Admin & System Verification
-
-Bookings and payments were verified from the administrative perspective.
-
-### Evidence
-
-- Admin Payment History ![Admin Payment History](./images/testing_screenshots/PASS_4/booking_lifecycle/16-admin-payment-history.png)
-
-- Admin Booking History ![Admin Booking History](./images/testing_screenshots/PASS_4/booking_lifecycle/17-admin-booking-history.png)
-
----
-
-## 🛡️ Defensive Programming — Input Validation
-
-The system prevents invalid or logically inconsistent user actions.
-All validation rules are enforced server-side to ensure data integrity regardless of client behavior.
-
-### Scenarios Tested
-- Booking in the past
-- Missing required address input
-
-### Evidence
-
-- Past Date Search Attempt ![Past Date Search Attempt](./images/testing_screenshots/PASS_4/booking_lifecycle/18-past-date-search.png)
-
-- Past Date Booking Denied ![Past Date Booking Denied](./images/testing_screenshots/PASS_4/booking_lifecycle/19-past-date-booking-denied.png)
-
-- Empty Address Search Denied ![Empty Address Search Denied](./images/testing_screenshots/PASS_4/booking_lifecycle/20-empty-address-search-denied.png)
-
----
-
-## 🛡️ Defensive Programming — Availability Integrity
-
-The system ensures that availability is correctly managed across cart and payment states. Availability is recalculated at each stage to prevent race conditions between cart state and confirmed bookings.
-
-### Scenarios Tested
-
-- Availability before booking
-- Reservation during cart stage
-- Final confirmation after payment
-
-### Evidence
-
-- Timeslot Available Before Payment ![Timeslot Available Before Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/21-timeslot-available-before-payment.png)
-
-- Timeslot Added to Cart ![Timeslot Added to Cart](./images/testing_screenshots/PASS_4/booking_lifecycle/22-timeslot-in-cart.png)
-
-- Timeslot Payment ![Timeslot Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/23-payment-for-timeslot.png)
-
-- Timeslot in Payment History ![Timeslot in Payment History](./images/testing_screenshots/PASS_4/booking_lifecycle/24-timeslot-in-payment-history.png)
-
-- Timeslot in Admin Payment History ![Timeslot in Admin Payment History](./images/testing_screenshots/PASS_4/booking_lifecycle/25-timeslot-in-admin-payment-history.png)
-
-- Timeslot in Admin Bookings ![Timeslot in Admin Bookings](./images/testing_screenshots/PASS_4/booking_lifecycle/26-timeslot-in-admin-bookings.png)
-
----
-
-## 🛡️ Defensive Programming — Double Booking Prevention
-
-The system prevents duplicate bookings for the same time slot. This is enforced through backend validation checks against existing confirmed bookings for the same resource and time slot.
-
-### Evidence
-
-- Search Same Timeslot After Booking ![Search Same Timeslot After Booking](./images/testing_screenshots/PASS_4/booking_lifecycle/27-search-same-timeslot-on-same-day-after-booking.png)
-
----
-
-## 🛡️ Defensive Programming — Concurrent Checkout Protection
-
-The system prevents duplicate or conflicting transactions across multiple browser sessions or tabs. Concurrency control ensures that only one successful transaction can be completed per booking instance across multiple sessions.
-
-### Scenarios Tested
-- Checkout initiated in one tab
-- Duplicate checkout attempt in second tab
-- System blocking duplicate transaction
-
-### Evidence
-
-- Checkout Summary ![Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/28-checkout-summary.png)
-
-- Checkout Tab A ![Checkout Tab A](./images/testing_screenshots/PASS_4/booking_lifecycle/29-checkout-on-tab-A.png)
-
-- Duplicate Checkout Created ![Duplicate Checkout Created](./images/testing_screenshots/PASS_4/booking_lifecycle/30-create-duplicate-checkout-tab-B.png)
-
-- Checkout Success Tab A ![Checkout Success Tab A](./images/testing_screenshots/PASS_4/booking_lifecycle/31-checkout-success-tab-A.png)
-
-- Duplicate Attempt Tab B ![Duplicate Attempt Tab B](./images/testing_screenshots/PASS_4/booking_lifecycle/32a-attempt-checkout-on-duplicate-tab-B.png)
-
-- Duplicate Checkout Blocked ![Duplicate Checkout Blocked](./images/testing_screenshots/PASS_4/booking_lifecycle/32b-checkout-on-duplicate-tab-B-blocked.png)
-
----
-
-## 🛡️ Defensive Programming — Payment Failure Handling
-
-The system correctly handles failed payment scenarios and prevents inconsistent states. Failed transactions do not persist booking records, ensuring the system remains in a consistent and recoverable state.
-
-### Evidence
-
-- Declined Payment — Before ![Declined Payment — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/34-declined-card-payment-back-to-checkout-summary-before.png)
-
-- Declined Attempt — Before ![Declined Attempt — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/34a-declined-card-payment-attempt-before.png)
-
-- Declined Attempt — After ![Declined Attempt — After](./images/testing_screenshots/PASS_4/booking_lifecycle/34b-declined-card-payment-attempt-after.png)
-
----
-
-## 🧠 Summary
-
-The booking system demonstrates:
-
-- full lifecycle integrity from booking to payment
-- correct persistence across user and admin views
-- protection against invalid inputs and edge cases
-- prevention of duplicate bookings and race conditions
-- robust handling of failed payment scenarios
-
-These tests confirm that the system behaves reliably under both normal and adverse conditions. The results demonstrate robust handling of both expected user flows and edge-case scenarios under real-world conditions.
-
-## 🧪 VT-10A — Functional Testing (Authentication & Account Workflow)
-
-Manual functional testing was conducted to verify the authentication and account lifecycle from registration through logout, including email flows, profile updates, admin verification, and access control.
-
-### Scope
-
-Testing covered:
-
-- new user signup
-- inbox / verification flow
-- welcome and newsletter email delivery
-- successful authenticated landing
-- profile completion and update
-- admin-side verification of created and updated user records
-- logout flow
-- access control for protected views
-
----
-
-### Detailed Results
-
-| Test ID | Area | File / Page | Expected | Result |
-|---|---|---|---|---|
-| VT-10A.1 | Authentication | Signup | New user account can be created successfully | Pass |
-| VT-10A.2 | Authentication | Check Inbox | Verification / follow-up email prompt shown correctly | Pass |
-| VT-10A.3 | Authentication | Welcome Email | Welcome email delivered after signup | Pass |
-| VT-10A.4 | Authentication | Newsletter Email | Newsletter signup email delivered for first-time user | Pass |
-| VT-10A.5 | Authentication | Email Verification | Verification messaging shown correctly | Pass |
-| VT-10A.6 | Authentication | Customer Home Page | Authenticated user is redirected into valid logged-in state | Pass |
-| VT-10A.7 | Authentication | Admin Verification (new user) | Newly created user appears correctly in admin | Pass |
-| VT-10A.8 | Authentication | Profile Update (before) | Existing account data visible before update | Pass |
-| VT-10A.9 | Authentication | Profile Update | User profile information updates successfully | Pass |
-| VT-10A.10 | Authentication | Admin Verification (updated user) | Updated user details are reflected in admin | Pass |
-| VT-10A.11 | Authentication | Logout Action | User can log out successfully | Pass |
-| VT-10A.12 | Authentication | Post-Logout Home Page | Logged-out state is shown correctly | Pass |
-| VT-10A.13 | Authentication | Access Control 1 | Protected route is blocked for unauthorized user | Pass |
-| VT-10A.14 | Authentication | Access Control 2 | Restricted content is not exposed without proper login | Pass |
-| VT-10A.15 | Authentication | Access Control 3 | Additional protected view correctly redirects or denies access | Pass |
-| VT-10A.16 | Authentication | Access Control 4 | Role/session protection behaves correctly under direct access attempt | Pass |
-
----
-
-### Evidence
-
-- VT-10A.1 ![Signup](./images/testing_screenshots/Authentication/01-Signup.png)
-
-- VT-10A.2 ![Check Inbox](./images/testing_screenshots/Authentication/02-Check-Inbox.png)
-
-- VT-10A.3 ![Welcome Email](./images/testing_screenshots/Authentication/03-Welcome-email.png)
-
-- VT-10A.4 ![Newsletter Email](./images/testing_screenshots/Authentication/04-Newsletter-email.png)
-
-- VT-10A.5 ![Email Verification Message](./images/testing_screenshots/Authentication/05-Email-verification-message.png)
-
-- VT-10A.6 ![Customer Home Page](./images/testing_screenshots/Authentication/06-Customer-home-page.png)
-
-- VT-10A.7 ![New User in Admin](./images/testing_screenshots/Authentication/07-New-user-in-admin.png)
-
-- VT-10A.8 ![Update User Profile — Before](./images/testing_screenshots/Authentication/08-Update-user-profile-before.png)
-
-- VT-10A.9 ![Update User Profile Info](./images/testing_screenshots/Authentication/09-Update-user-profile-info.png)
-
-- VT-10A.10 ![User Info in Admin Updated](./images/testing_screenshots/Authentication/10-User-info-in-admin-updated.png)
-
-- VT-10A.11
-![User Logout](./images/testing_screenshots/Authentication/11-User-logout.png)
-
-- VT-10A.12 ![Logout Home Page](./images/testing_screenshots/Authentication/12-Logout-home-page.png)
-
-- VT-10A.13 ![Access Control 1](./images/testing_screenshots/Authentication/13-Access-control-1.png)
-
-- VT-10A.14 ![Access Control 2](./images/testing_screenshots/Authentication/13-Access-control-2.png)
-
-- VT-10A.15 ![Access Control 3](./images/testing_screenshots/Authentication/13-Access-control-3.png)
-
-- VT-10A.16 ![Access Control 4](./images/testing_screenshots/Authentication/13-Access-control-4.png)
-
----
-
-### Summary
-
-Authentication testing confirmed that secure access control and authentication boundaries are correctly enforced across the application.
-
-- new users can register successfully
-- email-based onboarding and verification workflows function correctly
-- first-time users are enrolled into the newsletter workflow as designed
-- profile updates persist correctly
-- admin records reflect user creation and updates accurately
-- logout returns the application to a valid unauthenticated state
-- protected routes remain inaccessible without proper authentication
-
-## 🧪 VT-10B — Functional Testing (Booking & Checkout Workflow)
-
-Manual testing was conducted to validate the full booking workflow from service selection through checkout, payment, and persistence.
-
-### Scope
-
-Testing covered:
-
-- service search and availability display
-- adding bookings to cart
-- checkout process
-- successful payment handling
-- booking persistence in user and admin views
-
----
-
-### Detailed Results
-
-| Test ID | Area | File / Page | Expected | Result |
-|---|---|---|---|---|
-| VT-10B.1 | Booking | Search results | Available services displayed correctly | Pass |
-| VT-10B.2 | Booking | Add to cart | Selected service added to cart | Pass |
-| VT-10B.3 | Booking | Cart state | Cart reflects selected booking | Pass |
-| VT-10B.4 | Checkout | Checkout summary | Booking details displayed correctly | Pass |
-| VT-10B.5 | Checkout | Payment process | Payment completes successfully | Pass |
-| VT-10B.6 | Booking | Payment history | Booking stored and displayed | Pass |
-| VT-10B.7 | Booking | Invoice generation | Invoice generated correctly | Pass |
-| VT-10B.8 | Admin | Admin booking view | Booking visible in admin panel | Pass |
-
----
-
-### Evidence
-
-- VT-10B.1 ![Booking Created — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/01-booking-created-before.png)
-
-- VT-10B.2 ![Booking Created — After](./images/testing_screenshots/PASS_4/booking_lifecycle/02-booking-created-after.png)
-
-- VT-10B.3 ![Go to Checkout](./images/testing_screenshots/PASS_4/booking_lifecycle/03-booking-created-go-to-checkout.png)
-
-- VT-10B.4 ![Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/04-booking-created-checkout-summary.png)
-
-- VT-10B.5 ![Checkout Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/05-booking-created-checkout.png)
-
-- VT-10B.6 ![Payment Success — History](./images/testing_screenshots/PASS_4/booking_lifecycle/06-booking-success-payment-history.png)
-
-- VT-10B.7 ![Invoice Generated](./images/testing_screenshots/PASS_4/booking_lifecycle/07-booking-invoice.png)
-
-- VT-10B.8 ![Admin Booking View](./images/testing_screenshots/PASS_4/booking_lifecycle/17-admin-booking-history.png)
-
----
-
-### Summary
-
-### Summary
-
-Booking workflow testing confirmed that transactional integrity is maintained from service selection through checkout, payment, and persistence.
-
-- services can be selected and added to cart correctly
-- checkout process reflects accurate booking data
-- payments are processed successfully
-- bookings persist correctly across user and admin views
-- invoices are generated and accessible
-
----
+Each implemented feature maps directly to a user story, ensuring traceability between requirements and delivered functionality.
 
 ## 🏗️ Application Architecture
 
-### Apps Overview
+The application follows a modular Django architecture, separating concerns across multiple apps:
 
-* **core** → user + address
-* **customers** → profiles
-* **scheduling** → bookings, availability
-* **billing** → payments, cart
+- **core** → user accounts and address management
+- **customers** → customer profiles and reusable CRUD patterns
+- **scheduling** → booking logic, availability, and employee assignment
+- **billing** → cart, checkout, and payment processing
 
-## 📇 Customers App
+Each app is responsible for a distinct domain, improving maintainability, scalability, and testability.
 
-The **Customers app** provides a reusable pattern for managing core business data in a Django project.
-It implements **full CRUD (Create, Read, Update, Delete)** operations with a mobile-first, responsive UI.
+The system follows a standard request lifecycle:
 
-### 🔑 Features
+request → validation → availability checks → persistence → payment → analytics
 
-- Superuser-only access (owner-facing app).
-- Customer search by name, address, or email.
-- Pagination with "Showing X–Y of Z results" for clarity.
-- Mobile-first layout, optimized for 412px screens and up.
-- Custom global styling system with CSS variables for consistent theming.
-- Reusable confirmation modal for destructive actions (delete).
-- Extensible templates and views.
-
-### ♻️ Reusability
-
-This app was built as a **blueprint for future apps** (Scheduling, Employees, Inventory).
-
-Key reusable elements include:
-- **Model + Form pattern** with validation.
-- **Search + pagination logic** for large datasets.
-- **Mobile-first templates** that adapt across phases.
-- **Global CSS variables** for consistent design across apps.
-- **CRUD workflow with confirmation modals**.
-
-By following this pattern, future apps (e.g., Employees, Scheduling, Inventory) can be quickly wired up using the same structure.
-
-### 🚀 How to Wire Into Another Project (same for other apps)
-1. Add `customers` to your `INSTALLED_APPS` in `settings.py`.
-2. Include the app’s URLs:
-   ```python
-   path("customers/", include("customers.urls")),
-
-## 🖼️ Wireframes
-
-Wireframes were created during the UX design phase to validate layout and navigation before coding.
-Each wireframe below corresponds to a key page in the **Customers App **.
-
----
-
-Wireframes were created during the UX design phase to validate layout and navigation before coding.
-Each wireframe corresponds to a core page.
-
-- **Home / Navbar Mobile 412x844**
-  ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_mobile.png)
-
-  ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_larger_devices.png)
-
-- **Customer List**
-  ![Customer List Wireframe](readme/wireframes/customer_list.png)
-
-- **Customer Detail**
-  ![Customer Detail Wireframe](readme/wireframes/customer_detail.png)
-
-- **Customer Form**
-  ![Customer Form Wireframe](readme/wireframes/customer_form.png)
-
-- **Delete Confirmation Modal**
-  ![Delete Confirmation Wireframe](readme/wireframes/customer_delete.png)
-
----
-
-## Responsive Design Considerations
-
-**Navigation**
-- Mobile: collapsible hamburger
-- Tablet/Desktop: expanded navbar
-
-**Cards & Forms**
-- Mobile: single column
-- Tablet/Desktop: multi-column layout
-
-**Modals**
-- Keyboard accessible; scale to viewport
-
-**Pagination**
-- Centered; wraps on small screens
-
-
-## Scheduling App
-
-Customer-facing scheduling with **resource-aware availability**, **drag-and-drop booking**, and a **mini cart**.
-
-Staff users have a dedicated dashboard providing visibility of their assigned upcoming bookings. Access is role-restricted, ensuring only authorized staff members can view operational schedules. Staff interactions are intentionally limited to viewing responsibilities, while booking modifications and cancellations remain controlled by customer workflows to preserve business integrity.
-
-### Features
-- **Two search modes (mutually exclusive):**
-  - **Search by Date** → Show all time slots for that day.
-  - **Search by Time Slot** → Show all dates where that slot has available resources.
-- **Service Categories:** Garage/Basement, Lawncare, House Cleaning.
-- **Resource pills per slot** (e.g., 5 employees → 5 pill buttons).
-- **Travel adjacency logic:** show resources only if their jobs in adjacent slots are within ~30 minutes drive.
-- **Drag & Drop to Cart:** resource pills dragged into cart; slot dims or hides when booked.
-- **Mini Cart (always visible):** shows item count and total $; expandable with hamburger for itemized list and checkout.
-- **Login/Signup required** to complete checkout and save purchase history.
-
-### Reusability
-- **Calendar grid** reusable across services.
-- **Availability filter logic** (time + travel distance).
-- **Drag-and-drop cart** reusable for other booking flows.
-- **CSS variables** for consistent theme.
-
-### How to Wire Into Another Project
-1. Add `scheduling` to `INSTALLED_APPS`.
-2. Include URLs in your project’s `urls.py`:
-   ```python
-   from django.urls import path, include
-
-   urlpatterns = [
-
-       path("schedule/", include("scheduling.urls")),
-   ]
-
-## 🖼️ Wireframes
-
-Wireframes were created during the UX design phase to validate layout, search methods, and booking flow before coding.
-Each wireframe corresponds to a key customer-facing screen.
-
-- **Wireframe A — Search by Date (Mobile 412×844)**
-
-  ![Search by Date Wireframe](readme/wireframes/scheduling_search_by_date.png)
-
-- **Wireframe B — Search by Time Slot (Mobile 412×844)**
-
-  ![Search by Time Slot Wireframe](readme/wireframes/scheduling_search_by_timeslot.png)
-
----
-
-## 📱 Responsive Design Considerations
-
-**Mobile (412px)**
-- Stacked day cards with resource pills and sticky mini-cart (quantity + total).
-- Mutually exclusive search toggles (Date vs Time Slot); only one active at a time.
-- Drag-and-drop affordances with arrows/cues targeting the cart.
-
-**Tablet (≥768px)**
-- Two-column day layout with more room for filters/inputs.
-- Mini-cart remains visible; itemized view via hamburger control.
-
-**Desktop (≥1200px)**
-- Multi-column grid (week or multi-day view).
-- Persistent cart sidebar for summary + checkout.
-
----
+This structure ensures clear data flow, separation of concerns, and reliable transaction handling across the platform.
 
 ## 📊 Entity Relationship Diagrams
 
@@ -707,7 +230,7 @@ I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an int
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqdVt1u2jAUfhXLV5tEu1JoO7hradaxllIBndQJKTLxAVwSm9lOWwa93QPsEfckOw5kNCVkdDdRbH_f8fn5zknmNFAcaJ2CPhdspFnUl33LhYbACiVJ78ytG7fdXrvldcjcrZ7d46zdvmxeXyx3-lZISwQnpE_7FJ_JHmcWSPLIbFt4ssSAfhAB-IxzDca8IkIgIhYSqywLfRapGK1nEMZqIUfEWGbjhHym1AQ4-UAaTAYQhsBTcOJt1-t8bTa8xmnPu2h37oq8XpmWLIJ8rwbMgD9WsQ5nvt6IzsVrBXIDDfjKfZZxPfGm12x53at2r8iNxAbGp62fvG4eguQ5RwOlQiKMzx6YCNkghI3bvdbNVfvO83ZIAhdmGrKZv5mMFQAivGWLAyigh83bb07vWt5173MTFVVciDTfefX_e8bvY2MjkNb4qVr-JZUbJpxQOjCMJc_XzE4iLS50394b7B_NHn1Eso08nJ5_waZyqXjRVLfdtMcKyxKjY28pyepkyox5VJpv-NI47fR2qYSJB0mSt3Qreypo49xLmz2v9R8TJDUcS2H9qcYS7e6vu_vFRFss9vbUfDXM6n0asQkY8vvnr7T4RMP3GIxFC-up51iLxauhguwBhEqODEacA0-7HnEmGAOPUXBEyBxk2qGIxJKJkURgjkk1zzYTwkMhJy-sZs-XnLXwED9mhgRjEXKcJigSMNt4i4XTZk6IeVes07n0x8eZMBGO9a512Hq_JLr6L-GpEhAfKGmZkGYNcQfb0q1hCBqwd03W5BucXSwcCaFKi5GQKDVDhlpFmBUIJirOq_vK-KfLpBF3EgZi02ES4B0jpWfFCkGCGy6-CZUtVggiIZqGagawJQsZR7M5XQWPiAC_NLtlfWssWWJhMAUCy3ibh1urC6ErZW3X4kaLIGnKUDWJJ7RER1pwWrc6hhKNQOP0xCXFoeSmhh1DhGmt4yuHIYvDhPWMtCmT35SKUqZW8WhM60MWGlzFUze0Vj9UKYTFVnVnMkjXaIHW5_SJ1quVo_1y9bB8cFQ-rh4d1w6OSnSG28f7tcpJ9aRWOS7XTsqVSvW5RH8klx7sfzxBEIbBQTfc95HWayUKXFilW8s_uuTH7vkP8PpP5g)
 
 
-### **Billing App**
+## **Billing App**
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -810,7 +333,7 @@ erDiagram
 ```
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVttu2zgQ_RWCQItdwE59iZ3awD64rpoK6xtsdRdZGBBoaWyzkUgvSSXxJnndD-gn9ks6oiwlVmPH1YMgUXNmhmfODHVPAxkC7VJQHzlbKRbPBcHrzRvyx6GrsJg6g57njkezz-5kdgous_kyc6bk4aFalfek35t6pEvmVN4KPaeZgV18ZuB6ztAaBVIYxvcN7cfU-OGBoOO_3L7T73nO5Xh6ZTEKlqBABHAQ5blDZzYYZ3kspSKGx0B0JM0hxIfx-E93dJnlpIAZ0GQh5TUXqxzy81YnvauhM_I-uzMvzy1m14jcsG0MwhT5lQwPw9dMk2DNo5Cw8GuijfVCfsMdJyLU71gYVqXQvx_3-3wvERfXEPq7raCrYWN4DF6iYqN4zNS2TMXLwKfKK77iwnK4VDLGHUFwLRNzHG6ZTeELiGSaq5EpkaBSWAbMUysjFPybgDYQksU2D1KyfUlIGtQND4CY7QYOwPaUpHEjYRJhGC4O2DvDyWB85TjWnmnNVwLNtWHL5dM2TmpFJMj1rshH55M7cm1P_mI_3mfPBJM1hIf5mzYKK0kS3LxgMZSWIWY8ytYec29l6o47fu40hAD1E5EF0-CvZaKira9QF8V3fLatmbVc6DNTil3wfzxoxFA0-VrW7IYp46ePe8sgwmeLRZiibMfDhFxvIrb1jxNH0naJCNc-Cwy_KcfKFXMgVMqJvRV5w50hO6n6OAEUaF0m2EjDIp_FMhGmlBgSYRKNavyAPYxafEf6DGdnhDLONVykZjv4UF67UDpZ2Gg_pcDuXszq9FoXM_mVDBLBjY-TKYBXc9vnsohUGkCvxNuntVh9GtB-Tv9B7ieMp8xP7Ry3RegV8LwKBWp3evh2LJ0ggiKY4hvwc_S-ol5knpCvWgqi2K2PNqxE0klTajC-dPvk02D8NxmNPWf2C9DJ7mxZRvK2m0nv-__fyrVJl3Yd8_SXkh2HhIn9c5IpIDH-_KQTujhIS_7QUHHQha_sgCQ3nCHvKiOuQliESaWkxklkeBXruAJUx41E-jV5m5oajiLYHcxnc0ErdKV4SLtGJVChMSgcCPhKrbjm1KwBZwZNj4UQlgzdpnV_RNiGiX-kjHOkkslqTbtLFml8SzZp9XY_coUJTjFQ_VSVtNtq1qwP2r2nd7Rbr52fNS9q5-1Ou9lpdWqt9xW6pd1qo3Vx1qy1z-v1Tv28WWt1Hiv0Pxu2cVZv1Gr4oVnvXDQb7Xb78Qcv4x23)
 
-### **Customers App**
+## **Customers App**
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -918,7 +441,7 @@ erDiagram
 
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVttu4kgQ_ZVWS_OWZMIlYYK0DwxxMtYSjIDZVVZIVmMXuDd2t7e7zYRNeN0P2E_cL9lqGzszDrcBCexy1anbqWq_0ECGQLsU1C1nS8WSmSD4-fCB_LLvU2mMnUFv6nrDyRd3NDnFrtD5OnHG5PX1_Pz1lfS_TqbegzMejb07d-CQLplReDYgQk0yDWpGC5u6njWXLwSRfnP7Tu_2duxMJrl1wASJ2ApIksWGpzEcgfjseb-6w_vcNmFPoAm6XfEAiIK_MtBGHwEY9R4fnOH0i4tPx485TsQ0Sdk6AWE0MZGS2TIicymfuFgeg-v3xtMcRH4TmgQRBE8yMyRgqoikMK4lviMXrF5IFlKVfku3uy13JFEBcLGSth4sDBXo74Io3W17uUXu96bOfQlS1tKs06oRNbOp--BMBl6RtMaEwyxGz1zs0XceRgPv0Sm4wrTmS4Hq2rDF4i20k_iLCbvTR3Lr3LlDNyfyT5L4pbgmGKwhPCzvtFFY8Jy_giVQE0PCeFyTpZjHN6kqBOxZTLj2WWD4aguwKV3XiXM4ijSSAnyRJXOcptojBQtQCkI_kMKgLzt8NjrysTArO1BZCGlAl7KQGTA8ARIowMvQZ6YWaY1rhwPFPwBTEwbcrN_pobN6JhKlsW93WR1AZsKodb2wqeIJK8WbOqH3BGoTzn9KgcFVVa4LvxyPUhkCdBETI21kLLFx7Mgk01j0zziiyOGPpM9EADHS_63yJ1e5mrvDZf6ekWWMc6bBj2Sm4rWvqvwqB9WE7kHOw8NklPHt5Q9i3OQ_CCtmr5BnbB7XfVXTfTiLkOs0Zmv_2HwdHKTa0tvX9W2RDrdwxLht4BgWmQjzXvbCPzNt7Bnw1syDhDna6PxoOBKlzuY5497RkD3vZObp3k9aqQPv3u2Tu4H3Oxl6U2fyE6b5Rv3vn3_f7Tcrq20SK9oOa2Vf6yYTYVGwmIsnsuLsHa492_CQBaUjns4EPaNLxUPaNSqDM5qAQiLhLc0rPqMmAuQatadOCAuGbxe2rxs0S5n4Q8qktMyPe9pdsFjjXZba0m5frioVHAtQfUso2r1uNXIM2n2hz7Tb7NxctJr4bbc6l62rm9YZXdPuebvTuLhpX7Ya182r606z3dic0b9zr42LT41Ws9lqXLabl83O1U1j8z-8vfj0)
 
-### **Core App**
+## **Core App**
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -1121,19 +644,600 @@ erDiagram
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqtV-tu2kgUfpWRq65aiaTBYG7V_iDEtGySgoCslFUka7CPYRrb486Mm7Bp_u4D7CPuk-zxZRxwoGw35QfC43O-c__m8GC43AOjZ4A4Y3QpaHgTEfy8fk1-_YFPqXQ1s6cz8gvpn51N7dnMnpE3LhdA3hE3kYqHIOTbF1hI4cm3b0dH_EGbID1yY_C7SJJ__vqbhEmgWBwAoZ4nQEqQN8Zz1cHVbD6-tKeT6Xg4urAzCLhXEHk5ivaVsMjnKUAOUVV7yI8JiinCPP0klWDRksQrHkH1TIAPQoDnuDxS1FX6vUcVZF8O950FE2qVv3nUtnW037cZ0AUE1TMWQX3HmVk5c5laV46kQo-qIXA8DZy0baoAPImUWFcc_7-dZF9OLsbXtp12E5bu99EgbSbprsBL0P3lS9pIYx_IpsdkHNC1E9GwGiuElJWJXnAeECYdrCf7CpX4C98H_bn9YTy9PmBy05QHLgtpQBZUgrPiiQjWjtgoSNouioVAXAH403Ooqtiejy7t2cV4_iNdkyFiiYVy0p9bxzggG4elmc3ROh2Pz0efPmQjlfuVj5QE8ZW5QAR8SUAqPZVlJXaoUynZMgKPKK7Fq8ncoYXFuEWdJPJAaLUyDzvki45CFRZpeT1sO8RjED4XIYpT9cQMWmJPnsvpLrOJbKNT4hRUVS274umc0TCdqh1zmUj05jQP9h0Z0MiFAKPQIbx4_gb96TydvcFHe3A-vpqTNwsWvHTwtkgYDWyTdz4_xMXe02FkQhsKo7l9mfdWyp-sUGQKQnmgR7a0MxoGTJlEawqWHGlrT69s6UkIwMVRIzLgG-XPvNxX-6KcMllkFX1WZnq_s_KVMpZu_NcW02BJxJQTC2y073v04oaZ9K8v7U_z_Pb_Da_K_Olnt01h5uMI72KsblqVkN4WLBPTdQiRKntBz-V-XXTtNqOYlMVv0U-tWpHdj0C9z7gupGaJu8KWxEsKAv9oeP52VxPvAOCCLVmUMaUveIgo4N7yRO1hox0IicQQkJaQXV1gcR7_zjAONOk225SnZYTS0ay0l5ImlKWENAU_peD0Z79U1xF9nwD1opHX0lHrGJ4ZEywGR0tsT8HOK5GQz5JHRNA7B2Xoz-LI8cV4mu4n8-sL3E5Or0l_MnkBpBvgnXcGPsl2Zh8Hp_fK7gzrw34NQ0aq7706abRaXqt4PLpjnlr16vH9-yqA3rY1yumwY9dLFNOjzSYcRHnatgqY4XDYtK0Sxm-16Ak9CFMwgMYY2B17WGJ4rUaj0zyIEcASt48Cwu_4XZ-WENRbWAtPQ3hUrqgQdN0jJjHf6xpnSBmT1PRApVnefFnd78skbgrpjaVWuWdq-uKoadJ5yt6WESSDmmbzWmU8i0ylPt9ERs1YCuYZPSUSqBnoCC6d-GhkQ3xjqBXgKmakBOCBT_GfTzpfj6gW0-gPzkOtKXiyXBk9nwYSn5I4nZLi3155irchLkyDdPyNnnlSNzMUo_dg3OOz2TxuWJZpNbvtesdqWlbNWBu9ulU_bjfa3a5lddtts916rBl_ZnZPjrsNq941zU6r2-qYjbr5-C94qFS9)
 ---
 
-## 🎨 UX & Design
 
-### Wireframes
+### Apps Overview
 
-[UNCHANGED — all your wireframes stay]
+* **core** → user + address
+* **customers** → profiles
+* **scheduling** → bookings, availability
+* **billing** → payments, cart
 
-### Responsive Design
+## 📇 Customers App
+
+The **Customers app** provides a reusable pattern for managing core business data in a Django project.
+It implements **full CRUD (Create, Read, Update, Delete)** operations with a mobile-first, responsive UI.
+
+### 🔑 Features
+
+- Superuser-only access (owner-facing app).
+- Customer search by name, address, or email.
+- Pagination with "Showing X–Y of Z results" for clarity.
+- Mobile-first layout, optimized for 412px screens and up.
+- Custom global styling system with CSS variables for consistent theming.
+- Reusable confirmation modal for destructive actions (delete).
+- Extensible templates and views.
+
+### ♻️ Reusability
+
+This app was built as a **blueprint for future apps** (Scheduling, Employees, Inventory).
+
+Key reusable elements include:
+- **Model + Form pattern** with validation.
+- **Search + pagination logic** for large datasets.
+- **Mobile-first templates** that adapt across phases.
+- **Global CSS variables** for consistent design across apps.
+- **CRUD workflow with confirmation modals**.
+
+By following this pattern, future apps (e.g., Employees, Scheduling, Inventory) can be quickly wired up using the same structure.
+
+### 🚀 How to Wire Into Another Project (same for other apps)
+1. Add `customers` to your `INSTALLED_APPS` in `settings.py`.
+2. Include the app’s URLs:
+   ```python
+   path("customers/", include("customers.urls")),
+
+### 🖼️ Wireframes
+
+Wireframes were created during the UX design phase to validate layout and navigation before coding.
+Each wireframe below corresponds to a key page in the **Customers App**.
+
+---
+
+Wireframes were created during the UX design phase to validate layout and navigation before coding.
+Each wireframe corresponds to a core page.
+
+- **Home / Navbar Mobile 412x844**
+  ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_mobile.png)
+
+  ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_larger_devices.png)
+
+- **Customer List**
+  ![Customer List Wireframe](readme/wireframes/customer_list.png)
+
+- **Customer Detail**
+  ![Customer Detail Wireframe](readme/wireframes/customer_detail.png)
+
+- **Customer Form**
+  ![Customer Form Wireframe](readme/wireframes/customer_form.png)
+
+- **Delete Confirmation Modal**
+  ![Delete Confirmation Wireframe](readme/wireframes/customer_delete.png)
+
+---
+
+### Responsive Design Considerations
+
+**Navigation**
+- Mobile: collapsible hamburger
+- Tablet/Desktop: expanded navbar
+
+**Cards & Forms**
+- Mobile: single column
+- Tablet/Desktop: multi-column layout
+
+**Modals**
+- Keyboard accessible; scale to viewport
+
+**Pagination**
+- Centered; wraps on small screens
+
+
+## Scheduling App
+
+Customer-facing scheduling with **resource-aware availability**, **drag-and-drop booking**, and a **mini cart**.
+
+Staff users have a dedicated dashboard providing visibility of their assigned upcoming bookings. Access is role-restricted, ensuring only authorized staff members can view operational schedules. Staff interactions are intentionally limited to viewing responsibilities, while booking modifications and cancellations remain controlled by customer workflows to preserve business integrity.
+
+### Features
+- **Two search modes (mutually exclusive):**
+  - **Search by Date** → Show all time slots for that day.
+  - **Search by Time Slot** → Show all dates where that slot has available resources.
+- **Service Categories:** Garage/Basement, Lawncare, House Cleaning.
+- **Resource pills per slot** (e.g., 5 employees → 5 pill buttons).
+- **Travel adjacency logic:** show resources only if their jobs in adjacent slots are within ~30 minutes drive.
+- **Drag & Drop to Cart:** resource pills dragged into cart; slot dims or hides when booked.
+- **Mini Cart (always visible):** shows item count and total $; expandable with hamburger for itemized list and checkout.
+- **Login/Signup required** to complete checkout and save purchase history.
+
+### Reusability
+- **Calendar grid** reusable across services.
+- **Availability filter logic** (time + travel distance).
+- **Drag-and-drop cart** reusable for other booking flows.
+- **CSS variables** for consistent theme.
+
+### How to Wire Into Another Project
+1. Add `scheduling` to `INSTALLED_APPS`.
+2. Include URLs in your project’s `urls.py`:
+   ```python
+   from django.urls import path, include
+
+   urlpatterns = [
+
+       path("schedule/", include("scheduling.urls")),
+   ]
+
+### 🖼️ Wireframes
+
+Wireframes were created during the UX design phase to validate layout, search methods, and booking flow before coding.
+Each wireframe corresponds to a key customer-facing screen.
+
+- **Wireframe A — Search by Date (Mobile 412×844)**
+
+  ![Search by Date Wireframe](readme/wireframes/scheduling_search_by_date.png)
+
+- **Wireframe B — Search by Time Slot (Mobile 412×844)**
+
+  ![Search by Time Slot Wireframe](readme/wireframes/scheduling_search_by_timeslot.png)
+
+---
+
+### 📱 Responsive Design Considerations
+
+**Mobile (412px)**
+- Stacked day cards with resource pills and sticky mini-cart (quantity + total).
+- Mutually exclusive search toggles (Date vs Time Slot); only one active at a time.
+- Drag-and-drop affordances with arrows/cues targeting the cart.
+
+**Tablet (≥768px)**
+- Two-column day layout with more room for filters/inputs.
+- Mini-cart remains visible; itemized view via hamburger control.
+
+**Desktop (≥1200px)**
+- Multi-column grid (week or multi-day view).
+- Persistent cart sidebar for summary + checkout.
+
+---
+
+
+## 🔁 CRUD & Booking Lifecycle
+
+### Table A — CRUD Operations Overview
+
+| Operation | Scope | Behavior | Data Impact |
+|----------|------|--------|------------|
+| Create | Booking (Cart → Checkout) | New booking created after successful payment | Inserts Booking + PaymentHistory |
+| Read | User / Admin views | Display bookings, invoices, payment history | No data modification |
+| Update | Booking state | Status changes (active → cancelled → refunded) | Updates Booking + PaymentHistory |
+| Delete | Draft services only | Pre-checkout items removed from cart | Deletes CartItem only |
+
+### Table B — Booking State Transitions
+
+| Current State | Action | Next State | Constraint |
+|--------------|--------|----------|-----------|
+| Draft | Checkout | Active | Payment must succeed |
+| Active | Cancel | Cancelled | Cannot cancel twice |
+| Cancelled | Refund | Refunded | Triggered via payment workflow |
+| Any | Modify | Blocked | Past bookings cannot be changed |
+
+### Table C — Validation & Constraints
+
+| Rule | Enforcement | Outcome |
+|-----|------------|--------|
+| No past bookings | Server-side validation | Booking rejected |
+| No double booking | Availability check | Slot blocked |
+| No duplicate payment | Stripe idempotency | Duplicate prevented |
+| No repeated cancellation | State check | Action denied |
+| Cart consistency | Recalculation on change | Accurate totals |
+
+User flow: drag → add → delete → totals dynamically recalculated
+
+The following section demonstrates how these CRUD operations behave under real-world conditions, including validation, state transitions, and edge-case handling.
+
+## 🔄 Booking Lifecycle & Defensive Programming
+
+This section explains how the system enforces data integrity across the full booking lifecycle, including validation, state control, and concurrency protection.
+
+It builds on the CRUD operations above by demonstrating how the system behaves under real-world conditions and edge cases.
+
+### Lifecycle Control
+
+* active → cancelled → refunded
+* No duplicate cancellation allowed
+* Past bookings cannot be modified
+* Booking state integrity enforced
+
+### 🧪 Booking lifecycle & Defensive Programming
+
+This section demonstrates the **end-to-end booking_lifecycle**, including successful flows, edge cases, and defensive programming controls implemented to protect data integrity and user experience.
+
+All scenarios are supported by real execution screenshots from the application.
+
+---
+
+### 🔄 Booking lifecycle — Standard Flow
+
+The standard booking workflow was tested from initial selection through payment and persistence.
+
+#### **Flow Covered**
+
+This flow validates the full transaction pipeline from user interaction through to persistent storage and administrative visibility.
+
+
+- Booking creation
+- Cart population
+- Checkout process
+- Successful payment
+- Persistence to payment history and admin
+
+#### **Evidence**
+
+- Booking Created — Before ![Booking Created — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/01-booking-created-before.png)
+
+- Booking Created — After ![Booking Created — After](./images/testing_screenshots/PASS_4/booking_lifecycle/02-booking-created-after.png)
+
+- Go to Checkout ![Go to Checkout](./images/testing_screenshots/PASS_4/booking_lifecycle/03-booking-created-go-to-checkout.png)
+
+- Checkout Summary ![Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/04-booking-created-checkout-summary.png)
+
+- Checkout Payment ![Checkout Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/05-booking-created-checkout.png)
+
+- Payment Success — History ![Payment Success — History](./images/testing_screenshots/PASS_4/booking_lifecycle/06-booking-success-payment-history.png)
+- Invoice Generated ![Invoice Generated](./images/testing_screenshots/PASS_4/booking_lifecycle/07-booking-invoice.png)
+
+---
+
+## 🔁 Booking Adjustments & Cancellation
+
+The system supports lifecycle updates including cancellation and financial adjustments.
+
+### Evidence
+
+- Invoice After Cancellation ![Invoice After Cancellation](./images/testing_screenshots/PASS_4/booking_lifecycle/08-booking invoice after cancellation.png)
+- Payment History After Cancellation ![Payment History After Cancellation](./images/testing_screenshots/PASS_4/booking_lifecycle/09-booking - payment history after cancellation.png)
+
+---
+
+## 🔁 Rebooking Workflow
+
+Rebooking scenarios were tested to ensure system consistency and correct state handling.
+
+### Evidence
+
+- Rebooking — Before ![Rebooking — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/10-rebooking-created-before.png)
+
+- Rebooking — After ![Rebooking — After](./images/testing_screenshots/PASS_4/booking_lifecycle/11-rebooking-created-after.png)
+
+- Rebooking — Checkout Summary ![Rebooking — Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/12-rebooking-created-checkout-summary.png)
+
+- Rebooking — Checkout ![Rebooking — Checkout](./images/testing_screenshots/PASS_4/booking_lifecycle/13-rebooking-created-checkout.png)
+
+- Rebooking — Payment Success ![Rebooking — Payment Success](./images/testing_screenshots/PASS_4/booking_lifecycle/14-rebooking-success-payment-history.png)
+
+- Rebooking — Invoice ![Rebooking — Invoice](./images/testing_screenshots/PASS_4/booking_lifecycle/15-rebooking-invoice.png)
+
+---
+
+## 🧑‍💼 Admin & System Verification
+
+Bookings and payments were verified from the administrative perspective.
+
+### Evidence
+
+- Admin Payment History ![Admin Payment History](./images/testing_screenshots/PASS_4/booking_lifecycle/16-admin-payment-history.png)
+
+- Admin Booking History ![Admin Booking History](./images/testing_screenshots/PASS_4/booking_lifecycle/17-admin-booking-history.png)
+
+---
+
+## 🛡️ Defensive Programming — Input Validation
+
+The system prevents invalid or logically inconsistent user actions.
+All validation rules are enforced server-side to ensure data integrity regardless of client behavior.
+
+### Scenarios Tested
+- Booking in the past
+- Missing required address input
+
+### Evidence
+
+- Past Date Search Attempt ![Past Date Search Attempt](./images/testing_screenshots/PASS_4/booking_lifecycle/18-past-date-search.png)
+
+- Past Date Booking Denied ![Past Date Booking Denied](./images/testing_screenshots/PASS_4/booking_lifecycle/19-past-date-booking-denied.png)
+
+- Empty Address Search Denied ![Empty Address Search Denied](./images/testing_screenshots/PASS_4/booking_lifecycle/20-empty-address-search-denied.png)
+
+---
+
+## 🛡️ Defensive Programming — Availability Integrity
+
+The system ensures that availability is correctly managed across cart and payment states. Availability is recalculated at each stage to prevent race conditions between cart state and confirmed bookings.
+
+### Scenarios Tested
+
+- Availability before booking
+- Reservation during cart stage
+- Final confirmation after payment
+
+### Evidence
+
+- Timeslot Available Before Payment
+
+![Timeslot Available Before Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/21-timeslot-available-before-payment.png)
+
+- Timeslot Added to Cart
+
+![Timeslot Added to Cart](./images/testing_screenshots/PASS_4/booking_lifecycle/22-timeslot-in-cart.png)
+
+- Timeslot Payment
+
+![Timeslot Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/23-payment-for-timeslot.png)
+
+- Timeslot in Payment History
+
+![Timeslot in Payment History](./images/testing_screenshots/PASS_4/booking_lifecycle/24-timeslot-in-payment-history.png)
+
+- Timeslot in Admin Payment History
+
+![Timeslot in Admin Payment History](./images/testing_screenshots/PASS_4/booking_lifecycle/25-timeslot-in-admin-payment-history.png)
+
+- Timeslot in Admin Bookings
+
+![Timeslot in Admin Bookings](./images/testing_screenshots/PASS_4/booking_lifecycle/26-timeslot-in-admin-bookings.png)
+
+---
+
+## 🛡️ Defensive Programming — Double Booking Prevention
+
+The system prevents duplicate bookings for the same time slot. This is enforced through backend validation checks against existing confirmed bookings for the same resource and time slot.
+
+### Evidence
+
+- Search Same Timeslot After Booking ![Search Same Timeslot After Booking](./images/testing_screenshots/PASS_4/booking_lifecycle/27-search-same-timeslot-on-same-day-after-booking.png)
+
+---
+
+## 🛡️ Defensive Programming — Concurrent Checkout Protection
+
+The system prevents duplicate or conflicting transactions across multiple browser sessions or tabs. Concurrency control ensures that only one successful transaction can be completed per booking instance across multiple sessions.
+
+### Scenarios Tested
+- Checkout initiated in one tab
+- Duplicate checkout attempt in second tab
+- System blocking duplicate transaction
+
+### Evidence
+
+- Checkout Summary ![Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/28-checkout-summary.png)
+
+- Checkout Tab A ![Checkout Tab A](./images/testing_screenshots/PASS_4/booking_lifecycle/29-checkout-on-tab-A.png)
+
+- Duplicate Checkout Created ![Duplicate Checkout Created](./images/testing_screenshots/PASS_4/booking_lifecycle/30-create-duplicate-checkout-tab-B.png)
+
+- Checkout Success Tab A ![Checkout Success Tab A](./images/testing_screenshots/PASS_4/booking_lifecycle/31-checkout-success-tab-A.png)
+
+- Duplicate Attempt Tab B ![Duplicate Attempt Tab B](./images/testing_screenshots/PASS_4/booking_lifecycle/32a-attempt-checkout-on-duplicate-tab-B.png)
+
+- Duplicate Checkout Blocked ![Duplicate Checkout Blocked](./images/testing_screenshots/PASS_4/booking_lifecycle/32b-checkout-on-duplicate-tab-B-blocked.png)
+
+---
+
+## 🛡️ Defensive Programming — Payment Failure Handling
+
+The system correctly handles failed payment scenarios and prevents inconsistent states. Failed transactions do not persist booking records, ensuring the system remains in a consistent and recoverable state.
+
+### Evidence
+
+- Declined Payment — Before ![Declined Payment — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/34-declined-card-payment-back-to-checkout-summary-before.png)
+
+- Declined Attempt — Before ![Declined Attempt — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/34a-declined-card-payment-attempt-before.png)
+
+- Declined Attempt — After ![Declined Attempt — After](./images/testing_screenshots/PASS_4/booking_lifecycle/34b-declined-card-payment-attempt-after.png)
+
+---
+
+### 🧠 Summary
+
+The booking system demonstrates:
+
+- full lifecycle integrity from booking to payment
+- correct persistence across user and admin views
+- protection against invalid inputs and edge cases
+- prevention of duplicate bookings and race conditions
+- robust handling of failed payment scenarios
+
+These tests confirm that the system behaves reliably under both normal and adverse conditions. The results demonstrate robust handling of both expected user flows and edge-case scenarios under real-world conditions.
+
+## 🧪 VT-10A — Functional Testing (Authentication & Account Workflow)
+
+Manual functional testing was conducted to verify the authentication and account lifecycle from registration through logout, including email flows, profile updates, admin verification, and access control.
+
+### Scope
+
+Testing covered:
+
+- new user signup
+- inbox / verification flow
+- welcome and newsletter email delivery
+- successful authenticated landing
+- profile completion and update
+- admin-side verification of created and updated user records
+- logout flow
+- access control for protected views
+
+---
+
+### Detailed Results
+
+| Test ID | Area | File / Page | Expected | Result |
+|---|---|---|---|---|
+| VT-10A.1 | Authentication | Signup | New user account can be created successfully | Pass |
+| VT-10A.2 | Authentication | Check Inbox | Verification / follow-up email prompt shown correctly | Pass |
+| VT-10A.3 | Authentication | Welcome Email | Welcome email delivered after signup | Pass |
+| VT-10A.4 | Authentication | Newsletter Email | Newsletter signup email delivered for first-time user | Pass |
+| VT-10A.5 | Authentication | Email Verification | Verification messaging shown correctly | Pass |
+| VT-10A.6 | Authentication | Customer Home Page | Authenticated user is redirected into valid logged-in state | Pass |
+| VT-10A.7 | Authentication | Admin Verification (new user) | Newly created user appears correctly in admin | Pass |
+| VT-10A.8 | Authentication | Profile Update (before) | Existing account data visible before update | Pass |
+| VT-10A.9 | Authentication | Profile Update | User profile information updates successfully | Pass |
+| VT-10A.10 | Authentication | Admin Verification (updated user) | Updated user details are reflected in admin | Pass |
+| VT-10A.11 | Authentication | Logout Action | User can log out successfully | Pass |
+| VT-10A.12 | Authentication | Post-Logout Home Page | Logged-out state is shown correctly | Pass |
+| VT-10A.13 | Authentication | Access Control 1 | Protected route is blocked for unauthorized user | Pass |
+| VT-10A.14 | Authentication | Access Control 2 | Restricted content is not exposed without proper login | Pass |
+| VT-10A.15 | Authentication | Access Control 3 | Additional protected view correctly redirects or denies access | Pass |
+| VT-10A.16 | Authentication | Access Control 4 | Role/session protection behaves correctly under direct access attempt | Pass |
+
+---
+
+### Evidence
+
+- VT-10A.1 ![Signup](./images/testing_screenshots/Authentication/01-Signup.png)
+
+- VT-10A.2 ![Check Inbox](./images/testing_screenshots/Authentication/02-Check-Inbox.png)
+
+- VT-10A.3 ![Welcome Email](./images/testing_screenshots/Authentication/03-Welcome-email.png)
+
+- VT-10A.4 ![Newsletter Email](./images/testing_screenshots/Authentication/04-Newsletter-email.png)
+
+- VT-10A.5 ![Email Verification Message](./images/testing_screenshots/Authentication/05-Email-verification-message.png)
+
+- VT-10A.6 ![Customer Home Page](./images/testing_screenshots/Authentication/06-Customer-home-page.png)
+
+- VT-10A.7 ![New User in Admin](./images/testing_screenshots/Authentication/07-New-user-in-admin.png)
+
+- VT-10A.8 ![Update User Profile — Before](./images/testing_screenshots/Authentication/08-Update-user-profile-before.png)
+
+- VT-10A.9 ![Update User Profile Info](./images/testing_screenshots/Authentication/09-Update-user-profile-info.png)
+
+- VT-10A.10 ![User Info in Admin Updated](./images/testing_screenshots/Authentication/10-User-info-in-admin-updated.png)
+
+- VT-10A.11
+
+![User Logout](./images/testing_screenshots/Authentication/11-User-logout.png)
+
+- VT-10A.12
+
+![Logout Home Page](./images/testing_screenshots/Authentication/12-Logout-home-page.png)
+
+- VT-10A.13
+
+![Access Control 1](./images/testing_screenshots/Authentication/13-Access-control-1.png)
+
+- VT-10A.14
+
+![Access Control 2](./images/testing_screenshots/Authentication/13-Access-control-2.png)
+
+- VT-10A.15
+
+![Access Control 3](./images/testing_screenshots/Authentication/13-Access-control-3.png)
+
+- VT-10A.16
+
+![Access Control 4](./images/testing_screenshots/Authentication/13-Access-control-4.png)
+
+---
+
+### Summary
+
+Authentication testing confirmed that secure access control and authentication boundaries are correctly enforced across the application.
+
+- new users can register successfully
+- email-based onboarding and verification workflows function correctly
+- first-time users are enrolled into the newsletter workflow as designed
+- profile updates persist correctly
+- admin records reflect user creation and updates accurately
+- logout returns the application to a valid unauthenticated state
+- protected routes remain inaccessible without proper authentication
+
+## 🧪 VT-10B — Functional Testing (Booking & Checkout Workflow)
+
+Manual testing was conducted to validate the full booking workflow from service selection through checkout, payment, and persistence.
+
+### Scope
+
+Testing covered:
+
+- service search and availability display
+- adding bookings to cart
+- checkout process
+- successful payment handling
+- booking persistence in user and admin views
+
+---
+
+### Detailed Results
+
+| Test ID | Area | File / Page | Expected | Result |
+|---|---|---|---|---|
+| VT-10B.1 | Booking | Search results | Available services displayed correctly | Pass |
+| VT-10B.2 | Booking | Add to cart | Selected service added to cart | Pass |
+| VT-10B.3 | Booking | Cart state | Cart reflects selected booking | Pass |
+| VT-10B.4 | Checkout | Checkout summary | Booking details displayed correctly | Pass |
+| VT-10B.5 | Checkout | Payment process | Payment completes successfully | Pass |
+| VT-10B.6 | Booking | Payment history | Booking stored and displayed | Pass |
+| VT-10B.7 | Booking | Invoice generation | Invoice generated correctly | Pass |
+| VT-10B.8 | Admin | Admin booking view | Booking visible in admin panel | Pass |
+
+---
+
+### Evidence
+
+- VT-10B.1
+
+![Booking Created — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/01-booking-created-before.png)
+
+- VT-10B.2
+
+![Booking Created — After](./images/testing_screenshots/PASS_4/booking_lifecycle/02-booking-created-after.png)
+
+- VT-10B.3
+
+![Go to Checkout](./images/testing_screenshots/PASS_4/booking_lifecycle/03-booking-created-go-to-checkout.png)
+
+- VT-10B.4
+
+![Checkout Summary](./images/testing_screenshots/PASS_4/booking_lifecycle/04-booking-created-checkout-summary.png)
+
+- VT-10B.5
+
+![Checkout Payment](./images/testing_screenshots/PASS_4/booking_lifecycle/05-booking-created-checkout.png)
+
+- VT-10B.6
+
+![Payment Success — History](./images/testing_screenshots/PASS_4/booking_lifecycle/06-booking-success-payment-history.png)
+
+- VT-10B.7
+
+![Invoice Generated](./images/testing_screenshots/PASS_4/booking_lifecycle/07-booking-invoice.png)
+
+- VT-10B.8
+
+![Admin Booking View](./images/testing_screenshots/PASS_4/booking_lifecycle/17-admin-booking-history.png)
+
+---
+
+### Summary
+
+Booking workflow testing confirmed that transactional integrity is maintained from service selection through checkout, payment, and persistence.
+
+- services can be selected and added to cart correctly
+- checkout process reflects accurate booking data
+- payments are processed successfully
+- bookings persist correctly across user and admin views
+- invoices are generated and accessible
+
+---
+
+
+### 🎨 UX & Design
+
+#### **Responsive Design**
 
 At mobile width (412px), drag-and-drop interaction was not reliable because touch gestures favored page scrolling. A tap/click add-to-cart fallback was therefore treated as the preferred mobile interaction pattern.
 
 A mobile/tablet-safe Add to Cart interaction was added for search results. Drag-and-drop remains available on desktop, while touch-width layouts use explicit Add to Cart buttons to avoid scroll interference on smaller devices. This improves usability across responsive breakpoints.
 
-### Mobile UX Optimization
+#### **Mobile UX Optimization**
 
 * Card-based layouts for invoices
 * No horizontal scrolling
@@ -1144,21 +1248,22 @@ The application was specifically optimized for mobile usability rather than rely
 
 ### Key Improvements
 
-#### 1. Mobile-first invoice and payment views
+#### **1. Mobile-first invoice and payment views**
+
 - Replaced complex tables with **vertical card layouts** on smaller screens
 - Each service/payment is displayed as a **stacked, readable block**
 - Eliminates horizontal scrolling entirely
 
-#### 2. Conditional layout rendering
+#### **2. Conditional layout rendering**
 - Desktop (`≥992px`): full tables for data density
 - Mobile/tablet (`<992px`): card-based layout for readability
 
-#### 3. Touch-friendly interactions
+#### **3. Touch-friendly interactions**
 - Buttons expanded to full width on mobile
 - Removed reliance on drag-and-drop for small screens
 - Introduced explicit "Add to Cart" actions
 
-#### 4. Consistent UI patterns
+#### **4. Consistent UI patterns**
 - Same card structure used across:
   - Live Invoice
   - Payment History
@@ -1168,7 +1273,7 @@ The application was specifically optimized for mobile usability rather than rely
   - badges
   - action buttons
 
-#### 5. Defensive UX improvements
+#### **5. Defensive UX improvements**
 - Prevented duplicate bookings through:
   - server-side validation
   - real-time availability updates
@@ -1259,16 +1364,16 @@ All actions are tied to authenticated identity and validated server-side.
 
 ---
 
-# 🔹 SECTION 3 — Deployment (Note: This is a standard workflow I've used on other projects. Screenshots reference gambinos. Adjust to this project where relevant.)
+## 🔹 Deployment (Note: This is a standard workflow I've used on other projects. Screenshots reference gambinos. Adjust to this project where relevant.)
 
-## Platform
+### Platform
 
 * Heroku (PaaS)
 * Neon PostgreSQL
 * Namecheap domain
 * Brevo email
 
-## Custom Domain
+### Custom Domain
 
 👉 https://www.tuckeranddales.com
 
@@ -1276,20 +1381,21 @@ All actions are tied to authenticated identity and validated server-side.
 * DNS configured via Namecheap
 * Config Vars used for production
 
-## Setup
+### Setup
 
-### 1. **Clone repository**
+#### 1. **Clone repository**
+
 ```bash
    git clone https://github.com/Pacman0126/https://github.com/Pacman0126/tucker-and-dales-home-services.git
    cd tucker-and-dales-home-services
 ```
-### 2. **Setup Database (this project uses Neon)**
+#### 2. **Setup Database (this project uses Neon)**
 
-#### Database Setup (Neon.tech PostgreSQL)
+#### **Database Setup (Neon.tech PostgreSQL)**
 
 We use Neon.tech for serverless PostgreSQL hosting (scalable, free tier available, branch-based dev/prod separation).
 
-#### Step-by-Step: Getting Your `DATABASE_URL`
+#### **Step-by-Step: Getting Your `DATABASE_URL`**
 
 **A.  Log in to Neon Console**
    Go to https://console.neon.tech/ and sign in (use your email, GitHub, or Google account).
@@ -1328,11 +1434,16 @@ from django.db import connection
 connection.ensure_connection()  # No error = success
 
 
-#### Important Notes
+#### **Important Notes**
+
 - **Password security**: The password is embedded in the `DATABASE_URL` — if compromised, rotate it in Neon dashboard (Project → Settings → Users & roles → Edit role → Regenerate password → Update `.env`/Heroku).
+
 - **Pooled vs. Direct**: Use the **direct** (non-pooled) string unless your app needs pooling (most Django apps work fine with direct). Avoid checking "Pooled connection" in the modal if offered.
+
 - **SSL**: Neon requires `?sslmode=require` — it's included by default.
+
 - **Multiple branches**: For dev/testing, create a branch in Neon → Get a separate `DATABASE_URL` → Use env-specific `.env` files or Heroku review apps.
+
 - **Troubleshooting**: Connection errors? Check Neon dashboard → **Operations** tab for logs. Common fixes: Wrong branch/db name, expired password, or firewall (Neon allows all IPs by default).
 
 This integrates with your `settings.py` (uses `env.db("DATABASE_URL")` fallback to local SQLite if missing).
@@ -1795,18 +1906,18 @@ This ensures booking consistency and prevents duplicate payments in the normal u
 
 - User data is linked to bookings, ensuring that each booking is associated with a specific authenticated user.
 
-[add screenshots]
+
 ---
 
 
-# 🧪 Testing & validation
+## 🧪 Testing & validation
 
 This section documents the final validation work completed on the application.
 validation focused on standards compliance, code quality, and runtime correctness across HTML, CSS, JavaScript, and Python.
 
 ---
 
-## 📊 validation Summary
+### 📊 validation Summary
 
 | Test ID | Area | Tool | Expected | Result |
 |---|---|---|---|---|
@@ -1816,11 +1927,11 @@ validation focused on standards compliance, code quality, and runtime correctnes
 | VT-08 | Python validation | Flake8 | No critical syntax, import, or style errors in project code | Pass |
 
 ---
-## 🌐 VT-05 — HTML validation
+#### 🌐 **VT-05 — HTML validation**
 
 All key **user-facing templates** were validated using the W3C Markup validation Service.
 
-### Scope
+#### **Scope**
 validation was performed on the **rendered HTML output** of the application, rather than raw Django template files, because template inheritance and includes are only fully represented after rendering.
 
 Validated pages included:
@@ -1842,7 +1953,7 @@ Validated pages included:
 - Custom 404 page
 - Custom 500 page
 
-### Notes
+#### **Notes**
 - Structural issues such as invalid nesting, duplicate declarations, missing required elements, and modal markup errors were corrected
 - Accessibility issues such as ARIA misuse and heading hierarchy were reviewed and fixed where needed
 - validation focused on the pages most relevant to the live user journey and project functionality
@@ -1904,11 +2015,11 @@ Validated pages included:
 
 ---
 
-## 🎨 VT-06 — CSS Validation
+#### 🎨 **VT-06 — CSS Validation**
 
 Custom CSS was validated using the W3C CSS Validation Service.
 
-### Notes
+#### **Notes**
 - No blocking CSS errors were found
 - Warnings were reviewed and accepted, including:
   - CSS variables (not statically analyzable)
@@ -1922,11 +2033,11 @@ Custom CSS was validated using the W3C CSS Validation Service.
 
 ---
 
-## ⚙️ VT-07 — JavaScript Validation
+#### ⚙️ **VT-07 — JavaScript Validation**
 
 Custom JavaScript was validated using JSHint.
 
-### Notes
+#### **Notes**
 - ES11 was enabled to support modern JavaScript syntax
 - Required globals such as `google` were declared where needed
 - Templates containing multiple `<script>` blocks were validated **one script at a time**
@@ -1934,7 +2045,7 @@ Custom JavaScript was validated using JSHint.
 
 ---
 
-### 🔎 Detailed Validation Results
+#### 🔎 **Detailed Validation Results**
 
 | Test ID | Area | File / Page | Tool | Expected | Result |
 |---|---|---|---|---|---|
@@ -1985,23 +2096,45 @@ This confirms that the project’s custom client-side logic is maintainable, sta
 
 ---
 
-## 🧠 Functional Testing
+| Test ID | Area | File / Page | Tool | Expected | Result |
+|---|---|---|---|---|---|
+| VT-08.1 | Python validation | Project codebase | Flake8 | No critical Python syntax or style errors | Pass — no errors after fixes |
 
-### Authentication (VT-10A)
+#### **Python Validation (VT-08)**
 
-[UNCHANGED]
+Python code was validated using Flake8 to assess compliance with PEP 8 standards and to identify syntax or logical issues.
 
-### Booking Workflow (VT-10B)
+Validation was executed using the following command:
 
-[UNCHANGED]
+    flake8 core customers billing scheduling tucker_and_dales_home_services --exclude=migrations
+
+The validation focused on project-specific application code. Automatically generated files such as migrations were excluded.
+Minor stylistic decisions such as line wrapping were handled using standard Python formatting practices (parentheses-based line continuation)
+to preserve readability without altering functionality.
+
+
+#### **Results**
+
+- No syntax errors (E999) were present after corrections
+- No undefined names (F821) or import issues (F401, F811) remained
+- Code structure and formatting were aligned with PEP 8 guidelines
+- Line-length issues (E501) were reviewed and resolved where necessary to maintain readability and consistency
+
+All identified issues were addressed, resulting in a clean Flake8 report with no remaining errors.
+
+#### **Evidence**
+
+-  VT-08.1
+
+ ![PEP 8](./images/testing_screenshots/validation/python/pep8._results.png)
 
 ---
 
-## 📱 VT-11 — Browser & Responsiveness Testing
+#### 📱 **VT-11 — Browser & Responsiveness Testing**
 
 The application was tested across multiple screen sizes to ensure responsive behavior, usability, and layout stability under real-world conditions.
 
-### Scope
+#### **Scope**
 
 Testing covered:
 
@@ -2020,7 +2153,7 @@ Focus areas included:
 
 ---
 
-### Detailed Results
+#### **Detailed Results**
 
 | Test ID | Scenario | Expected Behavior | Result |
 |---|---|---|---|
@@ -2035,7 +2168,7 @@ Focus areas included:
 
 ---
 
-### Evidence
+#### **Evidence**
 
 - VT-11.1
 
@@ -2075,7 +2208,7 @@ Focus areas included:
 
 ---
 
-### Summary
+#### **Summary**
 
 Responsive testing confirmed that:
 
@@ -2089,9 +2222,9 @@ These results demonstrate that the application provides a consistent and usable 
 
 ---
 
-# 🛡️ Defensive Programming Strategy
+## 🛡️ Defensive Programming Strategy
 
-##  Defensive Programming & Edge Cases (VT-12)
+###  Defensive Programming & Edge Cases (VT-12)
 
 The system was tested against invalid inputs, edge cases, and concurrency scenarios to ensure robustness, data integrity, and safe failure handling.
 
@@ -2112,7 +2245,7 @@ Testing covered:
 
 ---
 
-### Detailed Results
+#### **Detailed Results**
 
 | Test ID | Scenario | Expected Behavior | Result |
 |---|---|---|---|
@@ -2128,7 +2261,7 @@ Testing covered:
 
 ---
 
-### Evidence
+#### **Evidence**
 
 #### Input Validation
 
@@ -2208,7 +2341,7 @@ Testing covered:
 
 ---
 
-### Summary
+#### **Summary**
 
 Defensive testing confirmed that:
 
@@ -2223,13 +2356,13 @@ These controls ensure that the system remains reliable and maintains data integr
 
 ---
 
-## 🔄 Booking Lifecycle Testing (PASS 4)
+## 🔄 Booking Lifecycle Testing
 
 [UNCHANGED — full evidence section]
 
 ---
 
-## 🧠 Summary
+### 🧠 Summary
 
 The system demonstrates:
 
@@ -2240,14 +2373,14 @@ The system demonstrates:
 
 ---
 
-# 📝 User Stories
+## 📝 User Stories
 
 User stories are tracked in a GitHub Project:
 
 👉 View full project board and user stories here:
 👉 [User Stories Board](https://github.com/users/Pacman0126/projects/7/)
 
-## 🧩 Agile Planning & Project Management
+### 🧩 Agile Planning & Project Management
 
 User stories were documented and managed using GitHub Issues and Project Boards, with acceptance criteria and MoSCoW prioritisation.
 
@@ -2271,7 +2404,7 @@ To improve project organisation, user stories were grouped into higher-level the
 This structure supports clear prioritisation, progress tracking, and alignment with project goals.
 
 ---
-## 🎨 Design Considerations
+### 🎨 Design Considerations
 
 The application uses a consistent visual approach with a focus on readability, clear hierarchy, and usability. Styling choices were guided by practical UI considerations, including contrast, spacing, and responsive layout behaviour.
 
@@ -2317,7 +2450,7 @@ The application uses a consistent visual approach with a focus on readability, c
 
 ---
 
-### Summary
+#### **Summary**
 
 All defined user stories were implemented and tested successfully.
 
