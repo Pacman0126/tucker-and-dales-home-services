@@ -1,38 +1,62 @@
 # Tucker and Dale's Home Services
 
-## 📚 Table of Contents
+## Table of Contents
 
 (ctrl+click links to navigate)
 
-- [Project Overview](#-project-overview)
-- [Key Features](#-key-features)
-- [User Stories & Agile Mapping](#-user-stories--agile-mapping)
+- [Project Overview](#project-overview)
+- [Key Features](#key-features)
+- [User Stories & Agile Mapping](#user-stories--agile-mapping)
 
 - [Application Architecture](#application-architecture)
-- [Entity Relationship Diagrams](#-entity-relationship-diagrams)
+- [Entity Relationship Diagrams](#entity-relationship-diagrams)
 
-- [CRUD & Booking Lifecycle](#-crud--booking-lifecycle)
-- [Booking Lifecycle & Defensive Programming](#-booking-lifecycle--defensive-programming)
+  - [Scheduling App](#scheduling-app)
+  - [Billing App](#billing-app)
+  - [Customers App](#customers-app)
+  - [Core App](#core-app)
+  - [Project-Wide ERD](#project-wide-erd)
 
-- [Functional Testing](#-functional-testing)
-  - [VT-10A Authentication](#-vt-10a--functional-testing-authentication--account-workflow)
-  - [VT-10B Booking & Checkout](#-vt-10b--functional-testing-booking--checkout-workflow)
+- [CRUD & Booking Lifecycle](#crud--booking-lifecycle)
+- [Booking Lifecycle & Defensive Programming](#booking-lifecycle--defensive-programming)
 
-- [Customers App](#customers-app)
-- [Scheduling App](#scheduling-app)
+- [Functional Testing](#functional-testing)
+  - [VT-10A Authentication](#vt-10a--functional-testing-authentication--account-workflow)
+  - [VT-10B Booking & Checkout](#vt-10b--functional-testing-booking--checkout-workflow)
 
-- [UX & Design](#-ux--design)
-- [Authentication & Access Control](#-authentication--access-control)
+- [Testing & Validation](#testing--validation)
+  - [Manual Testing](#manual-testing)
+  - [Validation Summary](#validation-summary)
+  - [VT-05 HTML Validation](#vt-05-html-validation)
 
-- [Deployment](#-deployment)
+  - [VT-06 CSS Validation](#vt-06-css-validation)
+  - [VT-07 JavaScript Validation](#vt-07-javascript-validation)
+  - [VT-08 Python Validation](#vt-08-python-validation)
+  - [VT-11 Browser & Responsiveness Testing](#browser--responsiveness-testing)
+  - [VT-12 Defensive Programming & Edge Case Testing](#defensive-programming--edge-case-testing)
+
+- [User Stories](#user-stories)
+- [User Story Results](#user-story-results)
+
+- [UX & Design](#ux--design)
+- [Authentication & Access Control](#authentication--access-control)
+
+- [Deployment](#deployment)
+  - [Setup Database](#2-setup-database)
+  - [Website Domain and Email Host Deployment](#website-domain-and-email-host-deployment)
+  - [Setup Website Domain](#setup-website-domain)
+  - [Setup Email Host](#setup-email-host-brevocom)
+  - [Deployment (Heroku)](#deployment-heroku)
+  - [Custom Domain & Deployment Configuration](#custom-domain--deployment-configuration)
+
+- [SEO & Discoverability](#seo--discoverability)
 
 
-## 📌 Project Overview
+## Project Overview
 
 A family owned home services company approached us to help them modernize their business
 for future expansion. They have an existing customer base and 15 employees in the Greater
-Dallas Area, Texas. This application has stored all these in a database with their home
-addresses. A user can browse available employees and services that are within 30 minutes
+Dallas Area, Texas. This application stores all customers, employees, and service addresses in a structured database. A user can browse available employees and services that are within 30 minutes
 drive from their current active jobsite location or the employee's home. All employees within
 30 minutes of the customer are rendered to Google Maps with color coded points and driving routes.
 
@@ -72,17 +96,32 @@ Admins can:
 * view schedules
 * access customer and payment history
 
+### Test Data & Usage Instructions
+
+This project is pre-populated with realistic **test data**, including customers, employees, service addresses, and bookings. All data is synthetic and intended to simulate real-world usage.
+
+To fully test the scheduling and availability features, the assessor should:
+
+- Use a **real, valid address** from the **Greater Dallas, Texas area** (e.g., Dallas, Plano, Frisco, Irving). Note: This project used Google Maps during development.
+- The system uses **geographic proximity and travel-time logic**, so only valid addresses within this region will return meaningful results
+- Random or non-regional addresses may result in no available services being displayed
+
+This ensures that availability filtering, employee assignment, and booking workflows behave as designed.
+
+[Back to Table of Contents](#table-of-contents)
 ---
 
-## 🎯 Key Features
+## Key Features
 
 ### Booking & Scheduling
 
 * Search by date OR time slot
+* Preloaded realistic test dataset (customers, employees, bookings) with location-based filtering using Greater Dallas service coverage
 * Travel-aware availability filtering
 (Availability is validated using employee scheduling constraints and travel-time feasibility checks)
 * Drag-and-drop booking
 * Real-time availability updates
+
 
 ### Payments & Billing
 
@@ -104,9 +143,10 @@ Admins can:
 * Read-only staff dashboards
 * Full payment visibility
 
+[Back to Table of Contents](#table-of-contents)
 ---
 
-## 🧩 User Stories & Agile Mapping
+## User Stories & Agile Mapping
 
 This project was developed using an Agile approach, where features were defined through user stories and implemented incrementally.
 
@@ -117,7 +157,9 @@ User roles include:
 
 Each implemented feature maps directly to a user story, ensuring traceability between requirements and delivered functionality.
 
-## 🏗️ Application Architecture
+[Back to Table of Contents](#table-of-contents)
+
+## Application Architecture
 
 The application follows a modular Django architecture, separating concerns across multiple apps:
 
@@ -134,7 +176,9 @@ request → validation → availability checks → persistence → payment → a
 
 This structure ensures clear data flow, separation of concerns, and reliable transaction handling across the platform.
 
-## 📊 Entity Relationship Diagrams
+[Back to Table of Contents](#table-of-contents)
+
+## Entity Relationship Diagrams
 
 ### **Scheduling App**
 
@@ -226,9 +270,16 @@ I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an int
     PAYMENTHISTORY ||--|| BOOKING : "FK booking"
     PAYMENTHISTORY ||--o{ PAYMENTHISTORY : "FK parent"
 
+%% NOTE:
+%% PAYMENTHISTORY has:
+%% - a primary FK booking (main transaction)
+%% - optional M2M linked_bookings for grouped invoices
   ```
+
+
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqdVt1u2jAUfhXLV5tEu1JoO7hradaxllIBndQJKTLxAVwSm9lOWwa93QPsEfckOw5kNCVkdDdRbH_f8fn5zknmNFAcaJ2CPhdspFnUl33LhYbACiVJ78ytG7fdXrvldcjcrZ7d46zdvmxeXyx3-lZISwQnpE_7FJ_JHmcWSPLIbFt4ssSAfhAB-IxzDca8IkIgIhYSqywLfRapGK1nEMZqIUfEWGbjhHym1AQ4-UAaTAYQhsBTcOJt1-t8bTa8xmnPu2h37oq8XpmWLIJ8rwbMgD9WsQ5nvt6IzsVrBXIDDfjKfZZxPfGm12x53at2r8iNxAbGp62fvG4eguQ5RwOlQiKMzx6YCNkghI3bvdbNVfvO83ZIAhdmGrKZv5mMFQAivGWLAyigh83bb07vWt5173MTFVVciDTfefX_e8bvY2MjkNb4qVr-JZUbJpxQOjCMJc_XzE4iLS50394b7B_NHn1Eso08nJ5_waZyqXjRVLfdtMcKyxKjY28pyepkyox5VJpv-NI47fR2qYSJB0mSt3Qreypo49xLmz2v9R8TJDUcS2H9qcYS7e6vu_vFRFss9vbUfDXM6n0asQkY8vvnr7T4RMP3GIxFC-up51iLxauhguwBhEqODEacA0-7HnEmGAOPUXBEyBxk2qGIxJKJkURgjkk1zzYTwkMhJy-sZs-XnLXwED9mhgRjEXKcJigSMNt4i4XTZk6IeVes07n0x8eZMBGO9a512Hq_JLr6L-GpEhAfKGmZkGYNcQfb0q1hCBqwd03W5BucXSwcCaFKi5GQKDVDhlpFmBUIJirOq_vK-KfLpBF3EgZi02ES4B0jpWfFCkGCGy6-CZUtVggiIZqGagawJQsZR7M5XQWPiAC_NLtlfWssWWJhMAUCy3ibh1urC6ErZW3X4kaLIGnKUDWJJ7RER1pwWrc6hhKNQOP0xCXFoeSmhh1DhGmt4yuHIYvDhPWMtCmT35SKUqZW8WhM60MWGlzFUze0Vj9UKYTFVnVnMkjXaIHW5_SJ1quVo_1y9bB8cFQ-rh4d1w6OSnSG28f7tcpJ9aRWOS7XTsqVSvW5RH8klx7sfzxBEIbBQTfc95HWayUKXFilW8s_uuTH7vkP8PpP5g)
 
+[Back to Table of Contents](#table-of-contents)
 
 ## **Billing App**
 
@@ -441,6 +492,8 @@ erDiagram
 
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVttu4kgQ_ZVWS_OWZMIlYYK0DwxxMtYSjIDZVVZIVmMXuDd2t7e7zYRNeN0P2E_cL9lqGzszDrcBCexy1anbqWq_0ECGQLsU1C1nS8WSmSD4-fCB_LLvU2mMnUFv6nrDyRd3NDnFrtD5OnHG5PX1_Pz1lfS_TqbegzMejb07d-CQLplReDYgQk0yDWpGC5u6njWXLwSRfnP7Tu_2duxMJrl1wASJ2ApIksWGpzEcgfjseb-6w_vcNmFPoAm6XfEAiIK_MtBGHwEY9R4fnOH0i4tPx485TsQ0Sdk6AWE0MZGS2TIicymfuFgeg-v3xtMcRH4TmgQRBE8yMyRgqoikMK4lviMXrF5IFlKVfku3uy13JFEBcLGSth4sDBXo74Io3W17uUXu96bOfQlS1tKs06oRNbOp--BMBl6RtMaEwyxGz1zs0XceRgPv0Sm4wrTmS4Hq2rDF4i20k_iLCbvTR3Lr3LlDNyfyT5L4pbgmGKwhPCzvtFFY8Jy_giVQE0PCeFyTpZjHN6kqBOxZTLj2WWD4aguwKV3XiXM4ijSSAnyRJXOcptojBQtQCkI_kMKgLzt8NjrysTArO1BZCGlAl7KQGTA8ARIowMvQZ6YWaY1rhwPFPwBTEwbcrN_pobN6JhKlsW93WR1AZsKodb2wqeIJK8WbOqH3BGoTzn9KgcFVVa4LvxyPUhkCdBETI21kLLFx7Mgk01j0zziiyOGPpM9EADHS_63yJ1e5mrvDZf6ekWWMc6bBj2Sm4rWvqvwqB9WE7kHOw8NklPHt5Q9i3OQ_CCtmr5BnbB7XfVXTfTiLkOs0Zmv_2HwdHKTa0tvX9W2RDrdwxLht4BgWmQjzXvbCPzNt7Bnw1syDhDna6PxoOBKlzuY5497RkD3vZObp3k9aqQPv3u2Tu4H3Oxl6U2fyE6b5Rv3vn3_f7Tcrq20SK9oOa2Vf6yYTYVGwmIsnsuLsHa492_CQBaUjns4EPaNLxUPaNSqDM5qAQiLhLc0rPqMmAuQatadOCAuGbxe2rxs0S5n4Q8qktMyPe9pdsFjjXZba0m5frioVHAtQfUso2r1uNXIM2n2hz7Tb7NxctJr4bbc6l62rm9YZXdPuebvTuLhpX7Ya182r606z3dic0b9zr42LT41Ws9lqXLabl83O1U1j8z-8vfj0)
 
+[Back to Table of Contents](#table-of-contents)
+
 ## **Core App**
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
@@ -503,7 +556,11 @@ erDiagram
 
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVG1P2zAQ_isnS_tWujSlC420D6UNEI01qOk0MVVCbnItHk4c2Q6sK_3vu4S-sAgQWEoUX_ycn3vuZc0SlSLzGeqR4EvNs1kOtD59gq-vrf2JSXA5mIbROL4Ir-L34J7O_IiDCTw-Hh2pNQxGo0kQx-DDjKmH3EBWSisKicDTVKMxaGZsB9wd3mJPo-hbOD6vsaXBFBZKg0F9LxIEqRJuhcor9AvYq8H192A8vQjjaTS5rl3wokCuDagcNCYoCvvs6nfpQQ7D6TWMgrNwHNbCfFCU9dM3gMgtiHS3M1aLfAkUo855hg0zZlzIhq3gxjwovfcwV0qCMDc8seJ-62DTlPXt2yWfo4TDmjFsL9twoTJsQbRYkOg7rQ8YkWPnBZvbsCXCrhomY7ltRloossqbqmKbDlSZW716zs49kmgtagjjCGoIa8S9q59X4k6JQP16gVlp_lPiVKk7qr_PMOR5glJiepAixURkXIJVFXeeVUwbRBrF-BqfraPnLt4idcVFRWmCizJPa3aD9HdpbIaEZs-jtCJDSDTSZ3rDm-zeVfqX0Xk4hLPL6CeMo2kQfwBaVX4MCc-BBsCh_7dVGcQkA9hbhGE0CYCatH3oN57c7qs34yuYI7XuAjVSFtIKR3V_R_IY4HlKTbGqYjd7vFWEIpHpoQrJjTCW_sNcSFlpWmF244QmArWTobtZiy21SJlvdYktlqEmH7RlddpmjKhSi7JqoqS44BROJfaGYAXPfymV7ZBalctb5i-4NLQriyoT2xm8P4KUOT2s8s38Xrd2wfw1-8N8t-e1neNO1-t5rtPv9twWWzHfO247_Y7j9Xtex3FP3N6mxf7Wdzptz-mcOF6377pfXO_Y62_-ARCtwOM)
 
-### **Project-Wide ERD (all data relationships across apps)**
+[Back to Table of Contents](#table-of-contents)
+
+### **Project-Wide ERD**
+
+(all data relationships across apps)
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -652,6 +709,8 @@ erDiagram
 * **scheduling** → bookings, availability
 * **billing** → payments, cart
 
+[Back to Table of Contents](#table-of-contents)
+
 ## 📇 Customers App
 
 The **Customers app** provides a reusable pattern for managing core business data in a Django project.
@@ -692,9 +751,6 @@ Wireframes were created during the UX design phase to validate layout and naviga
 Each wireframe below corresponds to a key page in the **Customers App**.
 
 ---
-
-Wireframes were created during the UX design phase to validate layout and navigation before coding.
-Each wireframe corresponds to a core page.
 
 - **Home / Navbar Mobile 412x844**
   ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_mobile.png)
@@ -798,8 +854,9 @@ Each wireframe corresponds to a key customer-facing screen.
 
 ---
 
+[Back to Table of Contents](#table-of-contents)
 
-## 🔁 CRUD & Booking Lifecycle
+## CRUD & Booking Lifecycle
 
 ### Table A — CRUD Operations Overview
 
@@ -833,11 +890,9 @@ User flow: drag → add → delete → totals dynamically recalculated
 
 The following section demonstrates how these CRUD operations behave under real-world conditions, including validation, state transitions, and edge-case handling.
 
-## 🔄 Booking Lifecycle & Defensive Programming
+## Booking Lifecycle & Defensive Programming
 
-This section explains how the system enforces data integrity across the full booking lifecycle, including validation, state control, and concurrency protection.
-
-It builds on the CRUD operations above by demonstrating how the system behaves under real-world conditions and edge cases.
+This section explains how the system enforces data integrity across the full booking lifecycle, building on the CRUD operations above to demonstrate real-world behavior, validation, and edge-case handling.
 
 ### Lifecycle Control
 
@@ -846,15 +901,11 @@ It builds on the CRUD operations above by demonstrating how the system behaves u
 * Past bookings cannot be modified
 * Booking state integrity enforced
 
-### 🧪 Booking lifecycle & Defensive Programming
-
-This section demonstrates the **end-to-end booking_lifecycle**, including successful flows, edge cases, and defensive programming controls implemented to protect data integrity and user experience.
-
-All scenarios are supported by real execution screenshots from the application.
-
 ---
 
-### 🔄 Booking lifecycle — Standard Flow
+The following scenarios demonstrate how these rules are enforced in real-world usage.
+
+### Booking lifecycle — Standard Flow
 
 The standard booking workflow was tested from initial selection through payment and persistence.
 
@@ -886,22 +937,22 @@ This flow validates the full transaction pipeline from user interaction through 
 
 ---
 
-## 🔁 Booking Adjustments & Cancellation
+### 🔁 Booking Adjustments & Cancellation
 
 The system supports lifecycle updates including cancellation and financial adjustments.
 
-### Evidence
+#### Evidence
 
 - Invoice After Cancellation ![Invoice After Cancellation](./images/testing_screenshots/PASS_4/booking_lifecycle/08-booking invoice after cancellation.png)
 - Payment History After Cancellation ![Payment History After Cancellation](./images/testing_screenshots/PASS_4/booking_lifecycle/09-booking - payment history after cancellation.png)
 
 ---
 
-## 🔁 Rebooking Workflow
+### 🔁 Rebooking Workflow
 
 Rebooking scenarios were tested to ensure system consistency and correct state handling.
 
-### Evidence
+#### Evidence
 
 - Rebooking — Before ![Rebooking — Before](./images/testing_screenshots/PASS_4/booking_lifecycle/10-rebooking-created-before.png)
 
@@ -917,28 +968,29 @@ Rebooking scenarios were tested to ensure system consistency and correct state h
 
 ---
 
-## 🧑‍💼 Admin & System Verification
+### 🧑‍💼 Admin & System Verification
 
 Bookings and payments were verified from the administrative perspective.
 
-### Evidence
+#### Evidence
 
 - Admin Payment History ![Admin Payment History](./images/testing_screenshots/PASS_4/booking_lifecycle/16-admin-payment-history.png)
 
 - Admin Booking History ![Admin Booking History](./images/testing_screenshots/PASS_4/booking_lifecycle/17-admin-booking-history.png)
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
-## 🛡️ Defensive Programming — Input Validation
+### 🛡️ Defensive Programming — Input Validation
 
 The system prevents invalid or logically inconsistent user actions.
 All validation rules are enforced server-side to ensure data integrity regardless of client behavior.
 
-### Scenarios Tested
+#### Scenarios Tested
 - Booking in the past
 - Missing required address input
 
-### Evidence
+#### Evidence
 
 - Past Date Search Attempt ![Past Date Search Attempt](./images/testing_screenshots/PASS_4/booking_lifecycle/18-past-date-search.png)
 
@@ -1047,9 +1099,13 @@ The booking system demonstrates:
 
 These tests confirm that the system behaves reliably under both normal and adverse conditions. The results demonstrate robust handling of both expected user flows and edge-case scenarios under real-world conditions.
 
-## 🧪 Functional Testing
+[Back to Table of Contents](#table-of-contents)
 
-## 🧪 VT-10A — Functional Testing (Authentication & Account Workflow)
+## Functional Testing
+
+All tests were conducted using valid Greater Dallas addresses to ensure realistic availability results.
+
+## VT-10A — Functional Testing (Authentication & Account Workflow)
 
 Manual functional testing was conducted to verify the authentication and account lifecycle from registration through logout, including email flows, profile updates, admin verification, and access control.
 
@@ -1151,9 +1207,11 @@ Authentication testing confirmed that secure access control and authentication b
 - logout returns the application to a valid unauthenticated state
 - protected routes remain inaccessible without proper authentication
 
-## 🧪 VT-10B — Functional Testing (Booking & Checkout Workflow)
+[Back to Table of Contents](#table-of-contents)
 
-Manual testing was conducted to validate the full booking workflow from service selection through checkout, payment, and persistence.
+## VT-10B — Functional Testing (Booking & Checkout Workflow)
+
+Manual testing validates the authentication and account lifecycle to validate the full booking workflow from service selection through checkout, payment, and persistence.
 
 ### Scope
 
@@ -1229,17 +1287,17 @@ Booking workflow testing confirmed that transactional integrity is maintained fr
 - invoices are generated and accessible
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
+## UX & Design
 
-### 🎨 UX & Design
-
-#### **Responsive Design**
+### **Responsive Design**
 
 At mobile width (412px), drag-and-drop interaction was not reliable because touch gestures favored page scrolling. A tap/click add-to-cart fallback was therefore treated as the preferred mobile interaction pattern.
 
 A mobile/tablet-safe Add to Cart interaction was added for search results. Drag-and-drop remains available on desktop, while touch-width layouts use explicit Add to Cart buttons to avoid scroll interference on smaller devices. This improves usability across responsive breakpoints.
 
-#### **Mobile UX Optimization**
+### **Mobile UX Optimization**
 
 * Card-based layouts for invoices
 * No horizontal scrolling
@@ -1291,13 +1349,11 @@ Users can:
 
 ...entirely on mobile without layout issues, scrolling conflicts, or interaction friction.
 
-
-[add screenshots]
-
+[Back to Table of Contents](#table-of-contents)
 
 ---
 
-## 🔐 Authentication & Access Control
+## Authentication & Access Control
 
 The system implements authenticated user access and profile-based data management.
 
@@ -1363,12 +1419,12 @@ Users can:
 
 All actions are tied to authenticated identity and validated server-side.
 
-
+[Back to Table of Contents](#table-of-contents)
 ---
 
-## 🔹 Deployment
+## Deployment
 
-(Note: This is a standard workflow I've used on other projects. Screenshots reference gambinos. Adjust to this project where relevant.)
+Note: This deployment workflow is consistent across projects and has been adapted here for this application.
 
 ### Platform
 
@@ -1390,10 +1446,11 @@ All actions are tied to authenticated identity and validated server-side.
 #### 1. **Clone repository**
 
 ```bash
-   git clone https://github.com/Pacman0126/https://github.com/Pacman0126/tucker-and-dales-home-services.git
-   cd tucker-and-dales-home-services
+git clone https://github.com/Pacman0126/tucker-and-dales-home-services.git
+
+cd tucker-and-dales-home-services
 ```
-#### 2. **Setup Database (this project uses Neon)**
+#### 2. **Setup Database**
 
 #### **Database Setup (Neon.tech PostgreSQL)**
 
@@ -1453,10 +1510,14 @@ connection.ensure_connection()  # No error = success
 This integrates with your `settings.py` (uses `env.db("DATABASE_URL")` fallback to local SQLite if missing).
 ---
 
-## 🚀 Setup Website Domain and Email Host Deployment (namecheap.com, Brevo.com)
+[Back to Table of Contents](#table-of-contents)
+
+## Website Domain and Email Host Deployment
+
+using namecheap.com & Brevo.com
 
 ---
-### 🚀 Setup Website Domain (namecheap.com)
+### Setup Website Domain
 
 - Sign In/Sign Up to namecheap.com. Search for an available domain and purchase domain
 
@@ -1484,7 +1545,9 @@ This integrates with your `settings.py` (uses `env.db("DATABASE_URL")` fallback 
 ![Alt text](./images/readme/namecheap/8-advanced-dns.png)
 ---
 
-### 🚀 Setup email host Brevo.com
+[Back to Table of Contents](#table-of-contents)
+
+### Setup Email Host (Brevo.com)
 
 - Sign in/ or signup Brevo account to use the namecheap.com domain for email features
 
@@ -1534,7 +1597,9 @@ This integrates with your `settings.py` (uses `env.db("DATABASE_URL")` fallback 
 
 ![Alt text](./images/readme/Brevo/12-brevo-generates-smtp-key.png)
 
-## 🚀 Deployment (Heroku)
+[Back to Table of Contents](#table-of-contents)
+
+## Deployment (Heroku)
 
 This project uses [Heroku](https://www.heroku.com), a platform as a service (PaaS) that enables developers to build, run, and operate applications entirely in the cloud.
 
@@ -1647,7 +1712,9 @@ The Python terminal window should now be connected and deployed to Heroku!
 
 ---
 
-## 🌐 Custom Domain & Deployment Configuration
+[Back to Table of Contents](#table-of-contents)
+
+## Custom Domain & Deployment Configuration
 
 The application is deployed on Heroku and configured with a custom domain:
 
@@ -1790,13 +1857,14 @@ CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://127.0.0.1:8000,http://localhost,htt
 
 - witch domains: Just comment/uncomment the alternative Brevo block and restart the server
 
+[Back to Table of Contents](#table-of-contents)
 ---
 
-## 🧪 Testing & Validation
+## Testing & Validation
 
 Testing was carried out throughout development to ensure the application works as expected, both for end-users and administrators.
 
-### ✅ Manual Testing
+### Manual Testing
 
 **Navigation & Layout**
 - Home page loads successfully with hero section and service categories → ✅
@@ -1910,18 +1978,18 @@ This ensures booking consistency and prevents duplicate payments in the normal u
 
 - User data is linked to bookings, ensuring that each booking is associated with a specific authenticated user.
 
-
+[Back to Table of Contents](#table-of-contents)
 ---
 
 
-## 🧪 Testing & validation
+## Testing & Validation
 
 This section documents the final validation work completed on the application.
 validation focused on standards compliance, code quality, and runtime correctness across HTML, CSS, JavaScript, and Python.
 
 ---
 
-### 📊 validation Summary
+### Validation Summary
 
 | Test ID | Area | Tool | Expected | Result |
 |---|---|---|---|---|
@@ -1931,7 +1999,7 @@ validation focused on standards compliance, code quality, and runtime correctnes
 | VT-08 | Python validation | Flake8 | No critical syntax, import, or style errors in project code | Pass |
 
 ---
-#### 🌐 **VT-05 — HTML validation**
+#### **VT-05 HTML Validation**
 
 All key **user-facing templates** were validated using the W3C Markup validation Service.
 
@@ -2019,7 +2087,7 @@ Validated pages included:
 
 ---
 
-#### 🎨 **VT-06 — CSS Validation**
+#### **VT-06 CSS Validation**
 
 Custom CSS was validated using the W3C CSS Validation Service.
 
@@ -2037,7 +2105,9 @@ Custom CSS was validated using the W3C CSS Validation Service.
 
 ---
 
-#### ⚙️ **VT-07 — JavaScript Validation**
+[Back to Table of Contents](#table-of-contents)
+
+#### **VT-07 JavaScript Validation**
 
 Custom JavaScript was validated using JSHint.
 
@@ -2100,11 +2170,13 @@ This confirms that the project’s custom client-side logic is maintainable, sta
 
 ---
 
+[Back to Table of Contents](#table-of-contents)
+
 | Test ID | Area | File / Page | Tool | Expected | Result |
 |---|---|---|---|---|---|
 | VT-08.1 | Python validation | Project codebase | Flake8 | No critical Python syntax or style errors | Pass — no errors after fixes |
 
-#### **Python Validation (VT-08)**
+#### **VT-08 Python Validation**
 
 Python code was validated using Flake8 to assess compliance with PEP 8 standards and to identify syntax or logical issues.
 
@@ -2133,8 +2205,9 @@ All identified issues were addressed, resulting in a clean Flake8 report with no
  ![PEP 8](./images/testing_screenshots/validation/python/pep8._results.png)
 
 ---
+[Back to Table of Contents](#table-of-contents)
 
-#### 📱 **VT-11 — Browser & Responsiveness Testing**
+#### **Browser & Responsiveness Testing**
 
 The application was tested across multiple screen sizes to ensure responsive behavior, usability, and layout stability under real-world conditions.
 
@@ -2226,9 +2299,11 @@ These results demonstrate that the application provides a consistent and usable 
 
 ---
 
-## 🛡️ Defensive Programming Strategy
+[Back to Table of Contents](#table-of-contents)
 
-###  Defensive Programming & Edge Cases (VT-12)
+## Defensive Programming Strategy
+
+### Defensive Programming & Edge Case Testing
 
 The system was tested against invalid inputs, edge cases, and concurrency scenarios to ensure robustness, data integrity, and safe failure handling.
 
@@ -2360,7 +2435,9 @@ These controls ensure that the system remains reliable and maintains data integr
 
 ---
 
-## 🔄 Booking Lifecycle Testing
+[Back to Table of Contents](#table-of-contents)
+
+<!-- ## 🔄 Booking Lifecycle Testing
 
 [UNCHANGED — full evidence section]
 
@@ -2373,11 +2450,11 @@ The system demonstrates:
 * full lifecycle integrity
 * strong validation controls
 * prevention of race conditions
-* reliable payment handling
+* reliable payment handling -->
 
 ---
 
-## 📝 User Stories
+## User Stories
 
 User stories are tracked in a GitHub Project:
 
@@ -2414,7 +2491,9 @@ The application uses a consistent visual approach with a focus on readability, c
 
 ---
 
-## 🧪 User Story Results
+[Back to Table of Contents](#table-of-contents)
+
+## User Story Results
 
 ### 🧪 User Story Testing
 
@@ -2465,15 +2544,16 @@ Each story is supported by:
 
 This confirms full alignment between planned features and implemented functionality
 
+[Back to Table of Contents](#table-of-contents)
 ---
 
-## 🔍 SEO & Discoverability
+## SEO & Discoverability
 
 Search Engine Optimisation (SEO) was implemented to improve visibility, accessibility, and discoverability of the application, while maintaining a clean and user-focused experience.
 
 ---
 
-## 🌐 Domain & Deployment
+### 🌐 Domain & Deployment
 
 - Custom domain configured: **https://www.tuckeranddales.com**
 - HTTPS enabled via SSL certificate (automatic certificate management)
@@ -2485,7 +2565,7 @@ Search Engine Optimisation (SEO) was implemented to improve visibility, accessib
 
 ---
 
-## 🧠 Meta Tags & Social Sharing
+### 🧠 Meta Tags & Social Sharing
 
 Core SEO meta tags are implemented in the base template to ensure consistent coverage across the application:
 
@@ -2505,11 +2585,9 @@ This ensures:
 
 ---
 
-## 🧭 Sitemap
+### 🧭 Sitemap
 
 A dynamic XML sitemap is provided at: /sitemap.xml
-
-
 
 Includes:
 - Core public-facing pages
@@ -2525,7 +2603,7 @@ This supports:
 
 ---
 
-## 🤖 Robots.txt
+### 🤖 Robots.txt
 
 A `robots.txt` file is implemented at: /robots.txt
 
@@ -2545,7 +2623,7 @@ Sitemap: https://www.tuckeranddales.com/sitemap.xml
 
 ---
 
-## 🧱 Template Architecture (SEO-Aware)
+### 🧱 Template Architecture (SEO-Aware)
 
 SEO is integrated at the template level:
 
@@ -2560,7 +2638,7 @@ This ensures:
 
 ---
 
-## ⚡ Performance & UX Considerations
+### ⚡ Performance & UX Considerations
 
 - Responsive design (mobile-first approach)
 - Optimised asset loading via CDN (Bootstrap, Icons)
@@ -2574,7 +2652,7 @@ These factors contribute indirectly to SEO through:
 
 ---
 
-## 📌 SEO Strategy Rationale
+### 📌 SEO Strategy Rationale
 
 The SEO approach focuses on:
 
@@ -2609,6 +2687,8 @@ Given the nature of the application (authenticated booking system), SEO efforts 
 ![Custom 404 Page](./images/testing_screenshots/SEO/error-custom-404.png)
 
 ---
+
+[Back to Table of Contents](#table-of-contents)
 
 # Tucker Resubmit Pass Blockers
 
