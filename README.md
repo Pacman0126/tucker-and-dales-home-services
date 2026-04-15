@@ -32,8 +32,6 @@
   - [VT-06 CSS Validation](#vt-06-css-validation)
   - [VT-07 JavaScript Validation](#vt-07-javascript-validation)
   - [VT-08 Python Validation](#vt-08-python-validation)
-  - [VT-11 Browser & Responsiveness Testing](#browser--responsiveness-testing)
-  - [VT-12 Defensive Programming & Edge Case Testing](#defensive-programming--edge-case-testing)
 
 - [User Stories](#user-stories)
 - [User Story Results](#user-story-results)
@@ -184,18 +182,40 @@ This structure ensures clear data flow, separation of concerns, and reliable tra
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
+
+**ERD Note:** PaymentHistory is used in three ways within the booking/payment flow:
+
+- as a nullable FK on PaymentHistory.booking for the main booking association
+- as an optional linked_bookings M2M for grouped invoices and multi-booking payment records
+- as Booking.primary_payment_record for the booking’s main financial reference
+
 ```mermaid
  erDiagram
-    CUSTOMER ||--o{ BOOKING : "makes → service request"
-    BOOKING ||--|| SERVICECATEGORY : "belongs to"
-    BOOKING ||--|| TIMESLOT : "scheduled in"
-    BOOKING ||--|| EMPLOYEE : "assigned to"
-    BOOKING ||--o{ PAYMENTHISTORY : "linked in"
-    PAYMENTHISTORY ||--o{ ADJUSTMENT : "has child entries"
-    PAYMENTHISTORY ||--|| USER : "belongs to"
+    %% ============================================
+    %% SCHEDULING CORE
+    %% ============================================
+    USER ||--o{ BOOKING : "creates → service request"
+
+    SERVICECATEGORY ||--o{ EMPLOYEE : "assigned skill/service"
+    SERVICECATEGORY ||--o{ BOOKING : "booked under"
+    SERVICECATEGORY ||--o{ CARTITEM : "references"
+
+    TIMESLOT ||--o{ BOOKING : "scheduled in"
+    TIMESLOT ||--o{ CARTITEM : "selected slot"
+
+    EMPLOYEE ||--o{ BOOKING : "assigned to"
+    EMPLOYEE ||--o{ CARTITEM : "selected employee"
+    EMPLOYEE ||--o{ JOBASSIGNMENT : "has route assignments"
+
+    BOOKING ||--o{ JOBASSIGNMENT : "creates job assignment"
+    BOOKING ||--o{ PAYMENTHISTORY : "payment records"
+    BOOKING ||--o| PAYMENTHISTORY : "primary_payment_record"
+
+    PAYMENTHISTORY ||--o{ PAYMENTHISTORY : "parent → adjustments"
     PAYMENTHISTORY ||--o{ BOOKING : "linked_bookings (M2M)"
+    PAYMENTHISTORY ||--|| USER : "belongs to"
+
     CART ||--o{ CARTITEM : "contains"
-    CARTITEM ||--|| SERVICECATEGORY : "references"
     CART ||--|| USER : "belongs to"
     PAYMENTHISTORY ||--|| CART : "originates from checkout"
 
@@ -209,75 +229,69 @@ I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an int
     SERVICECATEGORY {
       int id
       string name
-      decimal base_hourly_rate
-      datetime created_at
     }
 
     EMPLOYEE {
       int id
-      string display_name
-      string email
-      bool is_active
+      string name
+      string home_address
     }
 
     TIMESLOT {
       int id
-      time start_time
-      time end_time
-      bool is_available
+      string label
     }
 
     BOOKING {
       int id
       date date
-      text service_address
+      string service_address
+      decimal unit_price
       decimal total_amount
-      string status "Booked / Cancelled"
+      string status "Booked / Cancelled / Completed"
+      datetime created_at
+      datetime updated_at
     }
-    BOOKING ||--|| USER : "FK user"
-    BOOKING ||--|| SERVICECATEGORY : "FK service_category"
-    BOOKING ||--|| TIMESLOT : "FK time_slot"
-    BOOKING ||--|| EMPLOYEE : "FK employee"
+
+    JOBASSIGNMENT {
+      int id
+      string jobsite_address
+    }
 
     CART {
       int id
-      decimal subtotal
-      decimal tax
-      decimal total
+      string session_key
+      string address_key
+      datetime created_at
+      datetime updated_at
     }
-    CART ||--|| USER : "FK user"
 
     CARTITEM {
       int id
+      string service_address
       date date
       decimal unit_price
-      decimal subtotal
+      int quantity
+      decimal subtotal "computed property"
     }
-    CARTITEM ||--|| CART : "FK cart"
-    CARTITEM ||--|| SERVICECATEGORY : "FK service_category"
-    CARTITEM ||--|| TIMESLOT : "FK time_slot"
 
     PAYMENTHISTORY {
       int id
       decimal amount
       decimal adjustments_total_amt
-      string status "Paid / Refunded / Cancelled"
+      string currency
+      string status "Paid / Cancelled / Refunded / Adjustment"
       text service_address
+      string payment_type
+      string stripe_payment_id
+      text notes
       datetime created_at
       json raw_data
     }
-    PAYMENTHISTORY ||--|| USER : "FK user"
-    PAYMENTHISTORY ||--|| BOOKING : "FK booking"
-    PAYMENTHISTORY ||--o{ PAYMENTHISTORY : "FK parent"
 
-%% NOTE:
-%% PAYMENTHISTORY has:
-%% - a primary FK booking (main transaction)
-%% - optional M2M linked_bookings for grouped invoices
-  ```
+```
 
-
-[View on Mermaid Live](https://mermaid.live/edit#pako:eNqdVt1u2jAUfhXLV5tEu1JoO7hradaxllIBndQJKTLxAVwSm9lOWwa93QPsEfckOw5kNCVkdDdRbH_f8fn5zknmNFAcaJ2CPhdspFnUl33LhYbACiVJ78ytG7fdXrvldcjcrZ7d46zdvmxeXyx3-lZISwQnpE_7FJ_JHmcWSPLIbFt4ssSAfhAB-IxzDca8IkIgIhYSqywLfRapGK1nEMZqIUfEWGbjhHym1AQ4-UAaTAYQhsBTcOJt1-t8bTa8xmnPu2h37oq8XpmWLIJ8rwbMgD9WsQ5nvt6IzsVrBXIDDfjKfZZxPfGm12x53at2r8iNxAbGp62fvG4eguQ5RwOlQiKMzx6YCNkghI3bvdbNVfvO83ZIAhdmGrKZv5mMFQAivGWLAyigh83bb07vWt5173MTFVVciDTfefX_e8bvY2MjkNb4qVr-JZUbJpxQOjCMJc_XzE4iLS50394b7B_NHn1Eso08nJ5_waZyqXjRVLfdtMcKyxKjY28pyepkyox5VJpv-NI47fR2qYSJB0mSt3Qreypo49xLmz2v9R8TJDUcS2H9qcYS7e6vu_vFRFss9vbUfDXM6n0asQkY8vvnr7T4RMP3GIxFC-up51iLxauhguwBhEqODEacA0-7HnEmGAOPUXBEyBxk2qGIxJKJkURgjkk1zzYTwkMhJy-sZs-XnLXwED9mhgRjEXKcJigSMNt4i4XTZk6IeVes07n0x8eZMBGO9a512Hq_JLr6L-GpEhAfKGmZkGYNcQfb0q1hCBqwd03W5BucXSwcCaFKi5GQKDVDhlpFmBUIJirOq_vK-KfLpBF3EgZi02ES4B0jpWfFCkGCGy6-CZUtVggiIZqGagawJQsZR7M5XQWPiAC_NLtlfWssWWJhMAUCy3ibh1urC6ErZW3X4kaLIGnKUDWJJ7RER1pwWrc6hhKNQOP0xCXFoeSmhh1DhGmt4yuHIYvDhPWMtCmT35SKUqZW8WhM60MWGlzFUze0Vj9UKYTFVnVnMkjXaIHW5_SJ1quVo_1y9bB8cFQ-rh4d1w6OSnSG28f7tcpJ9aRWOS7XTsqVSvW5RH8klx7sfzxBEIbBQTfc95HWayUKXFilW8s_uuTH7vkP8PpP5g)
+[View on Mermaid Live](https://mermaid.live/edit#pako:eNqlVu2O2jgUfRXLUqWtNJ3yUYaC1B8MjabsDsMI6EpTIUWe5A54SOzUdrZlB_7uA-wj9kl6nZAAHkJbNT8gsX3Ovb73-CRPNJAh0C4F9Z6zuWLxTBC8Xrwg737hKkGT_gfv_cfrwc0V6Y_G3m-QfZx4Y7Jev3oln8jlaPSXpeySGQ0UMAOafPvvf6JB_cMDIAo-p6DNjM5EDkbs34O-1-9NvavR-K7g8Ya316M7z8uImNZ8LiAkesmj6PWWy3KcYNjP5F7KJcJTEYL6AazfG08HU2-Y4RQ8gAIRgN4lPB0Mvcn1aHosjg4WEKYRhuKiiOOuPwigIYLA2J1Fcq8o5e6PxCiLYWQRwl1-PATESSRXAFWoP0eXvclkcHUz9G6mGXTBNFEyNUDyoDEIs1eJIqtKfCGAR3m_x1DEd-C3vTsL_DCYTG07LD5hKwtA0QRShfoocH0UqHjM1MrfEvg5wS5zB3IqA2UTsApm4WOqTVmCapr9ZkVcoPB8qz8u5pr8MWwMX56Ar9f5acpEC5G0mLzPOcR29miXAykM46JMrVxYzVidQga2AKn4nIushw9KxgTlHSxRELuEMu6n_J6g6g3hYfGkjcJNkxTPq2AxOMMQMx45Ywmq5IvtVDa8qfKI0_F2sTbPztPPIsuhhYzBZ2GoQGuHtDzYp0kjhmV3oIVEKpAhVjz7cai2xneYDy6HAOUeob1x46P0A3BnjDQs8lksUzx-DqdhJtXY68vcI1-TPkPDi6L8XqJpALpHIZg8OcNjIPnpDn1mnk2lSXgwVW780CNOFw5dQ3NTVf1Mo6cJNKK4FP4SVs7MlnJ_5re2VR7FHyV0vH9uu6sbamk_p0wYblbuap3eZ33O3CBOUuv5iZIJKFxLnYydg18lxC31oXLK0Z0j-oXCXHkFqbIv0FWV6m4ZdzU3hgf7ora3vTLCTn8GvpqqSpY2ktu-WSXPjhD-JVC-GHZbzWiFRKv7CUU8aimIYl98XMPKyhJCz-hc8ZB2jUrhjMag0OTwkWb1nVGzAHQYaq01ZGppN7VBTMLEJynjAoav3PmCdh9YpPEpF932k69cAvZTpm-7Qrv1er2dkdDuE_2Kz83Wea120XxbazbbjUan0zyjKxyu1c5bndqbt-1OvVWrN-rNzRn9N4tbP6_XGq3mm3a71rlotdoXjc1361E5KA)
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -293,11 +307,14 @@ erDiagram
 
     USER ||--o{ CART : "owns"
     CART ||--o{ CARTITEM : "contains"
+
     CARTITEM ||--|| SERVICECATEGORY : "references"
     CARTITEM ||--|| TIMESLOT : "for time slot"
-    CARTITEM ||--|| BOOKING : "creates booking"
+    CARTITEM ||--|| EMPLOYEE : "selected employee"
 
     USER ||--o{ PAYMENTHISTORY : "makes payments"
+    USER ||--o{ PAYMENT : "initiates Stripe payment"
+
     PAYMENTHISTORY ||--o{ PAYMENTHISTORY : "has child adjustments (refunds/add-ons)"
     PAYMENTHISTORY ||--o{ BOOKING : "linked_bookings (M2M)"
     PAYMENTHISTORY ||--|| BOOKING : "primary booking"
@@ -308,6 +325,9 @@ erDiagram
     BOOKING ||--|| SERVICECATEGORY : "service type"
     BOOKING ||--|| TIMESLOT : "scheduled in"
     BOOKING ||--|| EMPLOYEE : "assigned staff"
+    BOOKING ||--o| PAYMENTHISTORY : "primary_payment_record"
+
+    PAYMENT ||--|| USER : "belongs to payer"
 
     %% =========================
     %% ENTITY DEFINITIONS
@@ -322,67 +342,84 @@ erDiagram
     SERVICECATEGORY {
       int id
       string name
-      decimal base_hourly_rate
-      datetime created_at
     }
 
     TIMESLOT {
       int id
       string label
-      time start_time
-      time end_time
     }
 
     EMPLOYEE {
       int id
-      string display_name
-      string email
-      bool is_active
+      string name
+      string home_address
     }
 
     BOOKING {
       int id
       date date
-      text service_address
+      string service_address
+      decimal unit_price
       decimal total_amount
-      string status "Booked / Cancelled"
+      string status "Booked / Cancelled / Completed"
+      datetime created_at
+      datetime updated_at
     }
 
     CART {
       int id
-      decimal subtotal
-      decimal tax
-      decimal total
+      string session_key
+      string address_key
       datetime created_at
+      datetime updated_at
     }
 
     CARTITEM {
       int id
+      string service_address
       decimal unit_price
-      decimal subtotal
+      int quantity
       date date
+      decimal subtotal "computed property"
+      datetime created_at
     }
 
     PAYMENTHISTORY {
       int id
       decimal amount
       decimal adjustments_total_amt
-      string status "Paid / Refunded / Adjustment"
+      string currency
+      string status "Paid / Cancelled / Refunded / Adjustment"
       string payment_type
       text service_address
       string stripe_payment_id
+      text notes
       datetime created_at
       json raw_data
+    }
+
+    PAYMENT {
+      int id
+      int amount
+      string currency
+      string stripe_payment_intent_id
+      string stripe_checkout_session_id
+      string status
+      string description
+      string receipt_url
+      json metadata
+      datetime created_at
+      datetime updated_at
     }
 
     %% =========================
     %% LOGIC FLOW NOTES
     %% =========================
-    %% Primary flow: CART → PAYMENTHISTORY → BOOKING
-    %% Refunds and adjustments are modeled as child PAYMENTHISTORY entries
-    %% linked via parent_id, allowing multi-stage invoices & partial refunds.
+    %% Primary flow: CART -> PAYMENTHISTORY -> BOOKING
+    %% Refunds and adjustments are child PAYMENTHISTORY entries linked by parent_id
+    %% Stripe transaction storage is separated into PAYMENT
 ```
-[View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVttu2zgQ_RWCQItdwE59iZ3awD64rpoK6xtsdRdZGBBoaWyzkUgvSSXxJnndD-gn9ks6oiwlVmPH1YMgUXNmhmfODHVPAxkC7VJQHzlbKRbPBcHrzRvyx6GrsJg6g57njkezz-5kdgous_kyc6bk4aFalfek35t6pEvmVN4KPaeZgV18ZuB6ztAaBVIYxvcN7cfU-OGBoOO_3L7T73nO5Xh6ZTEKlqBABHAQ5blDZzYYZ3kspSKGx0B0JM0hxIfx-E93dJnlpIAZ0GQh5TUXqxzy81YnvauhM_I-uzMvzy1m14jcsG0MwhT5lQwPw9dMk2DNo5Cw8GuijfVCfsMdJyLU71gYVqXQvx_3-3wvERfXEPq7raCrYWN4DF6iYqN4zNS2TMXLwKfKK77iwnK4VDLGHUFwLRNzHG6ZTeELiGSaq5EpkaBSWAbMUysjFPybgDYQksU2D1KyfUlIGtQND4CY7QYOwPaUpHEjYRJhGC4O2DvDyWB85TjWnmnNVwLNtWHL5dM2TmpFJMj1rshH55M7cm1P_mI_3mfPBJM1hIf5mzYKK0kS3LxgMZSWIWY8ytYec29l6o47fu40hAD1E5EF0-CvZaKira9QF8V3fLatmbVc6DNTil3wfzxoxFA0-VrW7IYp46ePe8sgwmeLRZiibMfDhFxvIrb1jxNH0naJCNc-Cwy_KcfKFXMgVMqJvRV5w50hO6n6OAEUaF0m2EjDIp_FMhGmlBgSYRKNavyAPYxafEf6DGdnhDLONVykZjv4UF67UDpZ2Gg_pcDuXszq9FoXM_mVDBLBjY-TKYBXc9vnsohUGkCvxNuntVh9GtB-Tv9B7ieMp8xP7Ry3RegV8LwKBWp3evh2LJ0ggiKY4hvwc_S-ol5knpCvWgqi2K2PNqxE0klTajC-dPvk02D8NxmNPWf2C9DJ7mxZRvK2m0nv-__fyrVJl3Yd8_SXkh2HhIn9c5IpIDH-_KQTujhIS_7QUHHQha_sgCQ3nCHvKiOuQliESaWkxklkeBXruAJUx41E-jV5m5oajiLYHcxnc0ErdKV4SLtGJVChMSgcCPhKrbjm1KwBZwZNj4UQlgzdpnV_RNiGiX-kjHOkkslqTbtLFml8SzZp9XY_coUJTjFQ_VSVtNtq1qwP2r2nd7Rbr52fNS9q5-1Ou9lpdWqt9xW6pd1qo3Vx1qy1z-v1Tv28WWt1Hiv0Pxu2cVZv1Gr4oVnvXDQb7Xb78Qcv4x23)
+[View on Mermaid Live](https://mermaid.live/edit#pako:eNqlV22P2jgQ_itWpEo9aXcLy8HuIt1JlKbbqLwJuDvtaaXImwzgktjUdm7LLfz3Tpw3khLKqvmAEnuemfHjxzPmxfKED1bXAvmB0aWk4SMn-Lx5Q_6oe3KLqT3ozZ3xaPbJmczOwSU2f83sKdntLi_FC-n3pnPSJY-WeObq0UoMzOCBgTO3h8bIE1xTlhgWpmY6Nt_tCLr-2-nb_d7cvh9PHwxKwgIkcA9KAQ5Rc2dozwbjJJOFkESzEIgKhK5D2MPJYPxg2wahIABPg08g3ARiC1Dkd7jWSe9haI_mn5zZPEstpGtQZEO3IXCdp3cEZKwZZ5pRjYiZlmwDGbAIVwlRH3hFFfFWLPAJ9b9ESpv45C1SFXFfvaO-fym4-i3L6Ljf9-PxZ2d0bxwGjK_Bd5-EWDO-RFfD6-EpOHJ4CN9IFlK5JSn-NLAQjWRLxg0jCylCXBF4axHp03BDbwx_gkDEuWoRMwmy4DFLrYqQ8DUCFW_10zYLUrE9pkAF8j_mAdHbDdTAShJUuBA_CjAM4zX2JQFSpdiSo7nSdLE4hhC7YypIWXdTHbkSPCH9H-T0CuLOqhvo0pk_kA_2R2fkmALyyuLxkrwTpEcT5mdfCk8FX5II6eY0hMowhJQFydg-81bdrNOOC6e5g3zbTiMDipRVoPkOnhs0H1qJEFw8ohKUqjjN9rzGp49nxfxUPKYCLTtFc_BQIAGJsPC4KBYPqjNaaBq4NBQRlqGKT011pFAt7_FMozbfkT7FIhwEybvAWgl4kjK1JsmZwutJwFffpfqHqWjjl6b2h43gJ0wqXBkT3F3DtjKTLvtw5peTMd3iZwm9kvXYy9eIcs30tnZLM7iKnszumL4ZbqK4am2k2IDU2zNI39f0lDplpVHLUshHiybjZpKp6sWLZNylt3UymlBWFdHUtCvz2ssjFGtLPWTVzVTfdErDN13Hfx447rF5bSyWarBcYNc5QyxflOBE0mcXbehxZusojb-OnqxapsoJc13Ou2yW9Uo3OxZHDGPmK4M-KA_xGhGVGWwegBNuJIPS4kPQtFj8L56ss_rLYHzv9MnHwfgfMhrP7dkroJP0HrIIxHM3KSqXf1aPAI6kdba4CicXJ0J5-UZFJaT3rIoPnJUM7y3JvQmvEyhTebhf6DS95WlJuaJeTDlyLSRdAmEK1YuImKVYKCLzH4OtC2spmW91tYzgwgpBYuvDT8sI7dHSK8CeYsWd3KdyHR-YPWI2lP8rRJjBpIiWK6u7oIHCr2RH0v8I-Shm7IPsxxq1uu1Gyzixui_WN6vbbDWvmp12o33X6dw2OtfXF9YWja5u2s125_e72-ubVueu2dlfWP-bqI0rtGrd3bZub246zUaj095_B5d-5Rk)
 
 ## **Customers App**
 
@@ -395,13 +432,10 @@ erDiagram
     %% =========================
 
     USER ||--|| CUSTOMERPROFILE : "extends user"
-    CUSTOMERPROFILE ||--o{ SERVICEADDRESS : "can have multiple"
-    CUSTOMERPROFILE ||--o{ BOOKING : "makes service requests"
-    CUSTOMERPROFILE ||--o{ PAYMENTHISTORY : "has payments through bookings"
-    CUSTOMERPROFILE ||--o{ CART : "owns checkout carts"
 
-    SERVICEADDRESS ||--o{ BOOKING : "used for booking"
-    SERVICEADDRESS ||--o{ PAYMENTHISTORY : "used for invoice address"
+    USER ||--o{ BOOKING : "creates service requests"
+    USER ||--o{ PAYMENTHISTORY : "makes payments"
+    USER ||--o{ CART : "owns checkout carts"
 
     BOOKING ||--|| SERVICECATEGORY : "service type"
     BOOKING ||--|| TIMESLOT : "scheduled in"
@@ -421,76 +455,84 @@ erDiagram
 
     CUSTOMERPROFILE {
       int id
-      string phone_number
+      string phone
+      string email
+      string company
       string preferred_contact "email / phone"
-      string notes
+      string timezone
+      string billing_street_address
+      string billing_city
+      string billing_state
+      string billing_zipcode
+      string region
+      string service_street_address
+      string service_city
+      string service_state
+      string service_zipcode
+      string service_region
       datetime created_at
-    }
-
-    SERVICEADDRESS {
-      int id
-      string street
-      string city
-      string state
-      string postal_code
-      string country
-      bool is_primary
+      datetime updated_at
     }
 
     BOOKING {
       int id
       date date
-      text service_address
+      string service_address
+      decimal unit_price
       decimal total_amount
-      string status "Booked / Cancelled"
+      string status "Booked / Cancelled / Completed"
       datetime created_at
+      datetime updated_at
     }
 
     SERVICECATEGORY {
       int id
       string name
-      decimal base_hourly_rate
     }
 
     TIMESLOT {
       int id
-      time start_time
-      time end_time
-      bool is_available
+      string label
     }
 
     EMPLOYEE {
       int id
-      string display_name
-      string email
-      bool is_active
+      string name
+      string home_address
     }
 
     PAYMENTHISTORY {
       int id
       decimal amount
-      string status "Paid / Refunded / Adjustment"
+      decimal adjustments_total_amt
+      string currency
+      string status "Paid / Cancelled / Refunded / Adjustment"
       text service_address
+      string payment_type
+      string stripe_payment_id
+      text notes
       datetime created_at
+      json raw_data
     }
 
     CART {
       int id
-      decimal subtotal
-      decimal tax
-      decimal total
+      string session_key
+      string address_key
       datetime created_at
+      datetime updated_at
     }
 
     %% =========================
     %% LOGIC FLOW NOTES
     %% =========================
-    %% USER → CUSTOMERPROFILE → SERVICEADDRESS → BOOKING
-    %% PAYMENTHISTORY and CART link via CUSTOMERPROFILE for ownership
+    %% USER -> CUSTOMERPROFILE stores contact, billing, and service address data
+    %% BOOKING and PAYMENTHISTORY store service_address snapshots directly
+    %% CART ownership remains tied to USER/session, not CUSTOMERPROFILE
 
 ```
 
-[View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVttu4kgQ_ZVWS_OWZMIlYYK0DwxxMtYSjIDZVVZIVmMXuDd2t7e7zYRNeN0P2E_cL9lqGzszDrcBCexy1anbqWq_0ECGQLsU1C1nS8WSmSD4-fCB_LLvU2mMnUFv6nrDyRd3NDnFrtD5OnHG5PX1_Pz1lfS_TqbegzMejb07d-CQLplReDYgQk0yDWpGC5u6njWXLwSRfnP7Tu_2duxMJrl1wASJ2ApIksWGpzEcgfjseb-6w_vcNmFPoAm6XfEAiIK_MtBGHwEY9R4fnOH0i4tPx485TsQ0Sdk6AWE0MZGS2TIicymfuFgeg-v3xtMcRH4TmgQRBE8yMyRgqoikMK4lviMXrF5IFlKVfku3uy13JFEBcLGSth4sDBXo74Io3W17uUXu96bOfQlS1tKs06oRNbOp--BMBl6RtMaEwyxGz1zs0XceRgPv0Sm4wrTmS4Hq2rDF4i20k_iLCbvTR3Lr3LlDNyfyT5L4pbgmGKwhPCzvtFFY8Jy_giVQE0PCeFyTpZjHN6kqBOxZTLj2WWD4aguwKV3XiXM4ijSSAnyRJXOcptojBQtQCkI_kMKgLzt8NjrysTArO1BZCGlAl7KQGTA8ARIowMvQZ6YWaY1rhwPFPwBTEwbcrN_pobN6JhKlsW93WR1AZsKodb2wqeIJK8WbOqH3BGoTzn9KgcFVVa4LvxyPUhkCdBETI21kLLFx7Mgk01j0zziiyOGPpM9EADHS_63yJ1e5mrvDZf6ekWWMc6bBj2Sm4rWvqvwqB9WE7kHOw8NklPHt5Q9i3OQ_CCtmr5BnbB7XfVXTfTiLkOs0Zmv_2HwdHKTa0tvX9W2RDrdwxLht4BgWmQjzXvbCPzNt7Bnw1syDhDna6PxoOBKlzuY5497RkD3vZObp3k9aqQPv3u2Tu4H3Oxl6U2fyE6b5Rv3vn3_f7Tcrq20SK9oOa2Vf6yYTYVGwmIsnsuLsHa492_CQBaUjns4EPaNLxUPaNSqDM5qAQiLhLc0rPqMmAuQatadOCAuGbxe2rxs0S5n4Q8qktMyPe9pdsFjjXZba0m5frioVHAtQfUso2r1uNXIM2n2hz7Tb7NxctJr4bbc6l62rm9YZXdPuebvTuLhpX7Ya182r606z3dic0b9zr42LT41Ws9lqXLabl83O1U1j8z-8vfj0)
+[View on Mermaid Live](https://mermaid.live/edit#pako:eNqlVm1v2joU_iuWpX2jLV1b3qRdibG0iy4lCNiuOlWK3OQAHomdazvraMt_30lIwmoaxLR8gMQ-z3nxc178TAMZAu1RUJ84WygW3wuCz7t35EPdU0lMnGF_5nqj6Wd3PD0Gt5X5MnUm5OXl5OTlhQy-TGferTMZT7xrd-iQHrmn8NOACDVJNah7uoeSz-Sj5_3rjm5y6UABM6AJCv_gARAF_6egjc6QNm7cv7t1RrPPLhqd3OXwmK0QnLB1DOJt0KA_meWi8lFoEiwhWMnUkICprfwWUbpUxIX4r-7AGfRnzk1pqvTQrBMoDVmwmXvrTIfe1p5GW2EaQUi4qJF3bsdD787ZnhvTmi8EimvD5vOda0dxicfizu7IJ-faHbk5qX9I6PP2naCzhvCw_NJGcbHIuRQsBmsZYsYjay3BOB6lqjQ8SBkRrn0WGP6jULApTdv5c9iLZCnFMS4EMk6YWNtoBXNQCkI_kMKgO1muZmhyVmimFsLwGJ72TT7wKMJ_Hz8BjM_CUIHWNUIBN-taPGZ-zd4TT7LKtnYVLLgU1mKRl4fdKYXecGeH33en3HvbnXL3tVshqslOjmxLO_SZ2dtKk_DV1sauw5pEyFD5T40nVvAhBDxmEUkFN36iUMLeMdKwyGexTIWxdeJ5pBqT5KOUKyzLMzJgIoAo2r5jjkWAMeyy5q8CtzvO4UrY1WKloOo9h5ERe4DIglZt6Fij1dJSxtahV0qtZl1HaMHDawaq1fB7qk3e2v2SKZumIMWaFsG6jr0x4zZ3E5inIsxf-5WFHY8GJ1hdRlVNLh84fj4LbMOKJ-CXErtQc7VC4rA7ImG-aymIYo8-yjC7aWYT7TBVGl3GkvRXYJ9LEc_vO3-Vt0dNp6F34w7I9dD7j4y8mTP9A2g-nE7-2ZsU2kiMgxStvFE2zgZhIqwuE0WwZHeIqLFsMZmglaS5Upt6ogVL9FIa1MMVBCZaV7pyKvBiAUoveYL9GecJ3jIMx-QyMnf-rOCikXFvh5Epog26UDykPaNSaNAYFCrBT5pTfE_NErDuaHZFCJlaZXm6QQxOuG9SxiVMyXSxpL05izR-bekqroTVKtZJCGqQVRrttTvnuRLae6Y_ae_8qnXabrbaF51267J51e1eNOgal5ut0_dXndb5RafbvGydNzubBn3K7TZPW52rVrfd7La6nWbz_WVn8wvsjEc8)
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -505,9 +547,7 @@ erDiagram
     %% =========================
 
     USER ||--o{ ADDRESS : "owns multiple addresses"
-
-    ADDRESS ||--o{ BOOKING : "used for service location"
-    ADDRESS ||--o{ PAYMENTHISTORY : "appears on receipts"
+    USER ||--o| NEWSLETTERSUBSCRIPTION : "has newsletter preferences"
 
     %% =========================
     %% ENTITY DEFINITIONS
@@ -523,38 +563,35 @@ erDiagram
 
     ADDRESS {
       int id
-      string label           "e.g. Home, Office"
+      string label           "e.g. Home, Rental A"
       string line1
       string line2
       string city
       string state
       string postal_code
-      string country          "2-letter ISO code"
+      string country         "2-letter ISO code"
     }
 
-    BOOKING {
+    NEWSLETTERSUBSCRIPTION {
       int id
-      date date
-      string status           "Booked / Cancelled"
-      decimal total_amount
-    }
-
-    PAYMENTHISTORY {
-      int id
-      decimal amount
-      string status           "Paid / Refunded / Adjustment"
+      date next_send_on
+      bool unsubscribed
+      string token
       datetime created_at
+      datetime updated_at
     }
 
     %% =========================
     %% LOGIC FLOW NOTES
     %% =========================
-    %% USERS can own multiple ADDRESSES in the CORE app.
-    %% Each ADDRESS may be referenced in bookings and payments
-    %% to maintain consistent billing and service records.
+    %% USERS can own multiple ADDRESS records in the CORE app.
+    %% ADDRESS remains a reusable core model, but BOOKING and PAYMENTHISTORY
+    %% now store service/billing address snapshots directly rather than
+    %% referencing ADDRESS by foreign key.
+    %% NEWSLETTERSUBSCRIPTION stores each user's newsletter send state.
 ```
 
-[View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVG1P2zAQ_isnS_tWujSlC420D6UNEI01qOk0MVVCbnItHk4c2Q6sK_3vu4S-sAgQWEoUX_ycn3vuZc0SlSLzGeqR4EvNs1kOtD59gq-vrf2JSXA5mIbROL4Ir-L34J7O_IiDCTw-Hh2pNQxGo0kQx-DDjKmH3EBWSisKicDTVKMxaGZsB9wd3mJPo-hbOD6vsaXBFBZKg0F9LxIEqRJuhcor9AvYq8H192A8vQjjaTS5rl3wokCuDagcNCYoCvvs6nfpQQ7D6TWMgrNwHNbCfFCU9dM3gMgtiHS3M1aLfAkUo855hg0zZlzIhq3gxjwovfcwV0qCMDc8seJ-62DTlPXt2yWfo4TDmjFsL9twoTJsQbRYkOg7rQ8YkWPnBZvbsCXCrhomY7ltRloossqbqmKbDlSZW716zs49kmgtagjjCGoIa8S9q59X4k6JQP16gVlp_lPiVKk7qr_PMOR5glJiepAixURkXIJVFXeeVUwbRBrF-BqfraPnLt4idcVFRWmCizJPa3aD9HdpbIaEZs-jtCJDSDTSZ3rDm-zeVfqX0Xk4hLPL6CeMo2kQfwBaVX4MCc-BBsCh_7dVGcQkA9hbhGE0CYCatH3oN57c7qs34yuYI7XuAjVSFtIKR3V_R_IY4HlKTbGqYjd7vFWEIpHpoQrJjTCW_sNcSFlpWmF244QmArWTobtZiy21SJlvdYktlqEmH7RlddpmjKhSi7JqoqS44BROJfaGYAXPfymV7ZBalctb5i-4NLQriyoT2xm8P4KUOT2s8s38Xrd2wfw1-8N8t-e1neNO1-t5rtPv9twWWzHfO247_Y7j9Xtex3FP3N6mxf7Wdzptz-mcOF6377pfXO_Y62_-ARCtwOM)
+[View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVO9v2jAQ_VdOlqp9oQxSfkbaBwppG42RKqGqOiEhJ7mC1cSJbKeUUf73OYFAm41pWIpkn_2e717eeUOCJERiEhQjRheCxjMOelxcwLdT43DCtcaDqe1MvDv73vsf3O7Mg2e58P5-eZlsYDAauZbngQkzkqy4hDiLFEsjBBqGAqVEOSNV2DtMrEdvbE2nlus9XHtD177P8yhYllQCx5WMUCkUkAp8RoE82BGdUZ01mdrTJxhZN_bELso8s8TNbg7AuAIWliupBOMLyCQKTmOshDGmLKrEUirlKhEHBj9JImByTgPFXvcE2_LqUtF_3x5RHyM4jhnB-qIOd0mMNXCRKxrBoFT-iGIcm3-JGZVYwNS6EpKKqmqtaaKj0Tx3YJUgybgS6w_pGZf7H2p7DhQIUin8hCdO6BDqdLRP3tRcIg_nCf8kbsZl5stAMB-ryqnkBflHFsVihECgnoZzqv7YytLw09b2LBeOnVt7CDdj5xEmztTyzoDmJvQgoBx0Zx0bqzSIwEB7SmpdQC0Rho5rAU3T-gF_PKg9qVuT6lkmqa85NBIh1n8hqoGfKbh2nO_25BYoD-F-8PRD986d7U0d9-nAxpOVljDHaeO_sgC_-iyKckX3nQ6S01QuEyUhZDo5Fa1BUJ2a0PnRo2ZlQ-fQMkV_Dc-ami04vOD6WMIJTxR5SEAaLIs-_PLpycgNsfNrQURqZCFYSEwlMqyRGIWWQy9J4awZ0RnqLib52xNS8ZL7cqsxKeU_kyQuYSLJFktiPtNI6tXOE_sX9xDVVYUohrn3idlpFBzE3JA3YjYb_Xrrqtnt9HvtVrvf7tbImphGt94xWka31Wu0u0azZ7S3NfKruLVR77Y6PaNhGB39Na-6_e1vjZfCzA)
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -566,30 +603,26 @@ I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an int
 
 ### 🔹 ERD Color Legend
 
-| Color | App / Module | Description |
-|:------:|:--------------|:-------------|
-| 🟦 **Core** | `core` | Core user models and address management (`User`, `Address`) |
-| 🟩 **Customers** | `customers` | Customer-specific data such as profiles and preferences (`CustomerProfile`) |
-| 🟧 **Scheduling** | `scheduling` | Booking flow, employees, services, and time slots (`Booking`, `Employee`, `ServiceCategory`, `TimeSlot`) |
-| 💗 **Billing** | `billing` | Payment, cart, and Stripe checkout functionality (`Cart`, `CartItem`, `PaymentHistory`) |
+|       Color       | App / Module | Description                                                                                                                        |
+| :---------------: | :----------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+|    🟦 **Core**    | `core`       | Shared foundation models and reusable user-linked utilities (`User`, `Address`, `NewsletterSubscription`)                          |
+|  🟩 **Customers** | `customers`  | Customer-specific profile, billing, and service-address data (`CustomerProfile`)                                                   |
+| 🟧 **Scheduling** | `scheduling` | Booking flow, employees, services, time slots, and routing (`Booking`, `Employee`, `ServiceCategory`, `TimeSlot`, `JobAssignment`) |
+|   💗 **Billing**  | `billing`    | Cart, payment history, and Stripe transaction records (`Cart`, `CartItem`, `PaymentHistory`, `Payment`)                            |
 
-> 💡 **Tip:** The colors above correspond to each app’s models as shown in the ERD above.
-> Together, they visualize how `User` and `Address` (Core) link to customer records, bookings, and payment chains.
+
+💡 Tip: The colors above correspond to each app’s models as shown in the ERD.
+In the final design, User remains the main ownership anchor, CustomerProfile stores profile and address data, and operational records like Booking and PaymentHistory store service-address snapshots directly for checkout, invoicing, and reporting.
+
 
 ```mermaid
 erDiagram
     %% ============================================
-    %% USERS & ADDRESSES (core / customers)
+    %% USERS & CORE PROFILE DATA
     %% ============================================
     USER ||--o{ ADDRESS : "owns → multiple addresses"
-    USER ||--o{ CUSTOMERPROFILE : "extends → customer info"
-
-    CUSTOMERPROFILE {
-      int id
-      string phone
-      string preferred_contact
-      date date_of_birth
-    }
+    USER ||--|| CUSTOMERPROFILE : "extends → customer info"
+    USER ||--o| NEWSLETTERSUBSCRIPTION : "has newsletter preferences"
 
     ADDRESS {
       int id
@@ -602,42 +635,77 @@ erDiagram
       string country
     }
 
+    CUSTOMERPROFILE {
+      int id
+      string phone
+      string email
+      string company
+      string preferred_contact
+      string timezone
+      string billing_street_address
+      string billing_city
+      string billing_state
+      string billing_zipcode
+      string region
+      string service_street_address
+      string service_city
+      string service_state
+      string service_zipcode
+      string service_region
+      datetime created_at
+      datetime updated_at
+    }
+
+    NEWSLETTERSUBSCRIPTION {
+      int id
+      date next_send_on
+      bool unsubscribed
+      string token
+      datetime created_at
+      datetime updated_at
+    }
+
     %% ============================================
     %% EMPLOYEES & SERVICES (scheduling)
     %% ============================================
     EMPLOYEE {
       int id
-      string display_name
-      string email
-      bool is_active
+      string name
+      string home_address
     }
 
     SERVICECATEGORY {
       int id
       string name
-      decimal base_hourly_rate
-      datetime created_at
     }
 
     TIMESLOT {
       int id
       string label
-      time start_time
-      time end_time
     }
 
     USER ||--o{ BOOKING : "creates → service request"
     EMPLOYEE ||--o{ BOOKING : "assigned to"
     SERVICECATEGORY ||--o{ BOOKING : "booked under"
     TIMESLOT ||--o{ BOOKING : "scheduled in"
-    ADDRESS ||--o{ BOOKING : "performed at"
+
+    EMPLOYEE ||--o{ JOBASSIGNMENT : "has route assignments"
+    BOOKING ||--o{ JOBASSIGNMENT : "creates job assignment"
 
     BOOKING {
       int id
       date date
-      text service_address
+      string service_address
+      decimal unit_price
       decimal total_amount
-      string status "Booked / Cancelled"
+      string status "Booked / Cancelled / Completed"
+      datetime created_at
+      datetime updated_at
+    }
+
+    JOBASSIGNMENT {
+      int id
+      string jobsite_address
     }
 
     %% ============================================
@@ -647,40 +715,62 @@ erDiagram
     CART ||--o{ CARTITEM : "contains → items"
     SERVICECATEGORY ||--o{ CARTITEM : "references category"
     TIMESLOT ||--o{ CARTITEM : "selected slot"
+    EMPLOYEE ||--o{ CARTITEM : "selected employee"
 
     CART {
       int id
-      decimal subtotal
-      decimal tax
-      decimal total
+      string session_key
+      string address_key
+      datetime created_at
+      datetime updated_at
     }
 
     CARTITEM {
       int id
+      string service_address
       date date
       decimal unit_price
-      decimal subtotal
+      int quantity
+      datetime created_at
     }
 
     %% ============================================
-    %% PAYMENTS & ADJUSTMENTS (billing)
+    %% PAYMENTS & CHAINS (billing)
     %% ============================================
     USER ||--o{ PAYMENTHISTORY : "makes → payments"
-    BOOKING ||--o{ PAYMENTHISTORY : "linked to booking"
+    USER ||--o{ PAYMENT : "initiates → Stripe payment"
+
+    BOOKING ||--o| PAYMENTHISTORY : "primary_payment_record"
     PAYMENTHISTORY ||--o{ PAYMENTHISTORY : "adjustment chain (self-FK)"
+    PAYMENTHISTORY ||--o{ BOOKING : "linked_bookings (M2M)"
+    PAYMENTHISTORY ||--o| BOOKING : "primary booking FK"
     CART ||--o{ PAYMENTHISTORY : "originates from checkout"
-    ADDRESS ||--o{ PAYMENTHISTORY : "used for receipts"
 
     PAYMENTHISTORY {
       int id
       decimal amount
       decimal adjustments_total_amt
-      string status "Paid / Refunded / Adjustment"
-      text service_address
+      string currency
+      string status
       string payment_type
+      string service_address
       string stripe_payment_id
+      string notes
       datetime created_at
       json raw_data
+    }
+
+    PAYMENT {
+      int id
+      int amount
+      string currency
+      string stripe_payment_intent_id
+      string stripe_checkout_session_id
+      string status
+      string description
+      string receipt_url
+      datetime created_at
+      datetime updated_at
     }
 
     %% ============================================
@@ -692,13 +782,13 @@ erDiagram
     classDef billing fill:#FCE8EF,stroke:#d63384,stroke-width:1px;
     classDef legend fill:#f8f9fa,stroke:#adb5bd,stroke-dasharray: 2 2;
 
-    class USER,ADDRESS core
+    class USER,ADDRESS,NEWSLETTERSUBSCRIPTION core
     class CUSTOMERPROFILE customers
-    class EMPLOYEE,SERVICECATEGORY,TIMESLOT,BOOKING scheduling
-    class CART,CARTITEM,PAYMENTHISTORY billing
+    class EMPLOYEE,SERVICECATEGORY,TIMESLOT,BOOKING,JOBASSIGNMENT scheduling
+    class CART,CARTITEM,PAYMENTHISTORY,PAYMENT billing
 ```
 
-[View on Mermaid Live](https://mermaid.live/edit#pako:eNqtV-tu2kgUfpWRq65aiaTBYG7V_iDEtGySgoCslFUka7CPYRrb486Mm7Bp_u4D7CPuk-zxZRxwoGw35QfC43O-c__m8GC43AOjZ4A4Y3QpaHgTEfy8fk1-_YFPqXQ1s6cz8gvpn51N7dnMnpE3LhdA3hE3kYqHIOTbF1hI4cm3b0dH_EGbID1yY_C7SJJ__vqbhEmgWBwAoZ4nQEqQN8Zz1cHVbD6-tKeT6Xg4urAzCLhXEHk5ivaVsMjnKUAOUVV7yI8JiinCPP0klWDRksQrHkH1TIAPQoDnuDxS1FX6vUcVZF8O950FE2qVv3nUtnW037cZ0AUE1TMWQX3HmVk5c5laV46kQo-qIXA8DZy0baoAPImUWFcc_7-dZF9OLsbXtp12E5bu99EgbSbprsBL0P3lS9pIYx_IpsdkHNC1E9GwGiuElJWJXnAeECYdrCf7CpX4C98H_bn9YTy9PmBy05QHLgtpQBZUgrPiiQjWjtgoSNouioVAXAH403Ooqtiejy7t2cV4_iNdkyFiiYVy0p9bxzggG4elmc3ROh2Pz0efPmQjlfuVj5QE8ZW5QAR8SUAqPZVlJXaoUynZMgKPKK7Fq8ncoYXFuEWdJPJAaLUyDzvki45CFRZpeT1sO8RjED4XIYpT9cQMWmJPnsvpLrOJbKNT4hRUVS274umc0TCdqh1zmUj05jQP9h0Z0MiFAKPQIbx4_gb96TydvcFHe3A-vpqTNwsWvHTwtkgYDWyTdz4_xMXe02FkQhsKo7l9mfdWyp-sUGQKQnmgR7a0MxoGTJlEawqWHGlrT69s6UkIwMVRIzLgG-XPvNxX-6KcMllkFX1WZnq_s_KVMpZu_NcW02BJxJQTC2y073v04oaZ9K8v7U_z_Pb_Da_K_Olnt01h5uMI72KsblqVkN4WLBPTdQiRKntBz-V-XXTtNqOYlMVv0U-tWpHdj0C9z7gupGaJu8KWxEsKAv9oeP52VxPvAOCCLVmUMaUveIgo4N7yRO1hox0IicQQkJaQXV1gcR7_zjAONOk225SnZYTS0ay0l5ImlKWENAU_peD0Z79U1xF9nwD1opHX0lHrGJ4ZEywGR0tsT8HOK5GQz5JHRNA7B2Xoz-LI8cV4mu4n8-sL3E5Or0l_MnkBpBvgnXcGPsl2Zh8Hp_fK7gzrw34NQ0aq7706abRaXqt4PLpjnlr16vH9-yqA3rY1yumwY9dLFNOjzSYcRHnatgqY4XDYtK0Sxm-16Ak9CFMwgMYY2B17WGJ4rUaj0zyIEcASt48Cwu_4XZ-WENRbWAtPQ3hUrqgQdN0jJjHf6xpnSBmT1PRApVnefFnd78skbgrpjaVWuWdq-uKoadJ5yt6WESSDmmbzWmU8i0ylPt9ERs1YCuYZPSUSqBnoCC6d-GhkQ3xjqBXgKmakBOCBT_GfTzpfj6gW0-gPzkOtKXiyXBk9nwYSn5I4nZLi3155irchLkyDdPyNnnlSNzMUo_dg3OOz2TxuWJZpNbvtesdqWlbNWBu9ulU_bjfa3a5lddtts916rBl_ZnZPjrsNq941zU6r2-qYjbr5-C94qFS9)
+[View on Mermaid Live](https://mermaid.live/edit#pako:eNrFWN1O4zgUfhUro1kxUpilv4SO9qKUdKYDpagtu2KFFLmJ2xryN7Yz0AFu9wH2EfdJ9riN08ZNCjsgba-a2Ofz8edzvnOcB8ONPGK0DMJOKJ4xHFyHCH7v36Pf_sMvM7oc2cMR-gV1BkMbXQwH3d6ZjU7a4_YrYCUmenzc348eUPvkZGiPRqiFro3oLuTon7_-RkHiCxr7BGHPY4Rzwq8NzfTxEXUuR-NB3x4qryQEuRck9FYobsJFFBCGaDiNtgCiR3Ru_zE6s8dj2OHl8agz7F2Me4PzJc4ccxSSO-4TIQAhZmRKGAndlScrKOX6w-oRwToCUU89ccFoOEM-nhBff0dDUil4V9XeuVQstFdcYEG0d3EEb31HHrwOECWhYCnGk3JcJ273BuJ5FOq4JMDU31oriHGo-7tijhEP3AsFdoU2LmhAfmwvMKE-EDJz4JEQ4aRxUDKpgKa1_TZdauwHjQsoY2RGo1BnnbDv1CW73VGTik4ts992R40Vu6NG8255ACOZQy4j8NdzsNgaSmIvN5Qdf0nYl0SBBIFUuBcOh8xy1j5MoshHSciTCXcZnRA9bkR0S97G4Z_VLrt_cTa4sm2pX5D2v_c68HePu3PiJTICPrwCXmE_kzwhDvQTnYMm5SMo22jqZKc9tj8Phlcvxs4Axr2-PTobjF-uSZnppigfDwanvfPPSyVcHdhKUdNghBz5lhAulKZmXBSYY87pLCQehIOaru-ywApi6xZsktAjTJlleyuYn54pmNBwLdC6X18Hx-3RqPf5vG-fjzOZZ1ECEb7yMyChyGqNWqDUWlFzE0027NfrK4BdmeWVC4KmMh5xaYBlylHhxAxm6CMikmUAB1L0C8pGwsHn4xWzv6IOhmrm-6v_IN1Q6SCFjTdJ2DxVu2MRyONUlGXEz6Z-pz0cL9uWL3bndHA5Rnup6n94o75FLpBvWqC20e_AF2ZZYiwnbRj0xnZ_FTmyFtLUEHYf8GeSI2e9bkZgNUFmEVT4kiTJ2XHiExcODHE_Kk3eYgsCARItCFkH93Jvu48W-jYORcu5JXo9TA97c-RVAZc5_ZxDxZmlJ2J5qknYbwkOxUaNL_X81VF80b6SGbQK5HbvfPTmYZyu8KUHHSFEmzzzAN-mch_jRU4QCwyXFhRoolmRGAHXMVHG22qYNt8FKwPTAWYLJzWFnseNWKZJmkH5BrB3A52_REDuHLIMSj7xp_vd0w-7oTYLCnAMMunIOgRsc7TXr_Z3mj_mzNOdoNQedU-LJKHA94jRGQ2XXE5ZFMAGiHsLBWpNo2ZUVlvSCM4Xg-xtxhB3VNHQK4abMKkxi8JCojf56YGJRfzCYpahyVjJDny7xYmAiRcoxA2PQsTwnQNzsJZ8KlJLmJJPhSWzlIC8y6Eo9Dydps7PUVpYMLGAUI_InjoW2zcRyAkCA07C_P-1t-4MzgZD2VePr86gqz6-Qu2Li1dAuj50UCdkCtdIRtAUVK71zra6lW7bhJ1Dz9J6d1BrNr1m-rh_Rz0xb1Xi-086QHrt5wrluGvZlQyl6uF6nTyLsr4lpDDdbrduNzKYabOJD_CzMKlcK4yObdndDMNr1mpW_VkMn8zg5pVCTK3p0RRnENibNCaegvAwn2PG8KKFqqj6SZ3xEmmp3mb6zcIsuQNK8jdt9C8FGbebk1QHYWq9i6maETOVRjPfF64pzi0JAmmqem7m1U49KloN05gx6hktwRJiGuBYgOWjscz1a0PMCVyRDCmsHma3UkSfwCbG4Z9RFCgzuADM5kZrin0OT6tMSb-dZVOIvIl0pEoYrWr1sLEEMVoPxr3RsqyP1cPDSs06qlr16lHFNBYwyfrYODo8aNSbB9XDes1qPJnGj-WiBx-tSrV-2GhUas1G7aBhWU__Ah4VE_c)
 ---
 
 
