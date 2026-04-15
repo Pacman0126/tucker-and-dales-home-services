@@ -36,13 +36,6 @@
     </div>
 
     <div class="card-body">
-      {% comment %} {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags|default:'info' }} mb-3">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %} {% endcomment %}
 
       {% if employee %}
         {% if bookings %}

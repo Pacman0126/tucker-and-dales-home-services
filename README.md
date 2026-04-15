@@ -48,7 +48,10 @@
   - [Custom Domain & Deployment Configuration](#custom-domain--deployment-configuration)
 
 - [SEO & Discoverability](#seo--discoverability)
+- [Marketing & Business Model](#marketing--business-model)
+- [E-Commerce Business Model](#e-commerce-business-model)
 
+e-commerce-business-model
 
 ## Project Overview
 
@@ -182,12 +185,14 @@ This structure ensures clear data flow, separation of concerns, and reliable tra
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
+**Scope:** Booking lifecycle, employees, time slots, and routing
 
-**ERD Note:** PaymentHistory is used in three ways within the booking/payment flow:
+**ERD Note:** PaymentHistory participates in booking flow in three ways:
 
-- as a nullable FK on PaymentHistory.booking for the main booking association
-- as an optional linked_bookings M2M for grouped invoices and multi-booking payment records
-- as Booking.primary_payment_record for the booking’s main financial reference
+  - **FK:** PaymentHistory.booking
+  - **M2M:** linked_bookings
+  - **FK:** Booking.primary_payment_record
+
 
 ```mermaid
  erDiagram
@@ -298,6 +303,12 @@ I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an int
 ## **Billing App**
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
+
+**Scope:** Cart, checkout, payments, and financial tracking
+
+**Key Design:**
+  - PaymentHistory = business/accounting layer
+  - Payment = Stripe transaction layer
 
 ```mermaid
 erDiagram
@@ -425,6 +436,11 @@ erDiagram
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
+Scope: Customer profile and address data
+
+**Design Note:**
+Address data is stored in CustomerProfile and duplicated into booking/payment records as snapshots, avoiding dependency on mutable address records.
+
 ```mermaid
 erDiagram
     %% =========================
@@ -540,6 +556,11 @@ erDiagram
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
+Scope: Shared foundational models
+
+**Design Note:**
+Address remains a reusable model, but is not directly linked to booking or payment flows in the final design.
+
 ```mermaid
 erDiagram
     %% =========================
@@ -605,15 +626,16 @@ I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an int
 
 |       Color       | App / Module | Description                                                                                                                        |
 | :---------------: | :----------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-|    🟦 **Core**    | `core`       | Shared foundation models and reusable user-linked utilities (`User`, `Address`, `NewsletterSubscription`)                          |
-|  🟩 **Customers** | `customers`  | Customer-specific profile, billing, and service-address data (`CustomerProfile`)                                                   |
+|    🟦 **Core**    | `core`       | Shared foundation models and reusable utilities (`User`, `Address`, `NewsletterSubscription`)                                      |
+|  🟩 **Customers** | `customers`  | Customer profile, billing, and service address data (`CustomerProfile`)                                                            |
 | 🟧 **Scheduling** | `scheduling` | Booking flow, employees, services, time slots, and routing (`Booking`, `Employee`, `ServiceCategory`, `TimeSlot`, `JobAssignment`) |
 |   💗 **Billing**  | `billing`    | Cart, payment history, and Stripe transaction records (`Cart`, `CartItem`, `PaymentHistory`, `Payment`)                            |
+                          |
 
 
-💡 Tip: The colors above correspond to each app’s models as shown in the ERD.
-In the final design, User remains the main ownership anchor, CustomerProfile stores profile and address data, and operational records like Booking and PaymentHistory store service-address snapshots directly for checkout, invoicing, and reporting.
-
+💡 Tip:
+User is the primary ownership anchor across the system. The colors above correspond to each app’s models as shown in the ERD.
+CustomerProfile stores profile and address data, while operational models (Booking, PaymentHistory) store address snapshots for consistency in checkout, invoicing, and reporting.
 
 ```mermaid
 erDiagram
@@ -977,6 +999,90 @@ Each wireframe corresponds to a key customer-facing screen.
 | Cart consistency | Recalculation on change | Accurate totals |
 
 User flow: drag → add → delete → totals dynamically recalculated
+
+### Data Flow Diagram
+
+```mermaid
+flowchart TD
+
+    %% =========================
+    %% USER INPUT
+    %% =========================
+    A[User selects service, date, time slot, address]
+
+    %% =========================
+    %% VALIDATION
+    %% =========================
+    B[Validate input]
+    B1{Valid?}
+    B --> B1
+
+    B1 -- No --> B_ERR[Return validation errors]
+    B1 -- Yes --> C[Check availability]
+
+    %% =========================
+    %% CAPACITY & LOGIC
+    %% =========================
+    C --> C1{Slot & employee available?}
+    C1 -- No --> C_ERR[Show unavailable / FULL]
+    C1 -- Yes --> D[Select employee & route]
+
+    %% =========================
+    %% CART FLOW
+    %% =========================
+    D --> E[Add to CartItem]
+    E --> F[Attach to Cart (session or user)]
+
+    %% =========================
+    %% CHECKOUT
+    %% =========================
+    F --> G[Proceed to checkout]
+    G --> H[Create Stripe session]
+
+    %% =========================
+    %% PAYMENT
+    %% =========================
+    H --> I[User completes payment]
+    I --> J[Stripe webhook / success return]
+
+    %% =========================
+    %% PERSISTENCE
+    %% =========================
+    J --> K[Create Payment record]
+    K --> L[Create PaymentHistory entry]
+
+    L --> M[Create Booking(s)]
+    M --> N[Link Booking ↔ PaymentHistory]
+
+    %% =========================
+    %% POST-PROCESSING
+    %% =========================
+    N --> O[Mark slot as unavailable]
+    O --> P[Update employee assignment]
+
+    %% =========================
+    %% OUTPUT
+    %% =========================
+    P --> Q[Show confirmation to user]
+    Q --> R[Store for reporting / history]
+```
+
+[View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVG1vokAQ_iubTa6fbOsLWmtyd6GISotARXvpoblQGIUIrFmW9jzj1_sF9wvvl9yygjVNLhE-ADv7PDvPzM7MDnvEB9zDy4i8eYFLGZr258k8Qfz59Al9_t9zRMxsdYI0w5pNzyXJziwFilKIwGMp_9LX0IMa8l3G3yyMAaURYTXk-j6FNF1U0vMk61pfnmqmcS7pznlyozD3jsJkk7FFYW7shP3rvlijy8sv3FqquWtwAzLIwfxDnUycCbCMJuj1cFxIEgSUEpouThnPkAqK4igBeGvkvrph5L6EUci21UJVZEtWtOkzukC6OdSUc6nKwX9jZ_M0czLEm4hsAUopEZQxK6cxKiJGOyBvKEuOUHSNBjNdX5wSyhD7ji0u-d3DBaIkY1A1zskUDXTz27mcvvCuOrLvI0aQwstaYxAXGlWxO3BkxlwvKAG8DtM0vzJCUcZrsqLEkao8mOf3wEBoGDoWJR6AUOnl1UCO5TcUiJGjUMgr02Y03EApspo4S34eq8bZ2kbCs3boUo_wqwPGL3TjbmNISnmaAN07ha43eAkIWfNiSDPP4yIRFb1QUag6sTV7qhqKei7rXuh4KNNkHURy7x6hfqH1QWD0D5hRmDJCt4j_0vfG0wV2XGLveFBhsio7eCx2DUcPk3W5h_7-_vPhzIpRm_b00pqYimrbmjE8l2kILaYzdulaDEzkpqeNWUg2BcxyZhsx4d57nRfSKilutIJaXuQVZr0lvD8epoZHkmVI48Nk5BVftFmOexQ4Pl14-gAteQ9S2BDK8vxeo6BIK67hFQ193GM0gxqOgR-WL_EuP2WOWQAxzHGP__o8K3M8T_acs3GT74TEJY1PoFWAe0s3SvkqE3nph-6KuvHRSiHxgSokSxjudW7FGbi3wz9xr9FqXzUlqdFq3EpSp9Xutmt4y83N5lW91Wjf3NxK9XpH6kr7Gv4l3NavOjfNltTstjrddqcrNff_ANVoFz8)
+
+#### Data Flow Summary
+
+The booking system follows a staged pipeline:
+
+1. User input is validated before any state change
+2. Availability and employee assignment are checked dynamically
+3. Services are added to a cart before checkout
+4. Stripe handles payment processing
+5. Upon success, Payment and PaymentHistory records are created
+6. Bookings are then persisted and linked to the payment record
+7. System state is updated (availability, assignments)
+8. Results are stored for reporting and user history
+
+This flow ensures idempotent booking creation and prevents duplicate or invalid reservations.
 
 The following section demonstrates how these CRUD operations behave under real-world conditions, including validation, state transitions, and edge-case handling.
 
@@ -2777,6 +2883,129 @@ Given the nature of the application (authenticated booking system), SEO efforts 
 ![Custom 404 Page](./images/testing_screenshots/SEO/error-custom-404.png)
 
 ---
+
+[Back to Table of Contents](#table-of-contents)
+
+
+## Marketing & Business Model
+
+---
+
+## 🔹 Marketing Strategy
+
+### Facebook Business Page Mockup
+
+As part of the marketing strategy, a **Facebook Business Page mockup** was created to simulate brand presence and audience engagement.
+
+The mockup demonstrates:
+
+* a clearly defined service offering (lawn care, house cleaning, garage and basement services)
+* targeting of both **individual homeowners** and **multi-property users** such as landlords and property managers
+* a structured content strategy including promotional posts, feature highlights, and customer testimonials
+* clear call-to-action elements directing users to book services through the platform
+
+The purpose of this approach is to:
+
+* increase brand awareness
+* communicate the value of the application
+* drive user engagement and bookings
+
+Rather than deploying a live page, a **high-fidelity visual mockup** was created using Figma to represent how the business would appear on Facebook.
+
+### Mockup Evidence
+
+![Facebook Mockup](./images/tuckers-mockup-facebook-business-page.png)
+
+---
+
+### Newsletter Integration
+
+A newsletter subscription system is implemented to support ongoing user engagement and retention.
+
+* Users receive confirmation upon subscription
+* Email communication is handled via transactional email integration
+* This supports future marketing campaigns such as promotions, reminders, and service updates
+
+---
+
+## E-Commerce Business Model
+
+### Overview
+
+This application operates as a **service-based e-commerce platform**, allowing users to book home services online with integrated payment processing.
+
+The platform provides a streamlined booking experience for:
+
+* **Homeowners** needing one-off services
+* **Landlords and property managers** managing multiple properties
+
+---
+
+### Value Proposition
+
+The system delivers value through:
+
+* **Convenience**: Users can book services in minutes without manual coordination
+* **Transparency**: Clear pricing and structured service selection
+* **Efficiency**: Assigned service professionals and scheduled time slots
+* **Centralisation**: Booking history and service tracking in one platform
+
+---
+
+### Revenue Model
+
+Revenue is generated through:
+
+* **Per-service payments** processed at checkout
+* Each booking represents a completed transaction
+* Payments are handled securely via Stripe integration
+
+This follows a **transaction-based revenue model**, typical of service marketplaces.
+
+---
+
+### Booking & Payment Flow
+
+1. User selects a service (lawn care, cleaning, garage/basement service)
+2. User chooses date and time slot
+3. Service is added to cart
+4. User completes checkout via Stripe
+5. Payment is recorded
+6. Booking is created and linked to the payment
+
+This ensures:
+
+* no invalid bookings without payment
+* consistent transaction tracking
+* reliable service scheduling
+
+---
+
+### Target Market
+
+The platform is designed for two primary user groups:
+
+* **Individual residential customers**
+
+  * booking services for their own homes
+
+* **Multi-property users** (landlords / property managers)
+
+  * managing maintenance across multiple locations
+
+This dual-target approach increases usability and market reach.
+
+---
+
+### Business Viability
+
+The model is scalable due to:
+
+* repeat service demand (cleaning, lawn care, maintenance)
+* potential for subscription or recurring services
+* expansion into additional service categories
+
+The application demonstrates a realistic and commercially viable approach to delivering and monetising home services online.
 
 [Back to Table of Contents](#table-of-contents)
 
