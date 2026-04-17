@@ -7,12 +7,41 @@
 <meta name="description" content="Schedule professional home services in the Greater Dallas area with Tucker & Dale's Home Services. Search by date or time slot, book online, and manage your service history.">
 {% endblock %}
 
+{% block body_class %}bg-default{% endblock %}
+
+{% block extra_head %}
+<style>
+  #mainContent {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .hero-fullbleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="hero-section d-flex flex-column justify-content-center align-items-center text-center py-5 bg-dark text-light rounded shadow-sm">
-  <div class="container py-4">
-
-    <!-- 🏠 Hero Image -->
+<section class="hero-fullbleed"
+         style="
+           min-height: calc(100vh - 56px);
+           margin: 0;
+           padding: 1.25rem 1rem 4rem 1rem;
+           display: flex;
+           align-items: flex-start;
+           justify-content: center;
+           text-align: center;
+           background: linear-gradient(180deg, #198754 0%, #145a32 100%);
+           color: #ffffff;
+         ">
+  <div style="
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+  ">
     <div class="mb-4">
       <img src="{% static 'images/hero.png' %}"
            alt="Tucker & Dale's Home Services"
@@ -20,37 +49,38 @@
            style="max-height: 200px; object-fit: cover;">
     </div>
 
-    <!-- 🧱 Tagline -->
     <blockquote class="blockquote mb-4">
-      <p class="mb-0 fs-5">“Reliable, honest, neighborly service.”</p>
+      <p class="mb-0 fs-5" style="color:#ffffff;">
+        “Reliable, honest, neighborly service.”
+      </p>
     </blockquote>
 
-    <!-- 🧰 Services Offered -->
-    <h5 class="fw-bold text-uppercase mb-3">Services Offered</h5>
+    <h5 class="fw-bold text-uppercase mb-3" style="color:#ffffff;">
+      Services Offered
+    </h5>
+
     <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
       <span class="badge bg-success fs-6 p-2">🧰 Garage / Basement</span>
       <span class="badge bg-primary fs-6 p-2">🌿 Lawncare</span>
       <span class="badge bg-info text-dark fs-6 p-2">🧹 House Cleaning</span>
     </div>
 
-    <!-- 📅 Book a Service CTA -->
     <div class="mt-3">
       {% if user.is_authenticated %}
         <a href="{% url 'scheduling:search_by_date' %}"
-          class="btn btn-warning btn-lg rounded-pill shadow">
+           class="btn btn-warning btn-lg rounded-pill shadow">
           Book a Service
         </a>
       {% else %}
         <a href="{% url 'scheduling:search_by_date' %}"
-          class="btn btn-outline-light btn-lg rounded-pill shadow">
+           class="btn btn-outline-light btn-lg rounded-pill shadow">
           Search for Services
         </a>
-        <p class="mt-3 mb-0 small text-light-emphasis">
+        <p class="mt-3 mb-0 small" style="color: rgba(255,255,255,0.85);">
           You can browse services and availability now. To book, please register or log in first.
         </p>
       {% endif %}
     </div>
-
   </div>
 </section>
 {% endblock %}

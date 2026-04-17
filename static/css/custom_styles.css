@@ -84,15 +84,19 @@ body {
   align-items: center;
 }
 
+.bg-default {
+  background: linear-gradient(180deg, #198754 0%, #145a32 100%) !important;
+  background-image: none !important; /* kills feather texture */
+}
 /* Subtle overlay for contrast */
-.hero-section::before {
+/* .hero-section::before {
   content: "";
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
   z-index: 1;
   pointer-events: none !important;
-}
+} */
 
 /* Everything inside hero stays visible */
 .hero-content {
@@ -937,19 +941,19 @@ body.home-page {
 }
 
 body.home-page .hero-section {
-  position: relative !important;
-  top: 56px !important;              /* exact navbar height */
-  margin: 0 !important;
-  padding: 0 !important;
-  height: calc(100vh - 56px - 72px) !important; /* viewport minus nav + footer */
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  min-height: calc(100vh - 56px - 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* ✅ FORCE HERO BACKGROUND */
   background: linear-gradient(180deg, #198754 0%, #145a32 100%) !important;
-  color: #fff !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  z-index: 1 !important;
 }
+
+
 
 body.home-page .hero-content {
   position: relative !important;
@@ -976,10 +980,6 @@ body.home-page {
   background-image: none !important;
 }
 
-body.home-page .container,
-body.home-page .container-fluid {
-  background-color: #145a32 !important; /* match the gutters */
-}
 
 /* Ensure hero fills full width cleanly without breaking navbar padding */
 body.home-page .hero-section {
@@ -1289,3 +1289,37 @@ body > .container.py-5 {
   }
 }
 
+@media (max-width: 991.98px) {
+  .checkout-actions {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .checkout-cta-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .checkout-cta-btn,
+  .checkout-cta-form {
+    width: 100%;
+  }
+
+  .checkout-cta-form .btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 992px) {
+  .checkout-cta-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.hero-section {
+  background: linear-gradient(180deg, #198754 0%, #145a32 100%) !important;
+}

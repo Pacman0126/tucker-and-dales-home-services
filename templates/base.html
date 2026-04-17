@@ -36,9 +36,9 @@
       flex-direction: column;
       background-color: #f8f9fa;
     }
-    body {
+    {% comment %} body {
       padding-top: 112px; /* for both navbars */
-    }
+    } {% endcomment %}
     main {
       flex: 1 0 auto;
       padding-bottom: 2rem;
@@ -69,8 +69,9 @@
 
   {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %} d-flex flex-column">
-
+{% comment %} <body class="{% block body_class %}bg-default{% endblock %} d-flex flex-column"> {% endcomment %}
+<body class="{% block body_class %}bg-default{% endblock %} d-flex flex-column"
+      style="padding-top:{% if navbar_mode == 'booking' %}112px{% else %}56px{% endif %};">
   <!-- ✅ PRIMARY NAVBAR -->
   {% comment %}
   ====================================================================
@@ -366,7 +367,7 @@
   {% block secondary_nav %}{% endblock %}
 
   <!-- ✅ MAIN CONTENT AREA -->
-  <main id="mainContent" class="container-fluid py-3 flex-fill">
+  <main id="mainContent" class="container-fluid py-0 flex-fill">
     {% block content %}{% endblock %}
   </main>
 
