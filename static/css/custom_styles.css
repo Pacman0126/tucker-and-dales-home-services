@@ -1323,3 +1323,243 @@ body > .container.py-5 {
 .hero-section {
   background: linear-gradient(180deg, #198754 0%, #145a32 100%) !important;
 }
+
+/* ------------------------------------------------------ */
+/* 📱 Booking primary navbar: prevent overlap at ~412px */
+/* ------------------------------------------------------ */
+
+.booking-nav-actions {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.booking-nav-btn {
+  white-space: nowrap;
+}
+
+/* Tighten booking navbar on phones so it stays within 56px */
+@media (max-width: 420px) {
+  #bookingPrimaryNavbar .container-fluid {
+    gap: 0.35rem;
+  }
+
+  #bookingPrimaryNavbar #booking-summary {
+    font-size: 0.72rem;
+    margin-right: 0.35rem !important;
+    white-space: nowrap;
+  }
+
+  #bookingPrimaryNavbar .booking-nav-btn {
+    padding: 0.28rem 0.5rem;
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
+
+  #bookingPrimaryNavbar .booking-nav-label {
+    display: none;
+  }
+
+  #bookingPrimaryNavbar .btn i {
+    margin-right: 0 !important;
+  }
+
+  #bookingPrimaryNavbar .booking-nav-actions {
+    gap: 0.35rem !important;
+  }
+
+  #bookingPrimaryNavbar #cart-icon,
+  #bookingPrimaryNavbar .btn-warning.btn-sm,
+  #bookingPrimaryNavbar .btn-outline-light.btn-sm {
+    flex-shrink: 0;
+  }
+}
+
+/* ------------------------------------------------------ */
+/* 📱 Home navbar mobile collapse panel — anchored under burger */
+/* ------------------------------------------------------ */
+@media (max-width: 991.98px) {
+  #homePrimaryNavbar .container-fluid {
+    position: relative;
+  }
+
+  #homePrimaryNavbar .navbar-toggler {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0.5rem;
+    left: auto;
+    width: min(260px, calc(100vw - 1rem));
+    margin: 0;
+    background-color: var(--color-navbar-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
+    padding: 0.5rem;
+    z-index: 1045;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse:not(.show) {
+    display: none !important;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse.show {
+    display: block !important;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse .navbar-nav {
+    width: 100%;
+    align-items: stretch !important;
+    gap: 0.25rem;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse .nav-item {
+    width: 100%;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse .nav-link {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0.6rem 0.85rem;
+    text-align: left;
+    border-radius: 0.5rem;
+  }
+}
+
+@media (min-width: 992px) {
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse {
+    position: static;
+    width: auto;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse .navbar-nav {
+    width: auto;
+    align-items: center !important;
+    gap: 0;
+  }
+
+  #homePrimaryNavbar #mainNavbar.home-navbar-collapse .nav-link {
+    width: auto;
+    text-align: center;
+  }
+}
+
+/* ------------------------------------------------------ */
+/* 📱 Booking primary navbar + search toolbar cleanup */
+/* ------------------------------------------------------ */
+
+.booking-primary-inner {
+  min-height: 56px;
+}
+
+.booking-primary-left {
+  min-width: 0;
+}
+
+.booking-navbar-context {
+  white-space: nowrap;
+}
+
+.booking-nav-actions {
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.booking-nav-btn {
+  white-space: nowrap;
+}
+
+.search-mode-toggle .btn,
+.search-submit-btn,
+#unlockAddressBtn,
+#newSearchBtn {
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  #bookingPrimaryNavbar .container-fluid {
+    gap: 0.35rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  #bookingPrimaryNavbar .booking-navbar-context {
+    font-size: 0.72rem;
+    margin-right: 0.35rem !important;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #bookingPrimaryNavbar .booking-nav-actions {
+    gap: 0.35rem !important;
+  }
+
+  #bookingPrimaryNavbar .booking-nav-btn {
+    padding: 0.28rem 0.45rem;
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
+
+  #bookingPrimaryNavbar .booking-nav-label {
+    display: none;
+  }
+
+  #bookingPrimaryNavbar .booking-nav-btn i {
+    margin-right: 0 !important;
+  }
+
+  #bookingPrimaryNavbar #cart-icon,
+  #bookingPrimaryNavbar .btn-warning.btn-sm,
+  #bookingPrimaryNavbar .btn-outline-light.btn-sm {
+    flex-shrink: 0;
+  }
+
+  #secondaryNavbar .container-fluid {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  #secondaryNavbar .search-toolbar-wrap {
+    gap: 0.6rem !important;
+  }
+
+  #secondaryNavbar .search-mode-toggle {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+
+  #secondaryNavbar .search-mode-toggle .btn {
+    flex: 1 1 100%;
+    width: 100%;
+    margin: 0 !important;
+  }
+
+  #secondaryNavbar #searchForm {
+    width: 100%;
+    gap: 0.6rem !important;
+    margin-top: 0 !important;
+  }
+
+  #secondaryNavbar #searchForm input,
+  #secondaryNavbar #searchForm select,
+  #secondaryNavbar #searchForm #addressContainer,
+  #secondaryNavbar #searchForm #addressContainer input,
+  #secondaryNavbar #searchForm #addressContainer button,
+  #secondaryNavbar #searchForm .search-submit-btn,
+  #secondaryNavbar #newSearchBtn {
+    width: 100%;
+  }
+}

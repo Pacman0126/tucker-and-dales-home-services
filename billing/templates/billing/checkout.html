@@ -2,8 +2,51 @@
 {% load static %}
 {% block title %}Checkout | Tucker & Dale’s{% endblock %}
 
+{% block extra_head %}
+<style>
+  .checkout-page .btn-outline-danger {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #ffffff !important;
+  }
+
+  .checkout-page .btn-outline-danger:hover,
+  .checkout-page .btn-outline-danger:focus {
+    background-color: #bb2d3b !important;
+    border-color: #bb2d3b !important;
+    color: #ffffff !important;
+  }
+
+  .checkout-page .btn-outline-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: #ffffff !important;
+  }
+
+  .checkout-page .btn-outline-secondary:hover,
+  .checkout-page .btn-outline-secondary:focus {
+    background-color: #5c636a !important;
+    border-color: #5c636a !important;
+    color: #ffffff !important;
+  }
+
+  .checkout-page .btn-outline-success {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #ffffff !important;
+  }
+
+  .checkout-page .btn-outline-success:hover,
+  .checkout-page .btn-outline-success:focus {
+    background-color: #157347 !important;
+    border-color: #157347 !important;
+    color: #ffffff !important;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container py-5 checkout-page">
   <div class="card shadow-sm">
     <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
       <h5 class="mb-0 fw-semibold">🧾 Checkout Summary</h5>
@@ -14,7 +57,6 @@
 
     <div class="card-body">
       {% if cart and cart.items.exists %}
-        <!-- Desktop / large screens -->
         <div class="d-none d-lg-block">
           <div class="table-responsive">
             <table class="table align-middle table-hover mb-0">
@@ -51,7 +93,6 @@
           </div>
         </div>
 
-        <!-- Mobile / tablet cards -->
         <div class="d-lg-none">
           {% for item in cart.items.all %}
             <div class="invoice-mobile-card mb-3">
@@ -109,76 +150,40 @@
           </div>
         </div>
 
-        {% comment %} <div class="d-flex justify-content-between flex-wrap gap-2 mt-4 checkout-actions">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mt-4 checkout-actions">
+
           <div class="form-check">
-            <input
-              type="checkbox"
-              class="form-check-input"
-              id="selectAllBottom">
+            <input type="checkbox" class="form-check-input" id="selectAllBottom">
             <label for="selectAllBottom" class="form-check-label small">
               Select All
             </label>
           </div>
 
-          <div class="d-flex gap-2 ms-auto">
-            <button
-              type="button"
-              class="btn btn-outline-danger"
-              id="remove-selected">
+          <div class="checkout-cta-group ms-auto">
+
+            <button type="button"
+                    class="btn btn-outline-danger checkout-cta-btn mb-3 mb-lg-0"
+                    id="remove-selected">
               <i class="bi bi-trash"></i> Delete Selected (Draft) Services
             </button>
 
             <a href="{% url 'scheduling:search_by_time_slot' %}"
-               class="btn btn-outline-secondary">
+               class="btn btn-outline-secondary checkout-cta-btn mb-3 mb-lg-0">
               <i class="bi bi-arrow-left-circle"></i> Back to Search
             </a>
 
             <form method="post"
                   action="{% url 'billing:create_checkout_session' %}"
-                  class="d-inline m-0">
+                  class="m-0 checkout-cta-form">
               {% csrf_token %}
-              <button type="submit" class="btn btn-success">
+              <button type="submit"
+                      class="btn btn-success w-100 checkout-cta-btn">
                 <i class="bi bi-credit-card"></i> Proceed to Payment
               </button>
             </form>
+
           </div>
-        </div> {% endcomment %}
-      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mt-4 checkout-actions">
-
-        <!-- Select All -->
-        <div class="form-check">
-          <input type="checkbox" class="form-check-input" id="selectAllBottom">
-          <label for="selectAllBottom" class="form-check-label small">
-            Select All
-          </label>
         </div>
-
-        <!-- CTA buttons -->
-        <div class="checkout-cta-group ms-auto">
-
-          <button type="button"
-                  class="btn btn-outline-danger checkout-cta-btn mb-3 mb-lg-0"
-                  id="remove-selected">
-            <i class="bi bi-trash"></i> Delete Selected (Draft) Services
-          </button>
-
-          <a href="{% url 'scheduling:search_by_time_slot' %}"
-            class="btn btn-outline-secondary checkout-cta-btn mb-3 mb-lg-0">
-            <i class="bi bi-arrow-left-circle"></i> Back to Search
-          </a>
-
-          <form method="post"
-                action="{% url 'billing:create_checkout_session' %}"
-                class="m-0 checkout-cta-form">
-            {% csrf_token %}
-            <button type="submit"
-                    class="btn btn-success w-100 checkout-cta-btn">
-              <i class="bi bi-credit-card"></i> Proceed to Payment
-            </button>
-          </form>
-
-        </div>
-      </div>
       {% else %}
         <div class="alert alert-info text-center mb-0">
           Your cart is empty.

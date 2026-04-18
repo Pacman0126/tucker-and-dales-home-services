@@ -2,8 +2,65 @@
 {% load static %}
 {% block title %}Payment History | Tucker & Dale’s{% endblock %}
 
+{% block extra_head %}
+<style>
+  /* Brute-force page background consistency for payment history only */
+  body,
+  #mainContent {
+    background: #f8f9fa !important;
+    background-image: none !important;
+  }
+
+  /* Remove feather bleed behind this page */
+  .payment-history-page {
+    background: #f8f9fa !important;
+    min-height: calc(100vh - 112px);
+  }
+
+  /* Filled action buttons for this page only */
+  .payment-history-page .btn-outline-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: #ffffff !important;
+  }
+
+  .payment-history-page .btn-outline-secondary:hover,
+  .payment-history-page .btn-outline-secondary:focus {
+    background-color: #5c636a !important;
+    border-color: #5c636a !important;
+    color: #ffffff !important;
+  }
+
+  .payment-history-page .btn-outline-primary {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+  }
+
+  .payment-history-page .btn-outline-primary:hover,
+  .payment-history-page .btn-outline-primary:focus {
+    background-color: #0b5ed7 !important;
+    border-color: #0b5ed7 !important;
+    color: #ffffff !important;
+  }
+
+  .payment-history-page .btn-outline-success {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #ffffff !important;
+  }
+
+  .payment-history-page .btn-outline-success:hover,
+  .payment-history-page .btn-outline-success:focus {
+    background-color: #157347 !important;
+    border-color: #157347 !important;
+    color: #ffffff !important;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container py-5 payment-history-page">
   <h3 class="mb-4 fw-semibold text-center text-dark" style="color:#212529 !important;">
     💳 Payment History
   </h3>

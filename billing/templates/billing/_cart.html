@@ -1,6 +1,6 @@
 {% load static %}
 
-<div class="card mt-4 shadow-sm">
+<div class="card mt-4 shadow-sm cart-component">
   <div class="card-header bg-light d-flex justify-content-between align-items-center">
     <strong>🛒 Your Booking Cart</strong>
     <span class="badge bg-dark">{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
@@ -45,7 +45,7 @@
                 </td>
                 <td class="text-end">
                   <button type="button"
-                          class="btn btn-sm btn-outline-danger"
+                          class="btn btn-sm btn-danger"
                           data-action="remove"
                           data-item-id="{{ item.id }}">
                     <i class="bi bi-trash"></i>
@@ -82,11 +82,11 @@
         <!-- Action Buttons -->
         <div class="mt-4 d-flex justify-content-between flex-wrap gap-2">
           <div></div>
-          <div class="d-flex gap-2 ms-auto">
-            <button type="button" class="btn btn-outline-danger" id="cart-remove-selected">
+          <div class="d-flex gap-2 ms-auto flex-wrap cart-action-buttons">
+            <button type="button" class="btn btn-danger" id="cart-remove-selected">
               <i class="bi bi-x-circle"></i> Delete Selected (Draft) Services
             </button>
-            <button type="button" class="btn btn-outline-secondary" id="cart-clear-btn">
+            <button type="button" class="btn btn-secondary" id="cart-clear-btn">
               <i class="bi bi-trash"></i> Clear Cart
             </button>
             <a class="btn btn-success" href="{% url 'billing:checkout' %}">
@@ -97,7 +97,12 @@
       </form>
     {% else %}
       <div class="alert alert-info mb-0 text-center">
-        Your cart is empty — drag available employees onto the 🛒 cart icon above.
+        <span class="d-none d-lg-inline">
+          Your cart is empty — drag available employees onto the 🛒 cart icon above.
+        </span>
+        <span class="d-lg-none">
+          Your cart is empty — tap <strong>Add to Cart</strong> on a service result above.
+        </span>
       </div>
     {% endif %}
   </div>
@@ -108,9 +113,6 @@
 <!-- ================================================================ -->
 <script>
 (function() {
-  // -----------------------------
-  // ⚙️ CSRF Helper
-  // -----------------------------
   function getCookie(name) {
     const cookies = document.cookie ? document.cookie.split('; ') : [];
     for (const c of cookies) {
@@ -121,9 +123,6 @@
   }
   const csrftoken = getCookie('csrftoken');
 
-  // -----------------------------
-  // 🧩 Drag Source Setup (from search page)
-  // -----------------------------
   document.querySelectorAll('.draggable-emp[draggable="true"]').forEach(el => {
     el.addEventListener('dragstart', ev => {
       const payload = {
@@ -138,9 +137,6 @@
     });
   });
 
-  // -----------------------------
-  // 🛒 Drop to Cart Icon
-  // -----------------------------
   const cartIcon = document.getElementById('cart-icon');
   const summaryLabel = document.getElementById('booking-summary');
 
@@ -181,7 +177,9 @@
           _replaceCartHTML(result.html);
           _updateSummary(result.summary_text);
           _flashCartIcon();
-        } else alert(result.error || "Failed to add item to cart.");
+        } else {
+          alert(result.error || "Failed to add item to cart.");
+        }
       } catch (error) {
         console.error(error);
         alert("Network error while adding item.");
@@ -189,9 +187,6 @@
     });
   }
 
-  // -----------------------------
-  // 🧹 Remove / Clear / Bulk Remove
-  // -----------------------------
   document.addEventListener('click', async ev => {
     const removeBtn = ev.target.closest('[data-action="remove"]');
     const clearBtn = ev.target.id === 'cart-clear-btn';
@@ -209,7 +204,7 @@
     } else if (bulkBtn) {
       endpoint = "{% url 'billing:cart_remove_selected' %}";
       const selected = Array.from(document.querySelectorAll('input[name="selected_items"]:checked'))
-                            .map(cb => cb.value);
+        .map(cb => cb.value);
       if (!selected.length) {
         alert("Select at least one item to remove.");
         return;
@@ -231,16 +226,15 @@
       if (result.ok) {
         _replaceCartHTML(result.html);
         _updateSummary(result.summary_text);
-      } else alert(result.error || "Failed to update cart.");
+      } else {
+        alert(result.error || "Failed to update cart.");
+      }
     } catch (error) {
       console.error(error);
       alert("Network error while updating cart.");
     }
   });
 
-  // -----------------------------
-  // 🔁 Select All Checkbox (table header)
-  // -----------------------------
   document.addEventListener("change", ev => {
     if (ev.target.id === "select-all") {
       const checkboxes = document.querySelectorAll('input[name="selected_items"]');
@@ -248,9 +242,6 @@
     }
   });
 
-  // -----------------------------
-  // 🔁 Helpers
-  // -----------------------------
   function _replaceCartHTML(html) {
     if (!html) return;
     const wrapper = document.createElement('div');

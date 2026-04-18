@@ -8,80 +8,84 @@
 <nav id="secondaryNavbar"
   class="navbar secondary-navbar fixed-top shadow-sm"
   style="top:56px; z-index:1039;">
-  <div class="container-fluid flex-wrap justify-content-between py-2">
+  <div class="container-fluid py-2">
 
-    <!-- 🔄 Search Mode Toggle Pills -->
-    <div class="btn-group mb-2 mb-lg-0" role="group" aria-label="Search mode selector">
-      <a href="{% url 'scheduling:search_by_date' %}"
-         class="btn btn-outline-primary {% if request.resolver_match.url_name == 'search_by_date' %}active{% endif %}">
-        <i class="bi bi-calendar3"></i> Search by Date
-      </a>
-      <a href="{% url 'scheduling:search_by_time_slot' %}"
-         class="btn btn-outline-primary {% if request.resolver_match.url_name == 'search_by_time_slot' %}active{% endif %}">
-        <i class="bi bi-clock-history"></i> Search by Time Slot
-      </a>
-    </div>
+    <div class="search-toolbar-wrap d-flex flex-column w-100 gap-2">
 
-    <!-- 🔍 Search Form -->
-    <form
-      id="searchForm"
-      method="get"
-      action="{% url request.resolver_match.app_name|add:':'|add:request.resolver_match.url_name %}"
-      class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-lg-0"
-      role="search"
-    >
-
-      {% if request.resolver_match.url_name == "search_by_date" %}
-        <input type="date" name="date" value="{{ request.GET.date|default:'' }}" class="form-control form-control-sm" required>
-      {% elif request.resolver_match.url_name == "search_by_time_slot" %}
-        <select name="time_slot" class="form-select form-select-sm" required>
-          <option value="">Select time slot</option>
-          {% for slot in time_slots %}
-            <option value="{{ slot.id }}" {% if request.GET.time_slot == slot.id|stringformat:"s" %}selected{% endif %}>
-              {{ slot.label }}
-            </option>
-          {% endfor %}
-        </select>
-      {% endif %}
-
-      <!-- 🏠 Address input OR AJAX "Book for New Address" -->
-      <div id="addressContainer">
-        {% if not address_locked %}
-          <input
-            type="text"
-            name="customer_address"
-            placeholder="Enter your address"
-            class="form-control form-control-sm"
-            value="{{ request.GET.customer_address|default:'' }}"
-            required
-          >
-        {% else %}
-          <!-- Hidden field preserves locked address during search -->
-          <input type="hidden" name="customer_address" value="{{ locked_address }}">
-          <button
-            type="button"
-            id="unlockAddressBtn"
-            class="btn btn-warning btn-sm fw-semibold ms-2"
-            data-url="{% url 'scheduling:unlock_address' %}">
-            <i class="bi bi-geo-alt"></i> Book for New Address
-          </button>
-        {% endif %}
+      <!-- 🔄 Search Mode Toggle Pills -->
+      <div class="search-mode-toggle d-flex flex-wrap gap-2">
+        <a href="{% url 'scheduling:search_by_date' %}"
+           class="btn btn-outline-primary rounded-pill {% if request.resolver_match.url_name == 'search_by_date' %}active{% endif %}">
+          <i class="bi bi-calendar3 me-1"></i> Search by Date
+        </a>
+        <a href="{% url 'scheduling:search_by_time_slot' %}"
+           class="btn btn-outline-primary rounded-pill {% if request.resolver_match.url_name == 'search_by_time_slot' %}active{% endif %}">
+          <i class="bi bi-clock-history me-1"></i> Search by Time Slot
+        </a>
       </div>
 
-      <button type="submit" id="searchBtn" class="btn btn-warning btn-sm fw-semibold">
-        <i class="bi bi-search"></i> Search
+      <!-- 🔍 Search Form -->
+      <form
+        id="searchForm"
+        method="get"
+        action="{% url request.resolver_match.app_name|add:':'|add:request.resolver_match.url_name %}"
+        class="search-form-row d-flex flex-wrap align-items-center gap-2"
+        role="search"
+      >
+
+        {% if request.resolver_match.url_name == "search_by_date" %}
+          <input type="date"
+                 name="date"
+                 value="{{ request.GET.date|default:'' }}"
+                 class="form-control form-control-sm"
+                 required>
+        {% elif request.resolver_match.url_name == "search_by_time_slot" %}
+          <select name="time_slot" class="form-select form-select-sm" required>
+            <option value="">Select time slot</option>
+            {% for slot in time_slots %}
+              <option value="{{ slot.id }}" {% if request.GET.time_slot == slot.id|stringformat:"s" %}selected{% endif %}>
+                {{ slot.label }}
+              </option>
+            {% endfor %}
+          </select>
+        {% endif %}
+
+        <div id="addressContainer">
+          {% if not address_locked %}
+            <input
+              type="text"
+              name="customer_address"
+              placeholder="Enter your address"
+              class="form-control form-control-sm"
+              value="{{ request.GET.customer_address|default:'' }}"
+              required
+            >
+          {% else %}
+            <input type="hidden" name="customer_address" value="{{ locked_address }}">
+            <button
+              type="button"
+              id="unlockAddressBtn"
+              class="btn btn-warning btn-sm fw-semibold"
+              data-url="{% url 'scheduling:unlock_address' %}">
+              <i class="bi bi-geo-alt me-1"></i> Book for New Address
+            </button>
+          {% endif %}
+        </div>
+
+        <button type="submit" id="searchBtn" class="btn btn-warning btn-sm fw-semibold search-submit-btn">
+          <i class="bi bi-search me-1"></i> Search
+        </button>
+      </form>
+
+      <!-- 🆕 New Search Button -->
+      <button id="newSearchBtn" class="btn btn-outline-primary btn-sm fw-semibold rounded-pill">
+        <i class="bi bi-arrow-repeat me-1"></i> New Search
       </button>
-    </form>
 
-    <!-- 🆕 New Search Button -->
-    <button id="newSearchBtn" class="btn btn-outline-primary btn-sm fw-semibold">
-      <i class="bi bi-arrow-repeat me-1"></i> New Search
-    </button>
-
+    </div>
   </div>
 </nav>
 
-<!-- 🌀 Global Loading Overlay -->
 <div id="loadingOverlay"
   class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center"
   style="z-index:2000;">
@@ -91,7 +95,6 @@
   </div>
 </div>
 
-<!-- ⚙️ Navbar & Unlock Behavior Script -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const navbar = document.getElementById("secondaryNavbar");
@@ -101,13 +104,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.getElementById("searchBtn");
   const unlockBtn = document.getElementById("unlockAddressBtn");
 
-  // Detect existing query (collapse navbar after first search)
   const hasQuery = window.location.search.length > 0;
   if (hasQuery) navbar.classList.add("collapsed");
 
-  // =========================================================
-  // 🔍 Search submission with overlay + spinner
-  // =========================================================
   form.addEventListener("submit", () => {
     overlay.classList.remove("d-none");
     navbar.classList.add("collapsed");
@@ -117,16 +116,12 @@ document.addEventListener("DOMContentLoaded", () => {
     searchBtn.innerHTML =
       '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Searching...';
 
-    // failsafe restore (4 seconds)
     setTimeout(() => {
       searchBtn.disabled = false;
       searchBtn.innerHTML = originalText;
     }, 4000);
   });
 
-  // =========================================================
-  // 🔄 New Search — keep locked address hidden, clear other inputs
-  // =========================================================
   newSearchBtn.addEventListener("click", () => {
     navbar.classList.remove("collapsed");
 
@@ -134,26 +129,21 @@ document.addEventListener("DOMContentLoaded", () => {
       if (el.tagName === "SELECT") {
         el.selectedIndex = 0;
       } else if (el.type !== "hidden" && el.name !== "customer_address") {
-        el.value = ""; // preserve hidden address if locked
+        el.value = "";
       }
     });
 
     overlay.classList.add("d-none");
     searchBtn.disabled = false;
 
-    // smooth scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    // focus first visible field after animation
     setTimeout(() => {
       const first = form.querySelector("input:not([type=hidden]), select");
       first?.focus();
     }, 300);
   });
 
-  // =========================================================
-  // 🧭 Unlock Address (AJAX reset + cart clear)
-  // =========================================================
   if (unlockBtn) {
     unlockBtn.addEventListener("click", async () => {
       const url = unlockBtn.dataset.url;
@@ -172,7 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (response.ok) {
-          // Replace hidden input with visible address field
           document.getElementById("addressContainer").innerHTML = `
             <input
               type="text"
@@ -182,7 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
               required
             >`;
 
-          // reset visible cart indicators
           const summary = document.getElementById("booking-summary");
           if (summary) summary.innerText = "(0) – ($0.00)";
           const badge = document.getElementById("cart-count");
@@ -202,9 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // =========================================================
-  // 🍪 Helper: CSRF token retrieval
-  // =========================================================
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
@@ -226,7 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 {% block extra_js %}
 {{ block.super }}
-<!-- 🌍 Google Maps Async Loader -->
 <script>
   window.gmapsReady = false;
   window._gmapsLoaded = false;
