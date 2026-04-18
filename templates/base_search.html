@@ -4,22 +4,158 @@
 <meta name="description" content="Search available home service appointments by date or time with Tucker & Dale's Home Services in the Greater Dallas area.">
 {% endblock %}
 
+{% block extra_head %}
+<style>
+  /* ======================================================
+     Search page: mobile toolbar cleanup
+     Real-device first, not devtools-first
+     ====================================================== */
+
+  /* Keep the secondary bar comfortably below the primary navbar */
+  #secondaryNavbar {
+    top: 56px !important;
+  }
+
+  #secondaryNavbar .container-fluid {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  .search-toolbar-wrap {
+    gap: 0.75rem !important;
+  }
+
+  /* Search mode pills */
+  .search-mode-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+    width: 100%;
+  }
+
+  .search-mode-toggle .btn {
+    border-radius: 9999px !important;
+    white-space: nowrap;
+  }
+
+  /* Search form spacing */
+  .search-form-row {
+    width: 100%;
+    gap: 0.75rem !important;
+  }
+
+  .search-form-row input,
+  .search-form-row select,
+  .search-form-row button,
+  .search-form-row #addressContainer,
+  .search-form-row #addressContainer input,
+  .search-form-row #addressContainer button {
+    min-height: 2.5rem;
+  }
+
+  .search-submit-btn {
+    white-space: nowrap;
+  }
+
+  #newSearchBtn {
+    border-radius: 9999px !important;
+    white-space: nowrap;
+  }
+
+  /* -------- Phones / small screens -------- */
+  @media (max-width: 575.98px) {
+    #secondaryNavbar .container-fluid {
+      padding-top: 0.8rem !important;
+      padding-bottom: 0.8rem !important;
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+    }
+
+    .search-toolbar-wrap {
+      gap: 0.65rem !important;
+    }
+
+    /* Two side-by-side pills on real phones like 412px */
+    .search-mode-toggle {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem !important;
+      align-items: stretch;
+    }
+
+    .search-mode-toggle .btn {
+      width: 100%;
+      margin: 0 !important;
+      padding: 0.55rem 0.7rem !important;
+      font-size: 0.92rem !important;
+      line-height: 1.2 !important;
+      text-align: center;
+    }
+
+    .search-form-row {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      width: 100%;
+      gap: 0.65rem !important;
+      margin-top: 0 !important;
+    }
+
+    .search-form-row input,
+    .search-form-row select,
+    .search-form-row #addressContainer,
+    .search-form-row #addressContainer input,
+    .search-form-row #addressContainer button,
+    .search-form-row .search-submit-btn,
+    #newSearchBtn {
+      width: 100% !important;
+      margin: 0 !important;
+    }
+
+    .search-form-row input,
+    .search-form-row select,
+    .search-form-row #addressContainer input {
+      font-size: 0.95rem !important;
+      padding: 0.6rem 0.75rem !important;
+    }
+
+    .search-form-row .search-submit-btn,
+    #newSearchBtn,
+    .search-form-row #addressContainer button {
+      padding: 0.6rem 0.8rem !important;
+      font-size: 0.95rem !important;
+    }
+  }
+
+  /* Ultra narrow fallback */
+  @media (max-width: 389.98px) {
+    .search-mode-toggle {
+      grid-template-columns: 1fr !important;
+    }
+
+    .search-mode-toggle .btn {
+      font-size: 0.9rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block secondary_nav %}
 <nav id="secondaryNavbar"
   class="navbar secondary-navbar fixed-top shadow-sm"
   style="top:56px; z-index:1039;">
-  <div class="container-fluid py-2">
+  <div class="container-fluid">
 
-    <div class="search-toolbar-wrap d-flex flex-column w-100 gap-2">
+    <div class="search-toolbar-wrap d-flex flex-column w-100">
 
       <!-- 🔄 Search Mode Toggle Pills -->
-      <div class="search-mode-toggle d-flex flex-wrap gap-2">
+      <div class="search-mode-toggle" aria-label="Search mode selector">
         <a href="{% url 'scheduling:search_by_date' %}"
-           class="btn btn-outline-primary rounded-pill {% if request.resolver_match.url_name == 'search_by_date' %}active{% endif %}">
+           class="btn btn-outline-primary {% if request.resolver_match.url_name == 'search_by_date' %}active{% endif %}">
           <i class="bi bi-calendar3 me-1"></i> Search by Date
         </a>
         <a href="{% url 'scheduling:search_by_time_slot' %}"
-           class="btn btn-outline-primary rounded-pill {% if request.resolver_match.url_name == 'search_by_time_slot' %}active{% endif %}">
+           class="btn btn-outline-primary {% if request.resolver_match.url_name == 'search_by_time_slot' %}active{% endif %}">
           <i class="bi bi-clock-history me-1"></i> Search by Time Slot
         </a>
       </div>
@@ -29,7 +165,7 @@
         id="searchForm"
         method="get"
         action="{% url request.resolver_match.app_name|add:':'|add:request.resolver_match.url_name %}"
-        class="search-form-row d-flex flex-wrap align-items-center gap-2"
+        class="search-form-row d-flex flex-wrap align-items-center"
         role="search"
       >
 
@@ -78,7 +214,7 @@
       </form>
 
       <!-- 🆕 New Search Button -->
-      <button id="newSearchBtn" class="btn btn-outline-primary btn-sm fw-semibold rounded-pill">
+      <button id="newSearchBtn" class="btn btn-outline-primary btn-sm fw-semibold">
         <i class="bi bi-arrow-repeat me-1"></i> New Search
       </button>
 
@@ -206,7 +342,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
-
 {% endblock %}
 
 {% block extra_js %}
