@@ -869,8 +869,9 @@ Each wireframe below corresponds to a key page in the **Customers App**.
 
   ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_larger_devices.png)
 
-- **Customer List**
-  ![Customer List Wireframe](readme/wireframes/customer_list.png)
+<!-- - **Customer List**
+  ![Customer List Wireframe](readme/wireframes/customer_list.png) -->
+
 
 - **Customer Detail**
   ![Customer Detail Wireframe](readme/wireframes/customer_detail.png)
@@ -939,13 +940,41 @@ Staff users have a dedicated dashboard providing visibility of their assigned up
 Wireframes were created during the UX design phase to validate layout, search methods, and booking flow before coding.
 Each wireframe corresponds to a key customer-facing screen.
 
-- **Wireframe A — Search by Date (Mobile 412×844)**
+**Search by Date**
 
-  ![Search by Date Wireframe](readme/wireframes/scheduling_search_by_date.png)
+  ![Search by Date Wireframe](readme/wireframes/scheduling-search-by-date.png)
 
-- **Wireframe B — Search by Time Slot (Mobile 412×844)**
+- **Search by Time Slot**
 
-  ![Search by Time Slot Wireframe](readme/wireframes/scheduling_search_by_timeslot.png)
+  ![Search by Date Wireframe](readme/wireframes/scheduling-search-by-timeslot.png)
+
+- **Search Results**
+
+  ![Search Results Wireframe](readme/wireframes/search-results.png)
+
+- **Employee Routes**
+
+  ![Routes Image](readme/wireframes/map-of-routes.png)
+
+- **Cart**
+
+  ![Checkout Cart Wireframe](readme/wireframes/cart.png)
+
+- **Payment History**
+
+  ![Payment History Wireframe](readme/wireframes/payment-history.png)
+
+- **Booking Adjustments**
+
+  ![Booking Adjustments Wireframe](readme/wireframes/adjustments.png)
+
+- **Customer Profile**
+
+  ![Customer Profile Wireframe](readme/wireframes/profile.png)
+
+- **Staff Dashboard**
+
+  ![Staff Dashboard Wireframe](readme/wireframes/staff-dashboard.png)
 
 ---
 
