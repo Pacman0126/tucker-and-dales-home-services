@@ -11,11 +11,16 @@
 - [Application Architecture](#application-architecture)
 - [Entity Relationship Diagrams](#entity-relationship-diagrams)
 
-  - [Scheduling App](#scheduling-app)
-  - [Billing App](#billing-app)
-  - [Customers App](#customers-app)
-  - [Core App](#core-app)
+  - [Scheduling App](#scheduling-app-erd)
+  - [Billing App](#billing-app-erd)
+  - [Customers App](#customers-app-erd)
+  - [Core App (ERD)](#core-app-erd)
   - [Project-Wide ERD](#project-wide-erd)
+
+  - [Scheduling App Overview](#scheduling-app-overview)
+  - [Billing App Overview](#billing-app-overview)
+  - [Customers App Overview](#customers-app-overview)
+  - [Core App Overview](#core-app-overview)
 
 - [CRUD & Booking Lifecycle](#crud--booking-lifecycle)
 - [Booking Lifecycle & Defensive Programming](#booking-lifecycle--defensive-programming)
@@ -51,7 +56,6 @@
 - [Marketing & Business Model](#marketing--business-model)
 - [E-Commerce Business Model](#e-commerce-business-model)
 
-e-commerce-business-model
 
 ## Project Overview
 
@@ -181,7 +185,7 @@ This structure ensures clear data flow, separation of concerns, and reliable tra
 
 ## Entity Relationship Diagrams
 
-### **Scheduling App**
+### Scheduling App (ERD)
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -300,7 +304,7 @@ I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an int
 
 [Back to Table of Contents](#table-of-contents)
 
-## **Billing App**
+### Billing App (ERD)
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -432,7 +436,9 @@ erDiagram
 ```
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqlV22P2jgQ_itWpEo9aXcLy8HuIt1JlKbbqLwJuDvtaaXImwzgktjUdm7LLfz3Tpw3khLKqvmAEnuemfHjxzPmxfKED1bXAvmB0aWk4SMn-Lx5Q_6oe3KLqT3ozZ3xaPbJmczOwSU2f83sKdntLi_FC-n3pnPSJY-WeObq0UoMzOCBgTO3h8bIE1xTlhgWpmY6Nt_tCLr-2-nb_d7cvh9PHwxKwgIkcA9KAQ5Rc2dozwbjJJOFkESzEIgKhK5D2MPJYPxg2wahIABPg08g3ARiC1Dkd7jWSe9haI_mn5zZPEstpGtQZEO3IXCdp3cEZKwZZ5pRjYiZlmwDGbAIVwlRH3hFFfFWLPAJ9b9ESpv45C1SFXFfvaO-fym4-i3L6Ljf9-PxZ2d0bxwGjK_Bd5-EWDO-RFfD6-EpOHJ4CN9IFlK5JSn-NLAQjWRLxg0jCylCXBF4axHp03BDbwx_gkDEuWoRMwmy4DFLrYqQ8DUCFW_10zYLUrE9pkAF8j_mAdHbDdTAShJUuBA_CjAM4zX2JQFSpdiSo7nSdLE4hhC7YypIWXdTHbkSPCH9H-T0CuLOqhvo0pk_kA_2R2fkmALyyuLxkrwTpEcT5mdfCk8FX5II6eY0hMowhJQFydg-81bdrNOOC6e5g3zbTiMDipRVoPkOnhs0H1qJEFw8ohKUqjjN9rzGp49nxfxUPKYCLTtFc_BQIAGJsPC4KBYPqjNaaBq4NBQRlqGKT011pFAt7_FMozbfkT7FIhwEybvAWgl4kjK1JsmZwutJwFffpfqHqWjjl6b2h43gJ0wqXBkT3F3DtjKTLvtw5peTMd3iZwm9kvXYy9eIcs30tnZLM7iKnszumL4ZbqK4am2k2IDU2zNI39f0lDplpVHLUshHiybjZpKp6sWLZNylt3UymlBWFdHUtCvz2ssjFGtLPWTVzVTfdErDN13Hfx447rF5bSyWarBcYNc5QyxflOBE0mcXbehxZusojb-OnqxapsoJc13Ou2yW9Uo3OxZHDGPmK4M-KA_xGhGVGWwegBNuJIPS4kPQtFj8L56ss_rLYHzv9MnHwfgfMhrP7dkroJP0HrIIxHM3KSqXf1aPAI6kdba4CicXJ0J5-UZFJaT3rIoPnJUM7y3JvQmvEyhTebhf6DS95WlJuaJeTDlyLSRdAmEK1YuImKVYKCLzH4OtC2spmW91tYzgwgpBYuvDT8sI7dHSK8CeYsWd3KdyHR-YPWI2lP8rRJjBpIiWK6u7oIHCr2RH0v8I-Shm7IPsxxq1uu1Gyzixui_WN6vbbDWvmp12o33X6dw2OtfXF9YWja5u2s125_e72-ubVueu2dlfWP-bqI0rtGrd3bZub246zUaj095_B5d-5Rk)
 
-## **Customers App**
+[Back to Table of Contents](#table-of-contents)
+
+### Customers App (ERD)
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -552,7 +558,7 @@ erDiagram
 
 [Back to Table of Contents](#table-of-contents)
 
-## **Core App**
+### Core App (ERD)
 
 I have also used [Mermaid](https://mermaid.live) with ChatGPT to generate an interactive ERD of the project.
 
@@ -814,16 +820,154 @@ erDiagram
 ---
 
 
-### Apps Overview
+## Apps Overview
 
-* **core** → user + address
-* **customers** → profiles
 * **scheduling** → bookings, availability
 * **billing** → payments, cart
+* **customers** → profiles
+* **core** → user + address
 
 [Back to Table of Contents](#table-of-contents)
 
-## 📇 Customers App
+## Scheduling App Overview
+
+Customer-facing scheduling with **resource-aware availability**, **drag-and-drop booking**, and a **mini cart**.
+
+Staff users have a dedicated dashboard providing visibility of their assigned upcoming bookings. Access is role-restricted, ensuring only authorized staff members can view operational schedules. Staff interactions are intentionally limited to viewing responsibilities, while booking modifications and cancellations remain controlled by customer workflows to preserve business integrity.
+
+### Features
+- **Two search modes (mutually exclusive):**
+  - **Search by Date** → Show all time slots for that day.
+  - **Search by Time Slot** → Show all dates where that slot has available resources.
+- **Service Categories:** Garage/Basement, Lawncare, House Cleaning.
+- **Resource pills per slot** (e.g., 5 employees → 5 pill buttons).
+- **Travel adjacency logic:** show resources only if their jobs in adjacent slots are within ~30 minutes drive.
+- **Drag & Drop to Cart:** resource pills dragged into cart; slot dims or hides when booked.
+- **Mini Cart (always visible):** shows item count and total $; expandable with hamburger for itemized list and checkout.
+- **Login/Signup required** to complete checkout and save purchase history.
+
+### Reusability
+- **Calendar grid** reusable across services.
+- **Availability filter logic** (time + travel distance).
+- **Drag-and-drop cart** reusable for other booking flows.
+- **CSS variables** for consistent theme.
+
+### How to Wire Into Another Project
+1. Add `scheduling` to `INSTALLED_APPS` in `settings.py`
+2. Include URLs in your project’s `urls.py`:
+   ```python
+   from django.urls import path, include
+
+   urlpatterns = [
+       path(
+        "schedule/",
+        include(("scheduling.urls", "scheduling"), namespace="scheduling"),
+    ),
+   ]
+   ```
+
+
+### 🖼️ Wireframes
+
+Wireframes were created during the UX design phase to validate layout, search methods, and booking flow before coding.
+Each wireframe corresponds to a key customer-facing screen.
+
+**Search by Date**
+
+  ![Search by Date Wireframe](readme/wireframes/scheduling-search-by-date.png)
+
+- **Search by Time Slot**
+
+  ![Search by Date Wireframe](readme/wireframes/scheduling-search-by-timeslot.png)
+
+- **Search Results**
+
+  ![Search Results Wireframe](readme/wireframes/search-results.png)
+
+- **Employee Routes**
+
+  ![Routes Image](readme/wireframes/map-of-routes.png)
+
+- **Staff Dashboard**
+
+![Staff Dashboard Wireframe](readme/wireframes/staff-dashboard.png)
+
+[Back to Table of Contents](#table-of-contents)
+
+## Billing App Overview
+
+The **Billing app** manages financial transactions, including cart handling, checkout, payments, and invoice tracking.
+
+It serves as the **financial layer of the system**, clearly separated from scheduling logic to ensure clean transaction processing and reporting.
+
+### 🔑 Features
+
+- Stripe checkout integration
+- Idempotent payment handling (prevents duplicate transactions)
+- Payment history grouped by service address
+- Running invoice model (per property)
+- Refund and cancellation workflow
+- Adjustment tracking for bookings (add / cancel services)
+
+### ♻️ Reusability
+
+- Address-based invoice grouping model
+- Payment tracking and adjustment workflow
+- Transaction history structure for reporting
+- Checkout validation and payment confirmation logic
+- Separation of payment layer (`Payment`) and accounting layer (`PaymentHistory`)
+
+### 🚀 How to Wire Into Another Project
+
+1. Add `billing` to `INSTALLED_APPS` in `settings.py`
+2. Include URLs in your project’s `urls.py`:
+
+```python
+   from django.urls import path, include
+
+   urlpatterns = [
+       path("billing/", include(("billing.urls", "billing"),
+                             namespace="billing")),
+   ]
+```
+
+---
+
+### 🖼️ Wireframes
+
+Wireframes were created during the UX design phase to validate layout and navigation before coding.
+Each wireframe below corresponds to a key page in the **Billing App**.
+
+- **Cart**
+
+  ![Checkout Cart Wireframe](readme/wireframes/cart.png)
+
+- **Payment History**
+
+  ![Payment History Wireframe](readme/wireframes/payment-history.png)
+
+- **Booking Adjustments**
+
+  ![Booking Adjustments Wireframe](readme/wireframes/adjustments.png)
+
+### 📱 Responsive Design Considerations
+
+**Mobile (412px)**
+- Stacked day cards with resource pills and sticky mini-cart (quantity + total).
+- Mutually exclusive search toggles (Date vs Time Slot); only one active at a time.
+- Drag-and-drop affordances with arrows/cues targeting the cart.
+
+**Tablet (≥768px)**
+- Two-column day layout with more room for filters/inputs.
+- Mini-cart remains visible; itemized view via hamburger control.
+
+**Desktop (≥1200px)**
+- Multi-column grid (week or multi-day view).
+- Persistent cart sidebar for summary + checkout.
+
+[Back to Table of Contents](#table-of-contents)
+
+## Customers App Overview
 
 The **Customers app** provides a reusable pattern for managing core business data in a Django project.
 It implements **full CRUD (Create, Read, Update, Delete)** operations with a mobile-first, responsive UI.
@@ -855,7 +999,11 @@ By following this pattern, future apps (e.g., Employees, Scheduling, Inventory) 
 1. Add `customers` to your `INSTALLED_APPS` in `settings.py`.
 2. Include the app’s URLs:
    ```python
-   path("customers/", include("customers.urls")),
+    path(
+        "customers/",
+        include(("customers.urls", "customers"), namespace="customers"),
+    ),
+  ```
 
 ### 🖼️ Wireframes
 
@@ -865,22 +1013,13 @@ Each wireframe below corresponds to a key page in the **Customers App**.
 ---
 
 - **Home / Navbar Mobile 412x844**
-  ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_mobile.png)
+  - ![Home / Navbar Wireframe](readme/wireframes/home_navbar_mobile.png)
 
-  ### ![Home / Navbar Wireframe](readme/wireframes/home_navbar_larger_devices.png)
+  - ![Home / Navbar Wireframe](readme/wireframes/home_navbar_larger_devices.png)
 
-<!-- - **Customer List**
-  ![Customer List Wireframe](readme/wireframes/customer_list.png) -->
+  - **Customer Profile** (customer facing page)
 
-
-- **Customer Detail**
-  ![Customer Detail Wireframe](readme/wireframes/customer_detail.png)
-
-- **Customer Form**
-  ![Customer Form Wireframe](readme/wireframes/customer_form.png)
-
-- **Delete Confirmation Modal**
-  ![Delete Confirmation Wireframe](readme/wireframes/customer_delete.png)
+  ![Customer Profile Wireframe](readme/wireframes/profile.png)
 
 ---
 
@@ -901,99 +1040,39 @@ Each wireframe below corresponds to a key page in the **Customers App**.
 - Centered; wraps on small screens
 
 
-## Scheduling App
+---
 
-Customer-facing scheduling with **resource-aware availability**, **drag-and-drop booking**, and a **mini cart**.
+[Back to Table of Contents](#table-of-contents)
 
-Staff users have a dedicated dashboard providing visibility of their assigned upcoming bookings. Access is role-restricted, ensuring only authorized staff members can view operational schedules. Staff interactions are intentionally limited to viewing responsibilities, while booking modifications and cancellations remain controlled by customer workflows to preserve business integrity.
+## Core App Overview
 
-### Features
-- **Two search modes (mutually exclusive):**
-  - **Search by Date** → Show all time slots for that day.
-  - **Search by Time Slot** → Show all dates where that slot has available resources.
-- **Service Categories:** Garage/Basement, Lawncare, House Cleaning.
-- **Resource pills per slot** (e.g., 5 employees → 5 pill buttons).
-- **Travel adjacency logic:** show resources only if their jobs in adjacent slots are within ~30 minutes drive.
-- **Drag & Drop to Cart:** resource pills dragged into cart; slot dims or hides when booked.
-- **Mini Cart (always visible):** shows item count and total $; expandable with hamburger for itemized list and checkout.
-- **Login/Signup required** to complete checkout and save purchase history.
+The **Core app** provides shared functionality and foundational models used across the entire project.
 
-### Reusability
-- **Calendar grid** reusable across services.
-- **Availability filter logic** (time + travel distance).
-- **Drag-and-drop cart** reusable for other booking flows.
-- **CSS variables** for consistent theme.
+It serves as the **system backbone**, supporting authentication, reusable data structures, and global features that are not tied to a single domain.
 
-### How to Wire Into Another Project
-1. Add `scheduling` to `INSTALLED_APPS`.
-2. Include URLs in your project’s `urls.py`:
+### 🔑 Features
+
+- Django authentication integration (`User` model)
+- Reusable `Address` model for general-purpose storage
+- Newsletter subscription system
+- Global layout and navigation handling
+- Shared templates and base structure
+
+### ♻️ Reusability
+
+- Centralized base templates (`base.html`, layout structure)
+- Shared context and UI components (navbar, footer)
+- Reusable address model for non-transactional use
+- Cross-app consistency for styling and layout
+- Newsletter subscription pattern reusable across projects
+
+### 🚀 How to Wire Into Another Project
+
+1. Add `core` to your `INSTALLED_APPS` in `settings.py`.
+2. Include the app’s URLs:
    ```python
-   from django.urls import path, include
-
-   urlpatterns = [
-
-       path("schedule/", include("scheduling.urls")),
-   ]
-
-### 🖼️ Wireframes
-
-Wireframes were created during the UX design phase to validate layout, search methods, and booking flow before coding.
-Each wireframe corresponds to a key customer-facing screen.
-
-**Search by Date**
-
-  ![Search by Date Wireframe](readme/wireframes/scheduling-search-by-date.png)
-
-- **Search by Time Slot**
-
-  ![Search by Date Wireframe](readme/wireframes/scheduling-search-by-timeslot.png)
-
-- **Search Results**
-
-  ![Search Results Wireframe](readme/wireframes/search-results.png)
-
-- **Employee Routes**
-
-  ![Routes Image](readme/wireframes/map-of-routes.png)
-
-- **Cart**
-
-  ![Checkout Cart Wireframe](readme/wireframes/cart.png)
-
-- **Payment History**
-
-  ![Payment History Wireframe](readme/wireframes/payment-history.png)
-
-- **Booking Adjustments**
-
-  ![Booking Adjustments Wireframe](readme/wireframes/adjustments.png)
-
-- **Customer Profile**
-
-  ![Customer Profile Wireframe](readme/wireframes/profile.png)
-
-- **Staff Dashboard**
-
-  ![Staff Dashboard Wireframe](readme/wireframes/staff-dashboard.png)
-
----
-
-### 📱 Responsive Design Considerations
-
-**Mobile (412px)**
-- Stacked day cards with resource pills and sticky mini-cart (quantity + total).
-- Mutually exclusive search toggles (Date vs Time Slot); only one active at a time.
-- Drag-and-drop affordances with arrows/cues targeting the cart.
-
-**Tablet (≥768px)**
-- Two-column day layout with more room for filters/inputs.
-- Mini-cart remains visible; itemized view via hamburger control.
-
-**Desktop (≥1200px)**
-- Multi-column grid (week or multi-day view).
-- Persistent cart sidebar for summary + checkout.
-
----
+    path("", include(("core.urls", "core"), namespace="core")),
+  ```
 
 [Back to Table of Contents](#table-of-contents)
 
