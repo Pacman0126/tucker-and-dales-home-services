@@ -8,8 +8,10 @@
 > Some internal links in this README may not jump to the correct section when viewed from the repository landing page.
 > This is due to a known GitHub rendering limitation affecting in-page anchor navigation.
 > If a link does not scroll correctly, open the README file directly or use your browser’s search (Ctrl+F).
+> Or, go directly to https://github.com/Pacman0126/tucker-and-dales-home-services/blob/main/README.md which is
+> easier to navigate without launching new browser tabs
 
-https://github.com/orgs/community/discussions/60984?utm_source=chatgpt.com
+GitHub Community: https://github.com/orgs/community/discussions/60984?utm_source=chatgpt.com
 
 
 - [Project Overview](#project-overview)
@@ -25,6 +27,7 @@ https://github.com/orgs/community/discussions/60984?utm_source=chatgpt.com
   - [Core App (ERD)](#core-app-erd)
   - [Project-Wide ERD](#project-wide-erd)
 
+  - [Apps Overview](#apps-overview)
   - [Scheduling App Overview](#scheduling-app-overview)
   - [Billing App Overview](#billing-app-overview)
   - [Customers App Overview](#customers-app-overview)
@@ -818,6 +821,7 @@ erDiagram
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNrFWN1O4zgUfhUro1kxUpilv4SO9qKUdKYDpagtu2KFFLmJ2xryN7Yz0AFu9wH2EfdJ9riN08ZNCjsgba-a2Ofz8edzvnOcB8ONPGK0DMJOKJ4xHFyHCH7v36Pf_sMvM7oc2cMR-gV1BkMbXQwH3d6ZjU7a4_YrYCUmenzc348eUPvkZGiPRqiFro3oLuTon7_-RkHiCxr7BGHPY4Rzwq8NzfTxEXUuR-NB3x4qryQEuRck9FYobsJFFBCGaDiNtgCiR3Ru_zE6s8dj2OHl8agz7F2Me4PzJc4ccxSSO-4TIQAhZmRKGAndlScrKOX6w-oRwToCUU89ccFoOEM-nhBff0dDUil4V9XeuVQstFdcYEG0d3EEb31HHrwOECWhYCnGk3JcJ273BuJ5FOq4JMDU31oriHGo-7tijhEP3AsFdoU2LmhAfmwvMKE-EDJz4JEQ4aRxUDKpgKa1_TZdauwHjQsoY2RGo1BnnbDv1CW73VGTik4ts992R40Vu6NG8255ACOZQy4j8NdzsNgaSmIvN5Qdf0nYl0SBBIFUuBcOh8xy1j5MoshHSciTCXcZnRA9bkR0S97G4Z_VLrt_cTa4sm2pX5D2v_c68HePu3PiJTICPrwCXmE_kzwhDvQTnYMm5SMo22jqZKc9tj8Phlcvxs4Axr2-PTobjF-uSZnppigfDwanvfPPSyVcHdhKUdNghBz5lhAulKZmXBSYY87pLCQehIOaru-ywApi6xZsktAjTJlleyuYn54pmNBwLdC6X18Hx-3RqPf5vG-fjzOZZ1ECEb7yMyChyGqNWqDUWlFzE0027NfrK4BdmeWVC4KmMh5xaYBlylHhxAxm6CMikmUAB1L0C8pGwsHn4xWzv6IOhmrm-6v_IN1Q6SCFjTdJ2DxVu2MRyONUlGXEz6Z-pz0cL9uWL3bndHA5Rnup6n94o75FLpBvWqC20e_AF2ZZYiwnbRj0xnZ_FTmyFtLUEHYf8GeSI2e9bkZgNUFmEVT4kiTJ2XHiExcODHE_Kk3eYgsCARItCFkH93Jvu48W-jYORcu5JXo9TA97c-RVAZc5_ZxDxZmlJ2J5qknYbwkOxUaNL_X81VF80b6SGbQK5HbvfPTmYZyu8KUHHSFEmzzzAN-mch_jRU4QCwyXFhRoolmRGAHXMVHG22qYNt8FKwPTAWYLJzWFnseNWKZJmkH5BrB3A52_REDuHLIMSj7xp_vd0w-7oTYLCnAMMunIOgRsc7TXr_Z3mj_mzNOdoNQedU-LJKHA94jRGQ2XXE5ZFMAGiHsLBWpNo2ZUVlvSCM4Xg-xtxhB3VNHQK4abMKkxi8JCojf56YGJRfzCYpahyVjJDny7xYmAiRcoxA2PQsTwnQNzsJZ8KlJLmJJPhSWzlIC8y6Eo9Dydps7PUVpYMLGAUI_InjoW2zcRyAkCA07C_P-1t-4MzgZD2VePr86gqz6-Qu2Li1dAuj50UCdkCtdIRtAUVK71zra6lW7bhJ1Dz9J6d1BrNr1m-rh_Rz0xb1Xi-086QHrt5wrluGvZlQyl6uF6nTyLsr4lpDDdbrduNzKYabOJD_CzMKlcK4yObdndDMNr1mpW_VkMn8zg5pVCTK3p0RRnENibNCaegvAwn2PG8KKFqqj6SZ3xEmmp3mb6zcIsuQNK8jdt9C8FGbebk1QHYWq9i6maETOVRjPfF64pzi0JAmmqem7m1U49KloN05gx6hktwRJiGuBYgOWjscz1a0PMCVyRDCmsHma3UkSfwCbG4Z9RFCgzuADM5kZrin0OT6tMSb-dZVOIvIl0pEoYrWr1sLEEMVoPxr3RsqyP1cPDSs06qlr16lHFNBYwyfrYODo8aNSbB9XDes1qPJnGj-WiBx-tSrV-2GhUas1G7aBhWU__Ah4VE_c)
 ---
 
+[Back to Table of Contents](#table-of-contents)
 
 ## Apps Overview
 
@@ -825,6 +829,50 @@ erDiagram
 * **billing** → payments, cart
 * **customers** → profiles
 * **core** → user + address
+
+### 📱 Responsive Design Strategy
+
+The application follows a **mobile-first approach**, with layout and interaction patterns adapted based on screen size and input type.
+
+#### Breakpoint Behavior
+
+- At **992px and below**, all data-heavy table layouts are converted into **stacked card-based views**.
+- This prevents horizontal compression and ensures content remains readable on smaller screens.
+- The main navigation bar collapses into a **mobile-friendly hamburger menu** at this breakpoint.
+- Above 992px, layouts expand into **multi-column grids and tables** for improved information density.
+
+#### Mobile & Tablet (≤992px)
+
+- Touchscreen devices do not reliably support drag-and-drop interactions.
+- Booking interactions are adapted to use:
+  - tap-based controls
+  - vertically stacked actions
+  - larger touch targets
+
+- Tables are replaced with **card layouts** to improve:
+  - readability
+  - scanability
+  - interaction clarity
+
+- Navigation is simplified using a **collapsible hamburger menu**, improving usability on smaller screens.
+
+- Forms and content use **single-column layouts** to avoid horizontal scrolling.
+
+#### Desktop (>992px)
+
+- Multi-column layouts and grids are used to maximise available screen space.
+- Table views are restored where they remain readable and efficient.
+- The full navigation bar is displayed, allowing direct access to all sections.
+- Drag-and-drop interactions are supported for enhanced usability with mouse and trackpad input.
+- Higher information density is maintained without compromising clarity.
+
+#### Design Rationale
+
+This approach ensures:
+
+- consistent usability across device types
+- clear data presentation at all screen sizes
+- appropriate interaction models for both touch and pointer-based devices
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -893,6 +941,7 @@ Each wireframe corresponds to a key customer-facing screen.
 
 [Back to Table of Contents](#table-of-contents)
 
+
 ## Billing App Overview
 
 The **Billing app** manages financial transactions, including cart handling, checkout, payments, and invoice tracking.
@@ -948,21 +997,6 @@ Each wireframe below corresponds to a key page in the **Billing App**.
 - **Booking Adjustments**
 
   ![Booking Adjustments Wireframe](readme/wireframes/adjustments.png)
-
-### 📱 Responsive Design Considerations
-
-**Mobile (412px)**
-- Stacked day cards with resource pills and sticky mini-cart (quantity + total).
-- Mutually exclusive search toggles (Date vs Time Slot); only one active at a time.
-- Drag-and-drop affordances with arrows/cues targeting the cart.
-
-**Tablet (≥768px)**
-- Two-column day layout with more room for filters/inputs.
-- Mini-cart remains visible; itemized view via hamburger control.
-
-**Desktop (≥1200px)**
-- Multi-column grid (week or multi-day view).
-- Persistent cart sidebar for summary + checkout.
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -1022,24 +1056,7 @@ Each wireframe below corresponds to a key page in the **Customers App**.
 
 ---
 
-### Responsive Design Considerations
 
-**Navigation**
-- Mobile: collapsible hamburger
-- Tablet/Desktop: expanded navbar
-
-**Cards & Forms**
-- Mobile: single column
-- Tablet/Desktop: multi-column layout
-
-**Modals**
-- Keyboard accessible; scale to viewport
-
-**Pagination**
-- Centered; wraps on small screens
-
-
----
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -3046,6 +3063,13 @@ The platform provides a streamlined booking experience for:
 * **Homeowners** needing one-off services
 * **Landlords and property managers** managing multiple properties
 
+The business philosophy of this application is that once a customer books and pays for a time slot, it becomes their owned reservation.
+
+Only the customer and the superuser (admin) are permitted to cancel, update, or delete paid bookings. Upon successful payment, the booking is finalized and the assigned employee’s schedule is updated accordingly.
+
+This approach enforces clear ownership and prevents conflicting changes by multiple staff members, ensuring consistency in scheduling and maintaining a reliable customer experience.
+
+This design supports accountability, auditability, and customer trust in the booking system.
 ---
 
 ### Value Proposition
