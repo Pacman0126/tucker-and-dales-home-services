@@ -4,6 +4,14 @@
 
 (ctrl+click links to navigate)
 
+> **Note:**
+> Some internal links in this README may not jump to the correct section when viewed from the repository landing page.
+> This is due to a known GitHub rendering limitation affecting in-page anchor navigation.
+> If a link does not scroll correctly, open the README file directly or use your browser’s search (Ctrl+F).
+
+https://github.com/orgs/community/discussions/60984?utm_source=chatgpt.com
+
+
 - [Project Overview](#project-overview)
 - [Key Features](#key-features)
 - [User Stories & Agile Mapping](#user-stories--agile-mapping)
@@ -20,8 +28,7 @@
   - [Scheduling App Overview](#scheduling-app-overview)
   - [Billing App Overview](#billing-app-overview)
   - [Customers App Overview](#customers-app-overview)
-  <!-- - [Core App Overview](#core-app-overview) -->
-  - [Core App Overview](https://github.com/Pacman0126/tucker-and-dales-home-services/blob/main/README.md#core-app-overview)
+  - [Core App Overview](#core-app-overview)
 
 - [CRUD & Booking Lifecycle](#crud--booking-lifecycle)
 - [Booking Lifecycle & Defensive Programming](#booking-lifecycle--defensive-programming)
