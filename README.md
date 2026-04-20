@@ -20,7 +20,8 @@
   - [Scheduling App Overview](#scheduling-app-overview)
   - [Billing App Overview](#billing-app-overview)
   - [Customers App Overview](#customers-app-overview)
-  - [Core App Overview](#core-app-overview)
+  <!-- - [Core App Overview](#core-app-overview) -->
+  - [Core App Overview](https://github.com/Pacman0126/tucker-and-dales-home-services/blob/main/README.md#core-app-overview)
 
 - [CRUD & Booking Lifecycle](#crud--booking-lifecycle)
 - [Booking Lifecycle & Defensive Programming](#booking-lifecycle--defensive-programming)
