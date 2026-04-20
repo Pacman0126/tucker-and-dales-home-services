@@ -551,7 +551,6 @@ erDiagram
     %% USER -> CUSTOMERPROFILE stores contact, billing, and service address data
     %% BOOKING and PAYMENTHISTORY store service_address snapshots directly
     %% CART ownership remains tied to USER/session, not CUSTOMERPROFILE
-
 ```
 
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqlVm1v2joU_iuWpX2jLV1b3qRdibG0iy4lCNiuOlWK3OQAHomdazvraMt_30lIwmoaxLR8gMQ-z3nxc178TAMZAu1RUJ84WygW3wuCz7t35EPdU0lMnGF_5nqj6Wd3PD0Gt5X5MnUm5OXl5OTlhQy-TGferTMZT7xrd-iQHrmn8NOACDVJNah7uoeSz-Sj5_3rjm5y6UABM6AJCv_gARAF_6egjc6QNm7cv7t1RrPPLhqd3OXwmK0QnLB1DOJt0KA_meWi8lFoEiwhWMnUkICprfwWUbpUxIX4r-7AGfRnzk1pqvTQrBMoDVmwmXvrTIfe1p5GW2EaQUi4qJF3bsdD787ZnhvTmi8EimvD5vOda0dxicfizu7IJ-faHbk5qX9I6PP2naCzhvCw_NJGcbHIuRQsBmsZYsYjay3BOB6lqjQ8SBkRrn0WGP6jULApTdv5c9iLZCnFMS4EMk6YWNtoBXNQCkI_kMKgO1muZmhyVmimFsLwGJ72TT7wKMJ_Hz8BjM_CUIHWNUIBN-taPGZ-zd4TT7LKtnYVLLgU1mKRl4fdKYXecGeH33en3HvbnXL3tVshqslOjmxLO_SZ2dtKk_DV1sauw5pEyFD5T40nVvAhBDxmEUkFN36iUMLeMdKwyGexTIWxdeJ5pBqT5KOUKyzLMzJgIoAo2r5jjkWAMeyy5q8CtzvO4UrY1WKloOo9h5ERe4DIglZt6Fij1dJSxtahV0qtZl1HaMHDawaq1fB7qk3e2v2SKZumIMWaFsG6jr0x4zZ3E5inIsxf-5WFHY8GJ1hdRlVNLh84fj4LbMOKJ-CXErtQc7VC4rA7ImG-aymIYo8-yjC7aWYT7TBVGl3GkvRXYJ9LEc_vO3-Vt0dNp6F34w7I9dD7j4y8mTP9A2g-nE7-2ZsU2kiMgxStvFE2zgZhIqwuE0WwZHeIqLFsMZmglaS5Upt6ogVL9FIa1MMVBCZaV7pyKvBiAUoveYL9GecJ3jIMx-QyMnf-rOCikXFvh5Epog26UDykPaNSaNAYFCrBT5pTfE_NErDuaHZFCJlaZXm6QQxOuG9SxiVMyXSxpL05izR-bekqroTVKtZJCGqQVRrttTvnuRLae6Y_ae_8qnXabrbaF51267J51e1eNOgal5ut0_dXndb5RafbvGydNzubBn3K7TZPW52rVrfd7La6nWbz_WVn8wvsjEc8)
@@ -608,14 +607,6 @@ erDiagram
       datetime updated_at
     }
 
-    %% =========================
-    %% LOGIC FLOW NOTES
-    %% =========================
-    %% USERS can own multiple ADDRESS records in the CORE app.
-    %% ADDRESS remains a reusable core model, but BOOKING and PAYMENTHISTORY
-    %% now store service/billing address snapshots directly rather than
-    %% referencing ADDRESS by foreign key.
-    %% NEWSLETTERSUBSCRIPTION stores each user's newsletter send state.
 ```
 
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqVVO9v2jAQ_VdOlqp9oQxSfkbaBwppG42RKqGqOiEhJ7mC1cSJbKeUUf73OYFAm41pWIpkn_2e717eeUOCJERiEhQjRheCxjMOelxcwLdT43DCtcaDqe1MvDv73vsf3O7Mg2e58P5-eZlsYDAauZbngQkzkqy4hDiLFEsjBBqGAqVEOSNV2DtMrEdvbE2nlus9XHtD177P8yhYllQCx5WMUCkUkAp8RoE82BGdUZ01mdrTJxhZN_bELso8s8TNbg7AuAIWliupBOMLyCQKTmOshDGmLKrEUirlKhEHBj9JImByTgPFXvcE2_LqUtF_3x5RHyM4jhnB-qIOd0mMNXCRKxrBoFT-iGIcm3-JGZVYwNS6EpKKqmqtaaKj0Tx3YJUgybgS6w_pGZf7H2p7DhQIUin8hCdO6BDqdLRP3tRcIg_nCf8kbsZl5stAMB-ryqnkBflHFsVihECgnoZzqv7YytLw09b2LBeOnVt7CDdj5xEmztTyzoDmJvQgoBx0Zx0bqzSIwEB7SmpdQC0Rho5rAU3T-gF_PKg9qVuT6lkmqa85NBIh1n8hqoGfKbh2nO_25BYoD-F-8PRD986d7U0d9-nAxpOVljDHaeO_sgC_-iyKckX3nQ6S01QuEyUhZDo5Fa1BUJ2a0PnRo2ZlQ-fQMkV_Dc-ami04vOD6WMIJTxR5SEAaLIs-_PLpycgNsfNrQURqZCFYSEwlMqyRGIWWQy9J4awZ0RnqLib52xNS8ZL7cqsxKeU_kyQuYSLJFktiPtNI6tXOE_sX9xDVVYUohrn3idlpFBzE3JA3YjYb_Xrrqtnt9HvtVrvf7tbImphGt94xWka31Wu0u0azZ7S3NfKruLVR77Y6PaNhGB39Na-6_e1vjZfCzA)
