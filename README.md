@@ -1093,7 +1093,7 @@ It serves as the **system backbone**, supporting authentication, reusable data s
 2. Include the app’s URLs:
    ```python
     path("", include(("core.urls", "core"), namespace="core")),
-  ```
+
 
 [Back to Table of Contents](#table-of-contents)
 
