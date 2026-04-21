@@ -559,13 +559,15 @@ erDiagram
       datetime updated_at
     }
 
-    %% =========================
-    %% LOGIC FLOW NOTES
-    %% =========================
-    %% USER -> CUSTOMERPROFILE stores contact, billing, and service address data
-    %% BOOKING and PAYMENTHISTORY store service_address snapshots directly
-    %% CART ownership remains tied to USER/session, not CUSTOMERPROFILE
+
 ```
+---
+     **LOGIC FLOW NOTES**
+
+    - USER -> CUSTOMERPROFILE stores contact, billing, and service address data
+    - BOOKING and PAYMENTHISTORY store service_address snapshots directly
+    - CART ownership remains tied to USER/session, not CUSTOMERPROFILE
+---
 
 [View on Mermaid Live](https://mermaid.live/edit#pako:eNqlVm1v2joU_iuWpX2jLV1b3qRdibG0iy4lCNiuOlWK3OQAHomdazvraMt_30lIwmoaxLR8gMQ-z3nxc178TAMZAu1RUJ84WygW3wuCz7t35EPdU0lMnGF_5nqj6Wd3PD0Gt5X5MnUm5OXl5OTlhQy-TGferTMZT7xrd-iQHrmn8NOACDVJNah7uoeSz-Sj5_3rjm5y6UABM6AJCv_gARAF_6egjc6QNm7cv7t1RrPPLhqd3OXwmK0QnLB1DOJt0KA_meWi8lFoEiwhWMnUkICprfwWUbpUxIX4r-7AGfRnzk1pqvTQrBMoDVmwmXvrTIfe1p5GW2EaQUi4qJF3bsdD787ZnhvTmi8EimvD5vOda0dxicfizu7IJ-faHbk5qX9I6PP2naCzhvCw_NJGcbHIuRQsBmsZYsYjay3BOB6lqjQ8SBkRrn0WGP6jULApTdv5c9iLZCnFMS4EMk6YWNtoBXNQCkI_kMKgO1muZmhyVmimFsLwGJ72TT7wKMJ_Hz8BjM_CUIHWNUIBN-taPGZ-zd4TT7LKtnYVLLgU1mKRl4fdKYXecGeH33en3HvbnXL3tVshqslOjmxLO_SZ2dtKk_DV1sauw5pEyFD5T40nVvAhBDxmEUkFN36iUMLeMdKwyGexTIWxdeJ5pBqT5KOUKyzLMzJgIoAo2r5jjkWAMeyy5q8CtzvO4UrY1WKloOo9h5ERe4DIglZt6Fij1dJSxtahV0qtZl1HaMHDawaq1fB7qk3e2v2SKZumIMWaFsG6jr0x4zZ3E5inIsxf-5WFHY8GJ1hdRlVNLh84fj4LbMOKJ-CXErtQc7VC4rA7ImG-aymIYo8-yjC7aWYT7TBVGl3GkvRXYJ9LEc_vO3-Vt0dNp6F34w7I9dD7j4y8mTP9A2g-nE7-2ZsU2kiMgxStvFE2zgZhIqwuE0WwZHeIqLFsMZmglaS5Upt6ogVL9FIa1MMVBCZaV7pyKvBiAUoveYL9GecJ3jIMx-QyMnf-rOCikXFvh5Epog26UDykPaNSaNAYFCrBT5pTfE_NErDuaHZFCJlaZXm6QQxOuG9SxiVMyXSxpL05izR-bekqroTVKtZJCGqQVRrttTvnuRLae6Y_ae_8qnXabrbaF51267J51e1eNOgal5ut0_dXndb5RafbvGydNzubBn3K7TZPW52rVrfd7La6nWbz_WVn8wvsjEc8)
 
@@ -2102,72 +2104,166 @@ These were resolved through:
 - Email links and redirects use the production domain
 - SEO components (robots.txt, sitemap.xml) resolve correctly
 
+### Google Maps API Setup
+
+This project uses **two separate Google Maps API keys**:
+
+- `GOOGLE_MAPS_BROWSER_KEY` for front-end map rendering
+- `GOOGLE_MAPS_SERVER_KEY` for backend routing and availability checks
+
+#### 1. Create a Google Cloud project
+- Go to the Google Cloud Console
+- Create or select a project
+- Enable billing if required
+
+#### 2. Enable the required APIs
+Enable the following APIs for the project:
+
+- Maps JavaScript API
+- Directions API
+- Distance Matrix API
+- Geocoding API
+
+#### 3. Create the browser key
+Create an API key for front-end usage and store it as:
+
+
+GOOGLE_MAPS_BROWSER_KEY=your_browser_maps_key
+
+**Apply these restrictions:**
+
+Application restriction: Websites
+
+Add referrers such as:
+- http://localhost:8000/*
+- [tucker-and-dales-home-services-51862a9ae5a8.herokuapp.com](https://tucker-and-dales-home-services-51862a9ae5a8.herokuapp.com/*) (or https://your-heroku-app.herokuapp.com/*)
+- https://tuckeranddales.com/*
+- https://www.tuckeranddales.com/*
+
+Restrict this key to:
+
+Maps JavaScript API
+
+#### 4. Create the server key
+
+**Create a second API key for backend requests and store it as:**
+
+GOOGLE_MAPS_SERVER_KEY=your_server_maps_key
+
+Apply these restrictions:
+
+- Application restriction: None
+- API restriction: restrict the key to:
+- Directions API
+- Distance Matrix API
+- Geocoding API
+
+Do not apply website referrer restrictions to the server key, or backend availability searches will fail.
+
+#### 5. Add both keys to environment variables
+
+**Add both keys to your local .env file and to your deployed environment (for example, Heroku Config Vars).**
+
+
+GOOGLE_MAPS_BROWSER_KEY=your_browser_maps_key
+GOOGLE_MAPS_SERVER_KEY=your_server_maps_key
+
+For deployment (e.g., Heroku), add them as Config Vars:
+
+- heroku config:set GOOGLE_MAPS_BROWSER_KEY=your_browser_maps_key
+- heroku config:set GOOGLE_MAPS_SERVER_KEY=your_server_maps_key
+
+#### 6. Restart the application and test
+
+After adding or updating the keys: heroku restart
+
+Then verify:
+
+- Search by date / time slot returns results
+- Employee availability is displayed correctly
+- “View Routes” loads Google Maps without errors
+
+If issues occur, check browser console and server logs for:
+
+- RefererNotAllowedMapError → incorrect browser key domain restrictions
+- REQUEST_DENIED → missing API enablement or billing issue
+- API keys with referer restrictions cannot be used with this API → server key incorrectly restricted
 
 ### Sample `.env`
 
 ```
 # =====================================================
-# Database (Neon PostgreSQL - production)
-# Get from Neon Console → Project → Connect
-# =====================================================
-DATABASE_URL=postgresql://[user:password@host/dbname?sslmode=require]
-
-# =====================================================
-# Django Secret Key (REQUIRED)
-# Generate with:
-# python -c "import secrets; print(secrets.token_urlsafe(50))"
+# Django Core
 # =====================================================
 SECRET_KEY=django-insecure-change-this-in-production
+SITE_ID=1
 
 # =====================================================
-# Stripe (Payments)
+# Database (Neon PostgreSQL)
+# Get from Neon Console -> Project -> Connect
+# =====================================================
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/DBNAME?sslmode=require&channel_binding=require
+
+# =====================================================
+# Environment Flags
+# =====================================================
+DEBUG=False
+DJANGO_PRODUCTION=False
+LOCAL_NO_MANIFEST=True
+USE_CONSOLE_EMAIL=False
+
+# =====================================================
+# Hosts / CSRF / Site URL
+# Comma-separated values where applicable
+# =====================================================
+ALLOWED_HOSTS=127.0.0.1,localhost,0.0.0.0,.herokuapp.com,tucker-and-dales-home-services-51862a9ae5a8.herokuapp.com,tuckeranddales.com,www.tuckeranddales.com
+
+CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://127.0.0.1:8000,http://localhost,http://localhost:8000,https://www.tuckeranddales.com,https://tuckeranddales.com
+
+SITE_BASE_URL=https://www.tuckeranddales.com
+ACCOUNT_DEFAULT_HTTP_PROTOCOL=http
+
+# =====================================================
+# Google Maps
+# Separate keys are used for browser and server requests
+# =====================================================
+GOOGLE_MAPS_BROWSER_KEY=your_browser_maps_key_here
+GOOGLE_MAPS_SERVER_KEY=your_server_maps_key_here
+
+# =====================================================
+# Stripe
 # Used for checkout, payment processing, and webhook validation
 # =====================================================
-STRIPE_PUBLIC_KEY=pk_test_xxxxxxxxxxxxxxxxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxxx
 STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxx
 
 # =====================================================
-# Email Configuration (Brevo SMTP - transactional emails)
-# Used for receipts, confirmations, and notifications
+# Email Configuration (Brevo SMTP)
+# Used for receipts, confirmations, newsletters, and notifications
 # =====================================================
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-# EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend  # For local dev
-
 EMAIL_HOST=smtp-relay.brevo.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-brevo-smtp-user@smtp-brevo.com
+EMAIL_HOST_PASSWORD=your-brevo-smtp-key
 
-EMAIL_HOST_USER=[your-brevo-smtp-user]@smtp-brevo.com
-EMAIL_HOST_PASSWORD=[your-brevo-smtp-key]
-
-DEFAULT_FROM_EMAIL="Tucker & Dale's Home Services <no-reply@tuckeranddales.com>"
-SERVER_EMAIL=no-reply@tuckeranddales.com
+DEFAULT_FROM_EMAIL=Tucker & Dale's Home Services <no-reply@tuckeranddales.com>
 
 # =====================================================
-# Site / Domain Configuration
+# Security / Redirects
 # =====================================================
-SITE_BASE_URL=https://www.tuckeranddales.com
+SECURE_SSL_REDIRECT=False
 
-# =====================================================
-# Django Environment Flags
-# =====================================================
-DEBUG=True
-DJANGO_PRODUCTION=False
-
-# =====================================================
-# Hosts & Security (comma-separated)
-# =====================================================
-ALLOWED_HOSTS=127.0.0.1,localhost,0.0.0.0,.herokuapp.com,tuckeranddales.com,www.tuckeranddales.com
-
-CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://127.0.0.1:8000,http://localhost,http://localhost:8000,https://www.tuckeranddales.com,https://tuckeranddales.com
-
-# =====================================================
-# Optional (future-proofing)
-# =====================================================
-# GOOGLE_MAPS_API_KEY=your_api_key_here
 
 ```
+
+Notes:
+- `GOOGLE_MAPS_BROWSER_KEY` is used for front-end map rendering and should be restricted by HTTP referrers.
+- `GOOGLE_MAPS_SERVER_KEY` is used for backend routing/availability logic and should be restricted by API scope, not website referrers.
+- `DJANGO_PRODUCTION=False` is shown here to match the current project setup. Update according to your deployment strategy.
+
 - Copy-paste the whole block into your project root as .env
 
 - Replace every placeholder (especially SECRET_KEY, DATABASE_URL, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD) with your real values
@@ -2179,6 +2275,22 @@ CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://127.0.0.1:8000,http://localhost,htt
 - Local testing: Uncomment the console.EmailBackend line temporarily if you want emails printed to the terminal instead of actually sent
 
 - witch domains: Just comment/uncomment the alternative Brevo block and restart the server
+
+### 🔐 API Key Security
+
+Google Maps integration uses two separate API keys:
+
+- **Browser key** (`GOOGLE_MAPS_BROWSER_KEY`)
+  - Restricted by HTTP referrers (Heroku + custom domain)
+  - Used only for front-end map rendering (Maps JavaScript API)
+
+- **Server key** (`GOOGLE_MAPS_SERVER_KEY`)
+  - No referrer restriction (required for backend requests)
+  - Restricted to specific APIs (Directions, Distance Matrix, Geocoding)
+  - Used for scheduling availability and routing logic
+
+Previously exposed development keys were revoked and replaced.
+All active keys are securely managed via environment variables and are not stored in the repository.
 
 [Back to Table of Contents](#table-of-contents)
 ---
