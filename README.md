@@ -1180,7 +1180,7 @@ flowchart TD
     J --> K[Create Payment record]
     K --> L[Create PaymentHistory entry]
 
-    L --> M[Create Booking(s)]
+    L --> M[Create Bookings]
     M --> N[Link Booking ↔ PaymentHistory]
 
     %% =========================
