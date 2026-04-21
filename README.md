@@ -1474,25 +1474,45 @@ Testing covered:
 
 ### Evidence
 
-- VT-10A.1 ![Signup](./images/testing_screenshots/Authentication/01-Signup.png)
+- VT-10A.1
 
-- VT-10A.2 ![Check Inbox](./images/testing_screenshots/Authentication/02-Check-Inbox.png)
+![Signup](./images/testing_screenshots/Authentication/01-Signup.png)
 
-- VT-10A.3 ![Welcome Email](./images/testing_screenshots/Authentication/03-Welcome-email.png)
+- VT-10A.2
 
-- VT-10A.4 ![Newsletter Email](./images/testing_screenshots/Authentication/04-Newsletter-email.png)
+![Check Inbox](./images/testing_screenshots/Authentication/02-Check-Inbox.png)
 
-- VT-10A.5 ![Email Verification Message](./images/testing_screenshots/Authentication/05-Email-verification-message.png)
+- VT-10A.3
 
-- VT-10A.6 ![Customer Home Page](./images/testing_screenshots/Authentication/06-Customer-home-page.png)
+![Welcome Email](./images/testing_screenshots/Authentication/03-Welcome-email.png)
 
-- VT-10A.7 ![New User in Admin](./images/testing_screenshots/Authentication/07-New-user-in-admin.png)
+- VT-10A.4
 
-- VT-10A.8 ![Update User Profile — Before](./images/testing_screenshots/Authentication/08-Update-user-profile-before.png)
+![Newsletter Email](./images/testing_screenshots/Authentication/04-Newsletter-email.png)
 
-- VT-10A.9 ![Update User Profile Info](./images/testing_screenshots/Authentication/09-Update-user-profile-info.png)
+- VT-10A.5
 
-- VT-10A.10 ![User Info in Admin Updated](./images/testing_screenshots/Authentication/10-User-info-in-admin-updated.png)
+![Email Verification Message](./images/testing_screenshots/Authentication/05-Email-verification-message.png)
+
+- VT-10A.6
+
+![Customer Home Page](./images/testing_screenshots/Authentication/06-Customer-home-page.png)
+
+- VT-10A.7
+
+![New User in Admin](./images/testing_screenshots/Authentication/07-New-user-in-admin.png)
+
+- VT-10A.8
+
+![Update User Profile — Before](./images/testing_screenshots/Authentication/08-Update-user-profile-before.png)
+
+- VT-10A.9
+
+![Update User Profile Info](./images/testing_screenshots/Authentication/09-Update-user-profile-info.png)
+
+- VT-10A.10
+
+![User Info in Admin Updated](./images/testing_screenshots/Authentication/10-User-info-in-admin-updated.png)
 
 - VT-10A.11
 
