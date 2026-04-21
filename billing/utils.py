@@ -1,6 +1,6 @@
 __all__ = ["_get_or_create_cart",
            "get_service_address", "lock_service_address"]
-
+import logging
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -14,6 +14,8 @@ from django.utils.timezone import now
 from django.urls import reverse
 from billing.models import Cart
 
+logger = logging.getLogger(__name__)
+
 
 def _clear_cart_for_session(request):
     """
@@ -26,7 +28,7 @@ def _clear_cart_for_session(request):
             Cart.objects.filter(
                 session_key=request.session.session_key).delete()
     request.session.modified = True
-    print("🧹 Cleared cart due to address change.")
+    logger.info("Cleared cart due to address change.")
 
 
 # ============================================================
@@ -340,4 +342,4 @@ def send_refund_confirmation_email(user, refund_record):
         fail_silently=False,
     )
 
-    print(f"📧 Sent refund confirmation to {user.email}")
+    logger.info("Sent refund confirmation to %s", user.email)

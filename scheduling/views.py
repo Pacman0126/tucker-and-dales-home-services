@@ -166,8 +166,6 @@ def search_by_time_slot(request):
         locked_address=locked_address,
     )
 
-    print(f"DEBUG FORM DATA: {form.data}")
-
     results = None
 
     # --- 2️⃣ Pagination / batching config ---
@@ -302,71 +300,6 @@ def staff_required(user):
     return user.is_authenticated and user.is_staff and not user.is_superuser
 
 
-# @login_required
-# @user_passes_test(staff_required)
-# def staff_dashboard(request):
-#     """
-#     Minimal staff-only dashboard.
-
-#     Because Employee currently has no direct link to auth.User,
-#     this resolves the matching Employee record by comparing:
-#     - user's full name
-#     - username
-
-#     Shows upcoming booked jobs assigned to that employee, plus
-#     customer name and phone (if a CustomerProfile exists).
-#     """
-#     today = timezone.localdate()
-
-#     full_name = (request.user.get_full_name() or "").strip()
-#     username = (request.user.username or "").strip()
-
-#     employee = None
-
-#     if full_name and username:
-#         employee = Employee.objects.filter(
-#             Q(name__iexact=full_name) | Q(name__iexact=username)
-#         ).first()
-#     elif full_name:
-#         employee = Employee.objects.filter(name__iexact=full_name).first()
-#     elif username:
-#         employee = Employee.objects.filter(name__iexact=username).first()
-
-#     bookings = Booking.objects.none()
-
-#     if employee:
-#         bookings = (
-#             Booking.objects.select_related(
-#                 "service_category",
-#                 "time_slot",
-#                 "employee",
-#                 "user",
-#                 "user__customer_profile",
-#             )
-#             .filter(
-#                 employee=employee,
-#                 date__gte=today,
-#                 status="Booked",
-#             )
-#             .order_by("date", "time_slot__id", "created_at")
-#         )
-#     else:
-#         messages.warning(
-#             request,
-#             "No Employee record matches this staff login. "
-#             "For this minimal staff dashboard, set Employee.name to match "
-#             "the staff user's full name or username."
-#         )
-
-#     return render(
-#         request,
-#         "scheduling/staff_dashboard.html",
-#         {
-#             "employee": employee,
-#             "bookings": bookings,
-#             "today": today,
-#         },
-#     )
 @login_required
 def staff_dashboard(request):
     """

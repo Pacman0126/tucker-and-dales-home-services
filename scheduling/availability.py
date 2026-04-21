@@ -61,8 +61,6 @@ def calculate_drive_time(addr1, addr2):
         logger.error("GOOGLE_MAPS_SERVER_KEY missing in settings.")
         return None
 
-    print("🔑 Using key prefix:", settings.GOOGLE_MAPS_SERVER_KEY[:10])
-
     url = "https://maps.googleapis.com/maps/api/distancematrix/json"
     params = {
         "origins": addr1,
@@ -78,7 +76,7 @@ def calculate_drive_time(addr1, addr2):
         status = data.get("status")
         if status == "REQUEST_DENIED":
             err = data.get("error_message", "(no message)")
-            logger.error(f"❌ Google API denied request: {err}")
+            logger.error(f" Google API denied request: {err}")
             return None
 
         if status != "OK":
@@ -139,8 +137,10 @@ def get_available_employees(customer_address, date, time_slot,
     available = []
 
     logger.info(
-        (f"🔎 Checking {service_category} availability for "
-         f"{date} [{time_slot.label}]")
+        "Checking %s availability for %s [%s]",
+        service_category,
+        date,
+        time_slot.label,
     )
 
     if not employees:

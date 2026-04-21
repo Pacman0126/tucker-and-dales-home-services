@@ -1,3 +1,4 @@
+import logging
 from django.utils import timezone
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -11,6 +12,8 @@ import stripe
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
+
+logger = logging.getLogger(__name__)
 # Create your models here.
 
 
@@ -409,4 +412,8 @@ class PaymentHistory(models.Model):
                 )
 
             except Exception as e:
-                print(f"❌ Failed to send {self.status} email: {e}")
+                logger.error(
+                    "Failed to send %s email: %s",
+                    self.status,
+                    e,
+                )

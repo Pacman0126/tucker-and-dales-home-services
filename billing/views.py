@@ -2,7 +2,7 @@
 billing/views.py
 Handles checkout, Stripe integration, payment tracking, and admin management.
 """
-
+import logging
 from io import BytesIO
 from datetime import datetime as dt
 from decimal import Decimal
@@ -53,6 +53,8 @@ from .utils import _get_or_create_cart, normalize_address, get_refund_policy
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 PENALTY_WINDOW_HOURS = 72
+
+logger = logging.getLogger(__name__)
 
 
 def _penalty_applies(booking: Booking) -> bool:
@@ -333,7 +335,7 @@ def create_checkout_session(request):
         return redirect(checkout_session.url, code=303)
 
     except Exception as e:
-        print("Stripe create session error:", e)
+        logger.error("Stripe create session error: %s", e)
         messages.error(request, f"Could not start checkout: {e}")
         return redirect("billing:checkout")
 
@@ -677,16 +679,16 @@ def stripe_webhook(request):
             endpoint_secret,
         )
     except ValueError as e:
-        print(f"❌ Webhook payload error: {e}")
+        logger.error("Webhook payload error: %s", e)
         return HttpResponseBadRequest("Invalid payload")
     except stripe.error.SignatureVerificationError as e:
-        print(f"❌ Webhook signature error: {e}")
+        logger.error("Webhook signature error: %s", e)
         return HttpResponseBadRequest("Invalid signature")
 
     event_type = event.get("type")
 
     if event_type != "payment_intent.succeeded":
-        print(f"ℹ️ Webhook event received: {event_type} (ignored)")
+        logger.info("Webhook event received: %s (ignored)", event_type)
         return HttpResponse(status=200)
 
     intent = event["data"]["object"]
@@ -708,9 +710,9 @@ def stripe_webhook(request):
     ).first()
 
     if existing_payment:
-        print(
-            ("ℹ️ Webhook skipped duplicate "
-             f"ℹ️PaymentHistory for {stripe_payment_id}")
+        logger.info(
+            "Webhook skipped duplicate PaymentHistory for %s",
+            stripe_payment_id,
         )
         return HttpResponse(status=200)
 
@@ -731,10 +733,13 @@ def stripe_webhook(request):
         ),
     )
 
-    print(
-        f"💾 [Webhook] PaymentHistory #{payment.id} recorded for user "
-        f"{user.username if user else 'Unknown'} "
-        f"(stripe_payment_id={stripe_payment_id}, amount=${amount})"
+    logger.info(
+        "[Webhook] PaymentHistory #%s recorded for user %s "
+        "(stripe_payment_id=%s, amount=$%s)",
+        payment.id,
+        user.username if user else "Unknown",
+        stripe_payment_id,
+        amount,
     )
 
     # Do NOT attach/reassign bookings here.
@@ -818,9 +823,10 @@ def cart_add(request):
         cart.items.all().delete()
         cart.address_key = current_service_addr
         cart.save(update_fields=["address_key"])
-        print(
-            "⚠️ Cart cleared due to new service address:"
-            f" {current_service_addr}"
+
+        logger.warning(
+            "Cart cleared due to new service address: %s",
+            current_service_addr,
         )
 
     item, created = CartItem.objects.get_or_create(
@@ -960,10 +966,12 @@ def live_invoice_view(request, booking_id):
                               in root.adjustments.all() if adj.amount < 0],
             }
         else:
-            print(f"⚠️ root object has no compute_sections: {root}")
+            logger.warning("root object has no compute_sections: %s", root)
     else:
-        print(f"⚠️ No PaymentHistory found for {booking.service_address}")
-
+        logger.warning(
+            "No PaymentHistory found for %s",
+            booking.service_address,
+        )
     return render(
         request,
         "billing/live_invoice.html",
@@ -1139,9 +1147,12 @@ def cancel_selected_services(request):
                 user=request.user,
             )
         except Booking.DoesNotExist:
-            print(
-                f"⚠️ Booking {booking_id} not found "
-                f"for {request.user.username}")
+
+            logger.warning(
+                "Booking %s not found for %s",
+                booking_id,
+                request.user.username,
+            )
             continue
 
         # Build booking datetime from booking.date + timeslot start time
@@ -1191,10 +1202,13 @@ def cancel_selected_services(request):
 
         # ❌ Intentionally NO address-level fallback here.
         if not root_payment:
-            print(
-                f"⚠️ No root payment record found for booking {booking_id} "
-                f"(address fallback intentionally disabled)"
+
+            logger.warning(
+                "No root payment record found for booking %s "
+                "(address fallback intentionally disabled)",
+                booking_id,
             )
+
             messages.error(
                 request,
                 f"Could not determine the original payment for "
@@ -1210,8 +1224,12 @@ def cancel_selected_services(request):
 
         # Locked = no refund and do not cancel
         if refund_pct == 0:
-            print(
-                f"⛔ Booking {booking.id} is locked; no cancellation allowed.")
+
+            logger.warning(
+                "Booking %s is locked; no cancellation allowed.",
+                booking.id,
+            )
+
             locked_count += 1
             messages.warning(
                 request,
@@ -1226,12 +1244,15 @@ def cancel_selected_services(request):
             # Defensive guard: never attempt to refund more than the charge
             charge_amount = root_payment.amount or Decimal("0.00")
             if refund_amt > charge_amount:
-                print(
-                    f"⚠️ Refund amount exceeds charge "
-                    f"for booking {booking.id}: "
-                    f"refund_amt={refund_amt}, charge_amount={charge_amount}, "
-                    f"root_payment_id={root_payment.id}, "
-                    f"stripe_payment_id={root_payment.stripe_payment_id}"
+                logger.warning(
+                    "Refund amount exceeds charge for booking %s: "
+                    "refund_amt=%s, charge_amount=%s, root_payment_id=%s, "
+                    "stripe_payment_id=%s",
+                    booking.id,
+                    refund_amt,
+                    charge_amount,
+                    root_payment.id,
+                    root_payment.stripe_payment_id,
                 )
                 messages.error(
                     request,
@@ -1249,16 +1270,22 @@ def cancel_selected_services(request):
                 )
                 refund_status = "Refunded"
                 refunded_count += 1
-                print(
-                    f"💸 Stripe refund successful for booking {booking.id}: "
-                    f"${refund_amt} ({refund_pct}% refund) via "
-                    f"root payment #{root_payment.id}"
+
+                logger.info(
+                    "Stripe refund successful for booking %s: "
+                    "$%s (%s%% refund) via root payment #%s",
+                    booking.id,
+                    refund_amt,
+                    refund_pct,
+                    root_payment.id,
                 )
             else:
-                print(
-                    f"⚠️ No Stripe refund issued for booking {booking.id}. "
-                    f"refund_amt={refund_amt}, "
-                    f"stripe_payment_id={root_payment.stripe_payment_id}"
+                logger.warning(
+                    "No Stripe refund issued for booking %s. "
+                    "refund_amt=%s, stripe_payment_id=%s",
+                    booking.id,
+                    refund_amt,
+                    root_payment.stripe_payment_id,
                 )
 
             if refund_pct == 100:
@@ -1286,20 +1313,24 @@ def cancel_selected_services(request):
             booking.save(update_fields=["status"])
             cancelled_count += 1
 
-            print(
-                f"✅ Booking {booking.id} cancelled — "
-                f"Refund record #{refund_entry.id} "
-                f"(${refund_amt:.2f}, {refund_pct}%)"
+            logger.info(
+                "Booking %s cancelled — Refund record #%s ($%.2f, %s%%)",
+                booking.id,
+                refund_entry.id,
+                refund_amt,
+                refund_pct,
             )
 
             try:
                 from billing.utils import send_refund_confirmation_email
                 send_refund_confirmation_email(request.user, refund_entry)
             except Exception as e:
-                print(f"⚠️ Refund email failed: {e}")
+                logger.warning("Refund email failed: %s", e)
 
         except Exception as e:
-            print(f"❌ Refund failed for booking {booking_id}: {e}")
+
+            logger.error("Refund failed for booking %s: %s", booking_id, e)
+
             messages.error(
                 request,
                 (f"Refund failed for {booking.service_category} "
@@ -1512,7 +1543,7 @@ def payment_success(request):
     try:
         checkout_session = stripe.checkout.Session.retrieve(session_id)
     except Exception as e:
-        print(f"❌ Stripe session retrieval error: {e}")
+        logger.error("Stripe session retrieval error: %s", e)
         messages.error(request, "Could not verify your payment session.")
         return redirect("billing:checkout")
 
@@ -1738,9 +1769,9 @@ def payment_success(request):
                 send_payment_receipt_email(
                     request.user, payment_record, all_bookings, request
                 )
-                print(f"📧 Sent receipt to {request.user.email}")
+                logger.info("Sent receipt to %s", request.user.email)
             except Exception as e:
-                print(f"⚠️ Payment receipt email failed: {e}")
+                logger.warning("Payment receipt email failed: %s", e)
 
             messages.success(
                 request, "Payment successful! Your booking has been confirmed."
@@ -1754,7 +1785,7 @@ def payment_success(request):
         return redirect("billing:payment_history")
 
     except Exception as e:
-        print(f"❌ Payment success error: {e}")
+        logger.error("Payment success error: %s", e)
         messages.error(request, f"Payment processing error: {e}")
         return redirect("billing:checkout")
 
@@ -1868,11 +1899,11 @@ def payment_history(request):
         reverse=True,
     )
 
-    print(
-        f"DEBUG: Found {len(cards)} consolidated property "
-        f"cards for {user.username}"
+    logger.info(
+        "Found %s consolidated property cards for %s",
+        len(cards),
+        user.username,
     )
-
     return render(
         request,
         "billing/payment_history.html",

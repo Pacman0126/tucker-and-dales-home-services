@@ -12,6 +12,9 @@ from django.utils.html import strip_tags
 
 from .models import NewsletterSubscription, first_day_next_month
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def build_absolute_url(request, path_name, **kwargs):
     """
