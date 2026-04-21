@@ -1041,7 +1041,7 @@ By following this pattern, future apps (e.g., Employees, Scheduling, Inventory) 
         "customers/",
         include(("customers.urls", "customers"), namespace="customers"),
     ),
-  ```
+
 
 ### 🖼️ Wireframes
 
@@ -1160,7 +1160,7 @@ flowchart TD
     %% CART FLOW
     %% =========================
     D --> E[Add to CartItem]
-    E --> F[Attach to Cart (session or user)]
+    E --> F[Attach to Cart session or user]
 
     %% =========================
     %% CHECKOUT
