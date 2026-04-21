@@ -6,6 +6,10 @@ app_name = "core"
 urlpatterns = [
     path("newsletter/unsubscribe/<str:token>/",
          views.newsletter_unsubscribe, name="newsletter_unsubscribe"),
+    path(
+        "newsletter/resubscribe/",
+        views.newsletter_resubscribe,
+        name="newsletter_resubscribe",),
     path("newsletter/send-now/", views.newsletter_send_now,
          name="newsletter_send_now"),
     path("", views.home, name="home"),

@@ -6,12 +6,13 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
-
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from customers.models import CustomerProfile
 
-from .models import NewsletterSubscription
+from .models import NewsletterSubscription, first_day_next_month
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,30 @@ def newsletter_unsubscribe(request, token: str):
         "emails/newsletter_unsubscribed.html",
         {"email": sub.user.email},
     )
+
+
+@login_required
+def newsletter_resubscribe(request):
+    if request.method != "POST":
+        return redirect("core:home")
+
+    sub, created = NewsletterSubscription.objects.get_or_create(
+        user=request.user,
+        defaults={"next_send_on": first_day_next_month(timezone.localdate())},
+    )
+
+    if sub.unsubscribed:
+        sub.unsubscribed = False
+        sub.save(update_fields=["unsubscribed", "updated_at"])
+        messages.success(
+            request, "You have been resubscribed to the newsletter.")
+    elif created:
+        messages.success(
+            request, "You have been subscribed to the newsletter.")
+    else:
+        messages.info(request, "You are already subscribed to the newsletter.")
+
+    return redirect(request.META.get("HTTP_REFERER", "core:home"))
 
 
 @staff_member_required

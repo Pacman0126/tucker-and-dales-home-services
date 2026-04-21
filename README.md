@@ -1051,17 +1051,14 @@ Each wireframe below corresponds to a key page in the **Customers App**.
 ---
 
 - **Home / Navbar Mobile 412x844**
-  - ![Home / Navbar Wireframe](readme/wireframes/home_navbar_mobile.png)
+   ![Home / Navbar Wireframe](readme/wireframes/home_navbar_mobile.png)
 
-  - ![Home / Navbar Wireframe](readme/wireframes/home_navbar_larger_devices.png)
 
-  - **Customer Profile** (customer facing page)
+ - **Customer Profile** (customer facing page)
 
   ![Customer Profile Wireframe](readme/wireframes/profile.png)
 
 ---
-
-
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -2724,7 +2721,7 @@ Focus areas included:
 
 ![Mobile — Checkout Summary (Before Fix)](./images/testing_screenshots/Mobile_responsiveness/05a-Checkout-summary-before-tables-squahed.png)
 
- ![Mobile — Checkout Summary](./images/testing_screenshots/Mobile_responsiveness/05b-Checkout-summary.PNG)
+ ![Mobile — Checkout Summary (After fix)](./images/testing_screenshots/Mobile_responsiveness/05b-Checkout-summary.PNG)
 
 ---
 - VT-11.6
@@ -2893,12 +2890,6 @@ These controls ensure that the system remains reliable and maintains data integr
 
 [Back to Table of Contents](#table-of-contents)
 
-<!-- ## 🔄 Booking Lifecycle Testing
-
-[UNCHANGED — full evidence section]
-
----
-
 ### 🧠 Summary
 
 The system demonstrates:
@@ -2985,7 +2976,16 @@ The application uses a consistent visual approach with a focus on readability, c
 | US-28 | As a customer, I want concurrent checkout attempts to be handled safely, so that duplicate payments are blocked. | Pass | VT-12 |
 | US-29 | As a customer, I want failed payments to return safely to checkout, so that my session remains recoverable. | Pass | VT-12 |
 | US-30 | As a user, I want the system to preserve data integrity across booking, payment, and admin views, so that records remain consistent throughout the lifecycle. | Pass | PASS 4 / VT-12 |
-
+| US-31 | As a new visitor, I want the site to appear in search engines, so that I can discover available services. | Pass | Meta tags, sitemap.xml, robots.txt |
+| US-32 | As a visitor, I want clear page titles and descriptions, so that I understand the services before clicking. | Pass | Base template meta tags, page-level overrides |
+| US-33 | As a business owner, I want the site to be indexable, so that it can rank in search results. | Pass | robots.txt and sitemap.xml accessible |
+| US-34 | As a visitor, I want access to an external business reference, so that I can verify credibility. | Pass | Footer external link with rel="noopener noreferrer" |
+| US-35 | As a visitor, I want to see a newsletter signup option, so that I can receive updates and promotions. | Pass | Footer newsletter CTA (conditional display) |
+| US-36 | As a registered user, I want to unsubscribe from the newsletter, so that I can control my email preferences. | Pass | Footer unsubscribe link with token |
+| US-37 | As a registered user, I want to resubscribe to the newsletter, so that I can receive future updates again. | Pass | Footer resubscribe POST action |
+| US-38 | As a new user, I want to be automatically subscribed to updates, so that I don’t miss important information. | Pass | Signup signal + initial email sent |
+| US-39 | As a business owner, I want to send newsletters to users, so that I can promote services and offers. | Pass | Superuser newsletter send tool |
+| US-40 | As a mobile user, I want marketing elements to display correctly on smaller screens, so that I can interact easily. | Pass | Responsive footer + navbar behavior (<992px) |
 
 ---
 
@@ -2996,7 +2996,7 @@ All defined user stories were implemented and tested successfully.
 Each story is supported by:
 - functional testing (VT-10A / VT-10B)
 - defensive testing (VT-12)
-- lifecycle validation (PASS 4)
+- lifecycle validation
 
 This confirms full alignment between planned features and implemented functionality
 
@@ -3178,13 +3178,18 @@ Rather than deploying a live page, a **high-fidelity visual mockup** was created
 
 ---
 
-### Newsletter Integration
+### 📧 Newsletter Signup & Marketing
 
-A newsletter subscription system is implemented to support ongoing user engagement and retention.
+The application includes a newsletter system to support digital marketing and customer engagement.
 
-* Users receive confirmation upon subscription
-* Email communication is handled via transactional email integration
-* This supports future marketing campaigns such as promotions, reminders, and service updates
+- New users are automatically subscribed during registration and receive an initial email confirmation.
+- A visible footer control allows users to:
+  - Unsubscribe from the newsletter
+  - Resubscribe at any time
+- Subscription state is managed via the `NewsletterSubscription` model.
+- Ongoing newsletters are designed to be sent on a scheduled basis (e.g., monthly), rather than triggered on every subscribe/unsubscribe action.
+
+This approach ensures a clear marketing entry point, user control over preferences, and scalable email delivery.
 
 ---
 

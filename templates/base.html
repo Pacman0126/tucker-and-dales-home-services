@@ -370,7 +370,6 @@
     {% block content %}{% endblock %}
   </main>
 
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 {% if user.is_authenticated and not user.is_superuser and not user.is_staff %}
@@ -495,6 +494,41 @@ document.addEventListener("dragstart", ev => {
 });
 </script>
 {% endif %}
+
+<footer class="text-center py-3">
+  <div class="container">
+    <div class="small mb-2">
+      © {% now "Y" %} Tucker & Dale's Home Services |
+      <a href="https://github.com/Pacman0126/tucker-and-dales-home-services#facebook-business-page-mockup"
+         target="_blank"
+         rel="noopener noreferrer">
+         Facebook Mockup
+      </a>
+    </div>
+
+    {% if user.is_authenticated and not user.is_superuser and not user.is_staff %}
+      {% if user.newsletter_sub and not user.newsletter_sub.unsubscribed %}
+        <a href="{% url 'core:newsletter_unsubscribe' user.newsletter_sub.token %}"
+           class="small">
+          Unsubscribe from Newsletter
+        </a>
+      {% elif user.newsletter_sub and user.newsletter_sub.unsubscribed %}
+        <form method="post"
+              action="{% url 'core:newsletter_resubscribe' %}"
+              class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-link btn-sm p-0 text-warning">
+            Subscribe to Newsletter
+          </button>
+        </form>
+      {% endif %}
+    {% elif not user.is_authenticated %}
+      <a href="{% url 'account_signup' %}" class="small">
+        Register &amp; Subscribe to Newsletter
+      </a>
+    {% endif %}
+  </div>
+</footer>
 
   {% block extra_js %}{% endblock %}
 </body>
