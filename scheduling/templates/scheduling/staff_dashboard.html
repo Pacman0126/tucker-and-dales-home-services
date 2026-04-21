@@ -5,6 +5,46 @@
 
 {% block content %}
 <div class="container py-5">
+  <style>
+    @media (max-width: 992px) {
+      .staff-table-wrap {
+        display: none !important;
+      }
+      .staff-card-wrap {
+        display: block !important;
+      }
+    }
+
+    @media (min-width: 993px) {
+      .staff-table-wrap {
+        display: block !important;
+      }
+      .staff-card-wrap {
+        display: none !important;
+      }
+    }
+
+    .staff-booking-card {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 0.75rem;
+      box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.08);
+    }
+
+    .staff-booking-card .label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 0.15rem;
+    }
+
+    .staff-booking-card .value {
+      color: #212529;
+      word-break: break-word;
+    }
+  </style>
+
   <div class="mb-3">
     <h3 class="mb-1 fw-semibold text-dark" style="color:#212529 !important;">
       <i class="bi bi-calendar-week me-2"></i>My Schedule
@@ -39,7 +79,9 @@
 
       {% if employee %}
         {% if bookings %}
-          <div class="table-responsive">
+
+          <!-- DESKTOP TABLE -->
+          <div class="table-responsive staff-table-wrap">
             <table class="table table-hover align-middle">
               <thead class="table-light">
                 <tr>
@@ -84,6 +126,67 @@
                 {% endfor %}
               </tbody>
             </table>
+          </div>
+
+          <!-- MOBILE / TABLET CARDS -->
+          <div class="staff-card-wrap">
+            <div class="d-flex flex-column gap-3">
+              {% for booking in bookings %}
+                <div class="card staff-booking-card">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3 gap-2">
+                      <div>
+                        <div class="label">Service</div>
+                        <div class="value fw-semibold">{{ booking.service_category.name }}</div>
+                      </div>
+                      <span class="badge bg-primary">{{ booking.status }}</span>
+                    </div>
+
+                    <div class="row g-3">
+                      <div class="col-6">
+                        <div class="label">Date</div>
+                        <div class="value">{{ booking.date }}</div>
+                      </div>
+                      <div class="col-6">
+                        <div class="label">Time</div>
+                        <div class="value">{{ booking.time_slot.label }}</div>
+                      </div>
+
+                      <div class="col-12">
+                        <div class="label">Customer</div>
+                        <div class="value">
+                          {% if booking.user %}
+                            {% if booking.user.get_full_name %}
+                              {{ booking.user.get_full_name|default:booking.user.username }}
+                            {% else %}
+                              {{ booking.user.username }}
+                            {% endif %}
+                          {% else %}
+                            <span class="text-muted">Anonymous</span>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <div class="col-12">
+                        <div class="label">Phone</div>
+                        <div class="value">
+                          {% if booking.user and booking.user.customer_profile and booking.user.customer_profile.phone %}
+                            {{ booking.user.customer_profile.phone }}
+                          {% else %}
+                            <span class="text-muted">Not provided</span>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <div class="col-12">
+                        <div class="label">Address</div>
+                        <div class="value">{{ booking.service_address }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
           </div>
 
           <div class="alert alert-info mt-3 mb-0">

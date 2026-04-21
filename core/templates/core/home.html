@@ -66,7 +66,12 @@
     </div>
 
     <div class="mt-3">
-      {% if user.is_authenticated %}
+      {% if user.is_authenticated and user.is_staff and not user.is_superuser %}
+        <a href="{% url 'scheduling:staff_dashboard' %}"
+           class="btn btn-warning btn-lg rounded-pill shadow">
+          My Schedule
+        </a>
+      {% elif user.is_authenticated %}
         <a href="{% url 'scheduling:search_by_date' %}"
            class="btn btn-warning btn-lg rounded-pill shadow">
           Book a Service

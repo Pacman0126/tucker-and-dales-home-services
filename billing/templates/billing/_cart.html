@@ -1,6 +1,20 @@
 {% load static %}
 
 <div class="card mt-4 shadow-sm cart-component">
+  <style>
+    @media (max-width: 992px) {
+      .cart-action-buttons {
+        width: 100%;
+      }
+
+      .cart-action-buttons .btn,
+      .cart-action-buttons a.btn,
+      .cart-action-buttons form {
+        width: 100%;
+      }
+    }
+  </style>
+
   <div class="card-header bg-light d-flex justify-content-between align-items-center">
     <strong>🛒 Your Booking Cart</strong>
     <span class="badge bg-dark">{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
@@ -80,16 +94,34 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="mt-4 d-flex justify-content-between flex-wrap gap-2">
-          <div></div>
-          <div class="d-flex gap-2 ms-auto flex-wrap cart-action-buttons">
-            <button type="button" class="btn btn-danger" id="cart-remove-selected">
+        <div class="mt-4 d-flex justify-content-between align-items-start flex-wrap">
+          <div class="form-check" style="padding-top: 0.35rem;">
+            <input type="checkbox" class="form-check-input" id="select-all-bottom">
+            <label for="select-all-bottom" class="form-check-label small">
+              Select All
+            </label>
+          </div>
+
+          <div class="ms-auto cart-action-buttons"
+               style="display: flex; flex-wrap: wrap; justify-content: flex-end;">
+
+            <button type="button"
+                    class="btn btn-danger"
+                    id="cart-remove-selected"
+                    style="margin-left: 0.75rem; margin-bottom: 0.75rem;">
               <i class="bi bi-x-circle"></i> Delete Selected (Draft) Services
             </button>
-            <button type="button" class="btn btn-secondary" id="cart-clear-btn">
+
+            <button type="button"
+                    class="btn btn-secondary"
+                    id="cart-clear-btn"
+                    style="margin-left: 0.75rem; margin-bottom: 0.75rem;">
               <i class="bi bi-trash"></i> Clear Cart
             </button>
-            <a class="btn btn-success" href="{% url 'billing:checkout' %}">
+
+            <a class="btn btn-success"
+               href="{% url 'billing:checkout' %}"
+               style="margin-left: 0.75rem; margin-bottom: 0.75rem; min-width: 240px; text-align: center;">
               <i class="bi bi-credit-card"></i> Proceed to Checkout
             </a>
           </div>
@@ -236,9 +268,16 @@
   });
 
   document.addEventListener("change", ev => {
-    if (ev.target.id === "select-all") {
+    if (ev.target.id === "select-all" || ev.target.id === "select-all-bottom") {
+      const isChecked = ev.target.checked;
+      const top = document.getElementById("select-all");
+      const bottom = document.getElementById("select-all-bottom");
+
+      if (top && top !== ev.target) top.checked = isChecked;
+      if (bottom && bottom !== ev.target) bottom.checked = isChecked;
+
       const checkboxes = document.querySelectorAll('input[name="selected_items"]');
-      checkboxes.forEach(cb => cb.checked = ev.target.checked);
+      checkboxes.forEach(cb => cb.checked = isChecked);
     }
   });
 

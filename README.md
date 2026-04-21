@@ -121,6 +121,8 @@ To fully test the scheduling and availability features, the assessor should:
 - Use a **real, valid address** from the **Greater Dallas, Texas area** (e.g., Dallas, Plano, Frisco, Irving). Note: This project used Google Maps during development.
 - The system uses **geographic proximity and travel-time logic**, so only valid addresses within this region will return meaningful results
 - Random or non-regional addresses may result in no available services being displayed
+- A staff member has already been added for testing purposes. username=Dale/password=$Hannah71 at 9690 Forest Ln, Dallas, TX 75243, United States,
+  This can be used for testing by selecting a random customer address near this on Goodle Maps or similar.
 
 This ensures that availability filtering, employee assignment, and booking workflows behave as designed.
 
@@ -2183,6 +2185,7 @@ CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://127.0.0.1:8000,http://localhost,htt
 ## Testing & Validation
 
 Testing was carried out throughout development to ensure the application works as expected, both for end-users and administrators.
+Drag-and-drop booking interaction is supported for desktop users with mouse or trackpad input with developer tools turned off. On touch devices and in Chrome DevTools mobile emulation, drag-and-drop is not relied upon, and tap-based Add to Cart interactions are used instead.
 
 ### Manual Testing
 

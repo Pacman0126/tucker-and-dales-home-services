@@ -17,7 +17,7 @@ class CustomerProfile(models.Model):
     )
 
     # ── Contact / identity (optional) ──
-    phone = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=20)
     email = models.EmailField(unique=True)
     company = models.CharField(max_length=120, blank=True)
     preferred_contact = models.CharField(

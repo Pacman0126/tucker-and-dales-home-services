@@ -19,11 +19,6 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-logger = logging.getLogger(__name__)
-
-User = get_user_model()
-
-
 def superuser_required(user):
     return user.is_authenticated and user.is_superuser
 
@@ -36,7 +31,8 @@ def profile_view(request):
     Loads safely even if the related profile does not exist yet.
     """
     customer_profile = CustomerProfile.objects.filter(
-        user=request.user).first()
+        user=request.user
+    ).first()
 
     context = {
         "customer_profile": customer_profile,
@@ -75,8 +71,6 @@ def customer_list(request):
             | Q(service_state__icontains=query)
             | Q(service_zipcode__icontains=query)
         )
-        # logger.info("Search performed: '%s' -> %s results",
-        #             query, customers.count())
 
     paginator = Paginator(customers, 12)
     page_number = request.GET.get("page")
@@ -100,8 +94,11 @@ def customer_detail(request, pk):
         CustomerProfile.objects.select_related("user"),
         pk=pk,
     )
-    return render(request, "customers/customer_detail.html",
-                  {"customer": customer})
+    return render(
+        request,
+        "customers/customer_detail.html",
+        {"customer": customer},
+    )
 
 
 @login_required
@@ -111,7 +108,9 @@ def customer_edit(request, pk):
     Allow superuser to edit customer User + CustomerProfile data together.
     """
     customer = get_object_or_404(
-        CustomerProfile.objects.select_related("user"), pk=pk)
+        CustomerProfile.objects.select_related("user"),
+        pk=pk,
+    )
     user = customer.user
 
     class InlineCustomerForm(forms.ModelForm):
@@ -155,27 +154,37 @@ def customer_edit(request, pk):
                 "phone": forms.TextInput(attrs={"class": "form-control"}),
                 "company": forms.TextInput(attrs={"class": "form-control"}),
                 "preferred_contact": forms.Select(
-                    attrs={"class": "form-select"}),
+                    attrs={"class": "form-select"}
+                ),
                 "timezone": forms.TextInput(attrs={"class": "form-control"}),
                 "billing_street_address": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "billing_city": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "billing_state": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "billing_zipcode": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "region": forms.TextInput(attrs={"class": "form-control"}),
                 "service_street_address": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "service_city": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "service_state": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "service_zipcode": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "service_region": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
             }
 
         def clean_email(self):
@@ -232,11 +241,10 @@ def customer_delete(request, pk):
         {"customer": customer},
     )
 
+
 # ----------------------------------------------------------------
 # 🧩 Helper: Safe login wrapper to set backend if missing
 # ----------------------------------------------------------------
-
-
 def _safe_login(request, user):
     """
     Logs in the user safely, merging any session carts.
@@ -245,7 +253,6 @@ def _safe_login(request, user):
     old_session_key = request.session.session_key
     user._request = request  # transient ref
 
-    # ✅ Ensure backend is set correctly
     if not hasattr(user, "backend"):
         backends = get_backends()
         if backends:
@@ -253,7 +260,6 @@ def _safe_login(request, user):
                 f"{backends[0].__module__}.{backends[0].__class__.__name__}"
             )
         else:
-            # Fallback to settings if somehow empty
             default_backend = getattr(
                 settings,
                 "AUTHENTICATION_BACKENDS",
@@ -261,35 +267,35 @@ def _safe_login(request, user):
             )[0]
             user.backend = default_backend
 
-    # ✅ Perform login
     login(request, user, backend=user.backend)
 
-    # 🧹 Clean transient session keys
     for key in ("force_profile_update", "entered_username"):
         request.session.pop(key, None)
 
-    # 🛒 Merge or link existing cart
     try:
         merged = merge_session_cart(
-            old_session_key, user) if old_session_key else None
+            old_session_key,
+            user,
+        ) if old_session_key else None
         if merged:
             request.session["cart_id"] = merged.pk
         else:
             from billing.models import Cart
-            c = Cart.objects.filter(user=user).order_by("-updated_at").first()
-            if c:
-                request.session["cart_id"] = c.pk
+            cart = Cart.objects.filter(
+                user=user).order_by("-updated_at").first()
+            if cart:
+                request.session["cart_id"] = cart.pk
         request.session.modified = True
 
         if request.session.get("cart_id"):
             print(
                 f"🛒 Linked cart id {request.session['cart_id']} "
-                f"for user '{user.username}'")
+                f"for user '{user.username}'"
+            )
 
     except Exception as e:
         print(f"⚠️ Cart merge/link failed: {e}")
 
-    # 🧽 Cleanup
     if hasattr(user, "_request"):
         delattr(user, "_request")
 
@@ -318,16 +324,16 @@ def _post_login_address_check(request, user):
         if not rc.has_valid_billing_address():
             messages.warning(
                 request,
-                ("Your profile is missing billing address details. "
-                 "Please complete your profile before checkout.")
+                (
+                    "Your profile is missing billing address details. "
+                    "Please complete your profile before checkout."
+                )
             )
-            # signal continuation back to checkout
             request.session["next_after_profile"] = "billing:checkout"
             request.session["checkout_pending"] = True
             request.session.modified = True
             return redirect("customers:complete_profile")
 
-        # Save billing (for forms) and only set service address if none yet
         request.session["billing_address"] = rc.full_billing_address
         if not request.session.get("service_address"):
             request.session["service_address"] = rc.full_billing_address
@@ -337,8 +343,11 @@ def _post_login_address_check(request, user):
     except CustomerProfile.DoesNotExist:
         messages.warning(
             request,
-            ("No customer profile found. "
-             "Please complete your profile before checkout."))
+            (
+                "No customer profile found. "
+                "Please complete your profile before checkout."
+            )
+        )
         request.session["next_after_profile"] = "billing:checkout"
         request.session["checkout_pending"] = True
         request.session.modified = True
@@ -357,6 +366,7 @@ def complete_profile(request):
 
     user = request.user
     entered_username = request.session.get("entered_username", "")
+    placeholder_phone = "000-000-0000"
 
     class InlineProfileForm(forms.ModelForm):
         username = forms.CharField(
@@ -405,26 +415,40 @@ def complete_profile(request):
                 "phone": forms.TextInput(attrs={"class": "form-control"}),
                 "company": forms.TextInput(attrs={"class": "form-control"}),
                 "preferred_contact": forms.Select(
-                    attrs={"class": "form-select"}),
+                    attrs={"class": "form-select"}
+                ),
                 "timezone": forms.TextInput(attrs={"class": "form-control"}),
                 "billing_street_address": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "billing_city": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "billing_state": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "billing_zipcode": forms.TextInput(
-                    attrs={"class": "form-control"}),
+                    attrs={"class": "form-control"}
+                ),
                 "region": forms.TextInput(attrs={"class": "form-control"}),
             }
 
         def clean_email(self):
             return self.cleaned_data.get("email", "").strip().lower()
 
+        def clean_phone(self):
+            phone = self.cleaned_data.get("phone", "").strip()
+            if not phone or phone == placeholder_phone:
+                raise forms.ValidationError(
+                    "Please enter a valid phone number so staff can contact you."
+                )
+            return phone
+
     rc, created = CustomerProfile.objects.get_or_create(
         user=user,
         defaults={
             "email": (user.email or "").strip().lower(),
+            "phone": placeholder_phone,
             "preferred_contact": "email",
             "timezone": "America/Chicago",
             "region": "US",
@@ -437,15 +461,23 @@ def complete_profile(request):
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": rc.email or user.email or "",
+        "phone": "" if rc.phone == placeholder_phone else rc.phone,
         "preferred_contact": rc.preferred_contact or "email",
         "timezone": rc.timezone or "America/Chicago",
         "region": rc.region or "US",
     }
 
     show_identity_warning = bool(
-        entered_username and entered_username.strip(
-        ).lower() != user.username.strip().lower()
+        entered_username
+        and entered_username.strip().lower() != user.username.strip().lower()
     )
+
+    if created or rc.phone == placeholder_phone:
+        messages.warning(
+            request,
+            "Please enter a valid phone number so staff can contact you "
+            "about scheduled services."
+        )
 
     if request.method == "POST":
         form = InlineProfileForm(request.POST, instance=rc, initial=initial)
@@ -484,8 +516,10 @@ def complete_profile(request):
                 else:
                     next_url = reverse("core:home")
 
-            if ("checkout/summary" in next_url
-                    or not next_url.endswith("/checkout/")):
+            if (
+                "checkout/summary" in next_url
+                or not next_url.endswith("/checkout/")
+            ):
                 next_url = reverse("billing:checkout")
 
             messages.success(request, "Profile updated successfully.")

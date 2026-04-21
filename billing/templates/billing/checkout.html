@@ -42,6 +42,32 @@
     border-color: #157347 !important;
     color: #ffffff !important;
   }
+
+  .invoice-mobile-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background-color: #ffffff;
+    box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.08);
+  }
+
+  .invoice-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+  }
+
+  .invoice-row .label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+  }
+
+  .invoice-row .value {
+    text-align: right;
+    color: #212529;
+  }
 </style>
 {% endblock %}
 
@@ -150,39 +176,48 @@
           </div>
         </div>
 
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mt-4 checkout-actions">
+        <!-- BRUTE-FORCE ACTION AREA -->
+        <div class="mt-4" style="padding-top: 0.75rem; padding-bottom: 0.5rem;">
 
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="selectAllBottom">
-            <label for="selectAllBottom" class="form-check-label small">
-              Select All
-            </label>
+          <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div class="form-check" style="padding-top: 0.35rem;">
+              <input type="checkbox" class="form-check-input" id="selectAllBottom">
+              <label for="selectAllBottom" class="form-check-label small">
+                Select All
+              </label>
+            </div>
+
+            <div class="ms-auto d-flex flex-wrap justify-content-end"
+                 style="margin-bottom: 0.75rem;">
+
+              <button type="button"
+                      class="btn btn-outline-danger"
+                      id="remove-selected"
+                      style="margin-left: 0.75rem; margin-bottom: 0.75rem;">
+                <i class="bi bi-trash"></i> Delete Selected (Draft) Services
+              </button>
+
+              <a href="{% url 'scheduling:search_by_time_slot' %}"
+                 class="btn btn-outline-secondary"
+                 style="margin-left: 0.75rem; margin-bottom: 0.75rem;">
+                <i class="bi bi-arrow-left-circle"></i> Back to Search
+              </a>
+            </div>
           </div>
 
-          <div class="checkout-cta-group ms-auto">
-
-            <button type="button"
-                    class="btn btn-outline-danger checkout-cta-btn mb-3 mb-lg-0"
-                    id="remove-selected">
-              <i class="bi bi-trash"></i> Delete Selected (Draft) Services
-            </button>
-
-            <a href="{% url 'scheduling:search_by_time_slot' %}"
-               class="btn btn-outline-secondary checkout-cta-btn mb-3 mb-lg-0">
-              <i class="bi bi-arrow-left-circle"></i> Back to Search
-            </a>
-
+          <div style="margin-top: 0.75rem;">
             <form method="post"
                   action="{% url 'billing:create_checkout_session' %}"
-                  class="m-0 checkout-cta-form">
+                  class="m-0">
               {% csrf_token %}
               <button type="submit"
-                      class="btn btn-success w-100 checkout-cta-btn">
+                      class="btn btn-success w-100"
+                      style="padding-top: 0.7rem; padding-bottom: 0.7rem;">
                 <i class="bi bi-credit-card"></i> Proceed to Payment
               </button>
             </form>
-
           </div>
+
         </div>
       {% else %}
         <div class="alert alert-info text-center mb-0">

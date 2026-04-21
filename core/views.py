@@ -6,9 +6,10 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
-from django.core.management import call_command
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from customers.models import CustomerProfile
 
 from .models import NewsletterSubscription
 
@@ -17,6 +18,26 @@ logger = logging.getLogger(__name__)
 
 def home(request):
     logger.info("Home page accessed")
+
+    if request.user.is_authenticated and not request.user.is_staff:
+        placeholder_phone = "000-000-0000"
+        profile = CustomerProfile.objects.filter(user=request.user).first()
+
+        if not profile:
+            messages.warning(
+                request,
+                "Please complete your profile before continuing."
+            )
+            return redirect("customers:complete_profile")
+
+        if not profile.phone or profile.phone.strip() == placeholder_phone:
+            messages.warning(
+                request,
+                "Please complete your profile, including a valid phone "
+                "number, before continuing."
+            )
+            return redirect("customers:complete_profile")
+
     return render(request, "core/home.html", {"navbar_mode": "home"})
 
 

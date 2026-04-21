@@ -110,12 +110,18 @@ class CustomerProfileForm(forms.ModelForm):
         ]
         widgets = {
             "email": forms.EmailInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Email address"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Email address",
+                }
             ),
             "phone": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Phone number"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Phone number (required)",
+                    "autocomplete": "tel",
+                    "required": "required",
+                }
             ),
             "company": forms.TextInput(
                 attrs={"class": "form-control mb-2", "placeholder": "Company"}
@@ -127,46 +133,74 @@ class CustomerProfileForm(forms.ModelForm):
                 attrs={"class": "form-control mb-2", "placeholder": "Timezone"}
             ),
             "billing_street_address": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Billing street address"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Billing street address",
+                }
             ),
             "billing_city": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Billing city"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Billing city",
+                }
             ),
             "billing_state": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Billing state"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Billing state",
+                }
             ),
             "billing_zipcode": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Billing ZIP / Postal Code"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Billing ZIP / Postal Code",
+                }
             ),
             "region": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Billing country / region code"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Billing country / region code",
+                }
             ),
             "service_street_address": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Service street address"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Service street address",
+                }
             ),
             "service_city": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Service city"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Service city",
+                }
             ),
             "service_state": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Service state"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Service state",
+                }
             ),
             "service_zipcode": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Service ZIP / Postal Code"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Service ZIP / Postal Code",
+                }
             ),
             "service_region": forms.TextInput(
-                attrs={"class": "form-control mb-2",
-                       "placeholder": "Service country / region code"}
+                attrs={
+                    "class": "form-control mb-2",
+                    "placeholder": "Service country / region code",
+                }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["phone"].required = True
+        self.fields["phone"].help_text = (
+            "Required so staff can contact you about scheduled services."
+        )
 
     def clean_email(self):
         """Ensure non-empty, normalized email."""
@@ -174,3 +208,12 @@ class CustomerProfileForm(forms.ModelForm):
         if not email:
             raise forms.ValidationError("Email address is required.")
         return email
+
+    def clean_phone(self):
+        """Require phone number for operational contact."""
+        phone = self.cleaned_data.get("phone", "").strip()
+        if not phone:
+            raise forms.ValidationError(
+                "Phone number is required so staff can contact you."
+            )
+        return phone
