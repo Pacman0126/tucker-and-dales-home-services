@@ -121,8 +121,9 @@ To fully test the scheduling and availability features, the assessor should:
 - Use a **real, valid address** from the **Greater Dallas, Texas area** (e.g., Dallas, Plano, Frisco, Irving). Note: This project used Google Maps during development.
 - The system uses **geographic proximity and travel-time logic**, so only valid addresses within this region will return meaningful results
 - Random or non-regional addresses may result in no available services being displayed
-- A staff member has already been added for testing purposes. username=Dale/password=$Hannah71 at 9690 Forest Ln, Dallas, TX 75243, United States,
+- A staff member has already been added for testing purposes. demo: username=Dale/password=$Hannah71 at 9690 Forest Ln, Dallas, TX 75243, United States,
   This can be used for testing by selecting a random customer address near this on Goodle Maps or similar.
+- For a full staff workflow, add via superuser in admin using a temporary email address where verification starts for a new staff member
 
 This ensures that availability filtering, employee assignment, and booking workflows behave as designed.
 
